@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --input-background-rgb: 200, 200, 200;
+  --input-foreground-rgb: 10, 30, 50;
+  --link-color: #7f1d1d;
+  --link-visited-color: #f97316;
+  --link-hover-color: #ef4444;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --input-background-rgb: 10, 30, 50;
+    --input-foreground-rgb: 200, 200, 200;
+    --link-color: #fecaca;
+    --link-visited-color: #f97316;
+    --link-hover-color: #ef4444;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+select, input {
+  color: rgb(var(--input-foreground-rgb));
+  background-color: rgb(var(--input-background-rgb));
+  padding-left: 5pt;
+}
+
+a {
+  color: var(--link-color);
+}
+
+a:visited {
+  color: var(--link-visited-color);
+}
+
+a:hover {
+  color: var(--link-hover-color);
+}
