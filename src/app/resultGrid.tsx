@@ -1,14 +1,58 @@
 'use client'
 
 import { ReadonlyURLSearchParams } from 'next/navigation'
-import UnitLine, { Unit } from './unitLine'
+import UnitLine, { UnitHeader, Unit, UnitComparators } from './unitLine'
 import './unitLine'
 import useSWR from 'swr'
-import {useState} from 'react'
+import {useReducer, useState} from 'react'
+
+function matchesIfFilterSet(filter: string | null, value: string) {
+    if (filter) {
+        if (value) {
+            return value.toLowerCase().includes(filter.toLowerCase())
+        } else {
+            return false
+        }
+    }
+    return true
+}
 
 type Sort = {
     column: string,
     order: number,
+}
+
+class Filter {
+
+    name: string | null
+    abilities: string | null
+
+    constructor(
+        name: string | null,
+        abilities: string | null,
+    ) {
+        this.name = name
+        this.abilities = abilities
+    }
+
+    public matches(unit: Unit) {
+        return matchesIfFilterSet(this.name, unit.Name)
+          && matchesIfFilterSet(this.abilities, unit.BFAbilities)
+    }
+
+    public withName(name: string) {
+        return new Filter(name, this.abilities)
+    }
+
+    public withAbilities(abilities: string) {
+        return new Filter(this.name, abilities)
+    }
+
+}
+
+type FilterAction = {
+    type: string,
+    filter: string,
 }
 
 export class MULSearchParams {
@@ -51,6 +95,8 @@ export class MULSearchParams {
     }
 }
 
+
+
 const fetcher = (params: MULSearchParams) => fetch(params.toUrl()).then((r) => r.json())
 
 function useSearch(params: MULSearchParams): Unit[] | string {
@@ -70,23 +116,29 @@ function useSearch(params: MULSearchParams): Unit[] | string {
     return data.Units
 }
 
-function NameSearch({filterCallback}:{filterCallback: (name: string)=>void}) {
+function QuickFilter({label, action, filterCallback}:{label: string, action: string, filterCallback: (act: FilterAction)=>void}) {
     const [nameFilter, setNameFilter] = useState('')
 
-    function filterName(name: string) {
+    function filter(name: string) {
         setNameFilter(name)
-        filterCallback(name)
+        filterCallback({
+            type: action,
+            filter: name,
+        })
     }
 
     return (
         <label className="mx-4">
-            Unit Name: <input className="border border-solid border-black dark:border-white ml-2" type='text' value={nameFilter} onChange={e => filterName(e.target.value)}/>
+            {label}: <input className="border border-solid border-black dark:border-white ml-2" type='text' value={nameFilter} onChange={e => filter(e.target.value)}/>
         </label>
     )
 }
 
-function SortOrder({initial, sortCallback}:{initial: Sort, sortCallback:(sort:Sort)=>void}) {
+function SortOrder({initial, sortCallback}:{initial: Sort, sortCallback:(sort: Sort)=>void}) {
     const [sortState, setSortState] = useState(initial)
+
+    const sortText = (sortState.order > 0) ? "\u21D1" : "\u21D3"
+
     return (
         <>
             <label className="mx-4">
@@ -103,63 +155,63 @@ function SortOrder({initial, sortCallback}:{initial: Sort, sortCallback:(sort:So
                     <option value="Name">Name</option>
                     <option value="BFPointValue">PV</option>
                     <option value="BFMove">Movement Speed</option>
+                    <option value="SyntHP">Hit Points</option>
                 </select>    
-                <select className="border border-solid border-black dark:border-white ml-2" value={sortState.order} onChange={e => {
+                <span className="border border-solid border-black dark:border-white px-2" onClick={e => {
                         const newState = {
                             column: sortState.column,
-                            order: +e.target.value, 
+                            order: -sortState.order, 
                         }
                         setSortState(newState) 
                         sortCallback(newState)
                     }
                 }>
-                    <option value={1}>Ascending</option>
-                    <option value={-1}>Descending</option>
-                </select>
+                    {sortText}
+                </span>
             </label>
         </>
     )
 }
 
 function FilteredTable({data}:{data:Unit[]}) {
-    const initialSort = {
-        column: "Name",
-        order: -1
+
+    function reduceFilter(filter: Filter, action: FilterAction) {
+        switch (action.type) {
+            case 'name':
+                return filter.withName(action.filter)
+            case 'abilities':
+                return filter.withAbilities(action.filter)
+            default:
+                return filter
+        }
     }
 
     const [units, setUnits] = useState(data)
-    const [sort, setSort] = useState(initialSort)
+    const [filter, setFilter] = useReducer(reduceFilter, new Filter(null, null))
+    const [sort, setSort] = useState({
+        column: 'Name',
+        order: 1
+    })
 
-    function filterCallback(name: string) {
-        if (typeof data === "string") {
-            return
-        }
-        setUnits(data.filter((unit) => unit.Name.toLowerCase().includes(name.toLowerCase())))
-        sortCallback(sort)
-    }
-
-    function sortCallback(sort: Sort) {
-        type UnitKey = keyof Unit
-        const col = sort.column as UnitKey
-        units.sort((a,b) => {
-            const valA = a[col] 
-            const valB = b[col]
-            if (valA == valB) return 0
-            if (valA > valB) return sort.order
-            return -1 * sort.order
-        })
-       setSort(sort)
+    function sortAndFilter(data: Unit[]) {
+        return data
+            .filter((unit) => filter.matches(unit))
+            .sort((a, b) => UnitComparators[sort.column](a, b) * sort.order)
     }
 
     return (
         <>
-            <div className="sticky top-0 my-2 items-center text-center bg-inherit">
-                <NameSearch filterCallback={filterCallback}/>
-                <SortOrder initial={sort} sortCallback={sortCallback}/>
+            <div className="sticky top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white">
+                <QuickFilter label="Unit Name" action="name" filterCallback={setFilter}/>
+                <QuickFilter label="Abilities" action="abilities" filterCallback={setFilter}/>
+                <SortOrder initial={sort} sortCallback={setSort}/>
+                <div className="mx-20 text-sm">
+                    <UnitHeader/>
+                </div>
             </div>
-            <div className="mx-20 text-sm">
+            <div className="mx-20 text-sm mb-2">
             {
-                units.map(entry => {
+                sortAndFilter(units).map(entry => {
                     return <UnitLine key={entry.Id} unit={entry} />
                 })
             }
