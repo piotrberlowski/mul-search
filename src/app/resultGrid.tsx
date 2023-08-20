@@ -128,8 +128,12 @@ function QuickFilter({label, action, filterCallback}:{label: string, action: str
     }
 
     return (
-        <label className="mx-4">
-            {label}: <input className="border border-solid border-black dark:border-white ml-2" type='text' value={nameFilter} onChange={e => filter(e.target.value)}/>
+        <label className="mx-2">
+            {label}: <input className="inline-block border border-solid border-black dark:border-white ml-2 h-5 min-h-full" type='text' value={nameFilter} onChange={e => filter(e.target.value)}/>
+            <span className="inline-block border border-solid border-black dark:border-white px-2 rounded-md" onClick={e => {
+                       filter("")
+                    }
+                }>X</span>
         </label>
     )
 }
@@ -141,9 +145,9 @@ function SortOrder({initial, sortCallback}:{initial: Sort, sortCallback:(sort: S
 
     return (
         <>
-            <label className="mx-4">
+            <label className="mx-0">
                 Sort Order:         
-                <select className="border border-solid border-black dark:border-white ml-2" value={sortState.column} onChange={e => {
+                <select className="border border-solid border-black dark:border-white ml-2 h-5" value={sortState.column} onChange={e => {
                         const newState = {
                             column: e.target.value,
                             order: sortState.order, 
@@ -157,7 +161,7 @@ function SortOrder({initial, sortCallback}:{initial: Sort, sortCallback:(sort: S
                     <option value="BFMove">Movement Speed</option>
                     <option value="SyntHP">Hit Points</option>
                 </select>    
-                <span className="border border-solid border-black dark:border-white px-2" onClick={e => {
+                <span className="inline-block border border-solid border-black dark:border-white px-2 rounded-md" onClick={e => {
                         const newState = {
                             column: sortState.column,
                             order: -sortState.order, 
@@ -201,7 +205,7 @@ function FilteredTable({data}:{data:Unit[]}) {
 
     return (
         <>
-            <div className="sticky top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white">
+            <div className="sticky top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
                 <QuickFilter label="Unit Name" action="name" filterCallback={setFilter}/>
                 <QuickFilter label="Abilities" action="abilities" filterCallback={setFilter}/>
                 <SortOrder initial={sort} sortCallback={setSort}/>

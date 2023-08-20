@@ -19,6 +19,15 @@ function Header() {
   )
 }
 
+function FloatingFooter() {
+  return (
+    <div className='grid grid-cols-2 sticky bottom-0 mt-2 items-justified text-center bg-inherit border-t border-t-solid border-t-1 border-t-black dark:border-t-white text-xs'>
+        <span>Data and search API courtesy of <a href="http://www.masterunitlist.info">Master Unit List.</a>.</span>
+        <span>App source available at <a href="https://github.com/piotrberlowski/mul-search">GitHub</a>.</span> 
+    </div>
+  )
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -30,6 +39,7 @@ export default function RootLayout({
         <div className='max-w-screen-lg mx-auto items-center bg-inherit'>
           <Header/>
           {children}
+          <FloatingFooter/>
         </div>
       </body>
     </html>
