@@ -10,7 +10,7 @@
   --link-visited-color: #f97316;
   --link-hover-color: #ef4444;
   --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --background-end-rgb: 214, 219, 220;
 }
 
 @media (prefers-color-scheme: dark) {
