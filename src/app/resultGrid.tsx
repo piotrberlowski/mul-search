@@ -1,10 +1,11 @@
 'use client'
 
 import { ReadonlyURLSearchParams } from 'next/navigation'
-import UnitLine, { UnitHeader, Unit, UnitComparators } from './unitLine'
+import UnitLine, { UnitHeader, IUnit, UnitComparators } from './unitLine'
 import './unitLine'
 import useSWR from 'swr'
-import {useReducer, useState} from 'react'
+import { useReducer, useState, memo } from 'react'
+import { AddUnitCallback } from './unitListApi'
 
 function matchesIfFilterSet(filter: string | null, value: string) {
     if (filter) {
@@ -35,9 +36,9 @@ class Filter {
         this.abilities = abilities
     }
 
-    public matches(unit: Unit) {
+    public matches(unit: IUnit) {
         return matchesIfFilterSet(this.name, unit.Name)
-          && matchesIfFilterSet(this.abilities, unit.BFAbilities)
+            && matchesIfFilterSet(this.abilities, unit.BFAbilities)
     }
 
     public withName(name: string) {
@@ -69,7 +70,7 @@ export class MULSearchParams {
         const specific = searchParams.get('specific')
         const unitType = searchParams.get('unitType')
         const general = searchParams.get('general')
-    
+
         this.canSearch = !(!era || !specific || !unitType)
 
         this.specific = specific
@@ -86,7 +87,7 @@ export class MULSearchParams {
         target.searchParams.append('Factions', this.specific ?? '')
         target.searchParams.append('AvailableEras', this.era ?? '')
         target.searchParams.append('Types', this.unitType ?? '')
-    
+
         if (this.general) {
             target.searchParams.append('Factions', this.general)
         }
@@ -99,7 +100,7 @@ export class MULSearchParams {
 
 const fetcher = (params: MULSearchParams) => fetch(params.toUrl()).then((r) => r.json())
 
-function useSearch(params: MULSearchParams): Unit[] | string {
+function useSearch(params: MULSearchParams): IUnit[] | string {
 
     const { data, error } = useSWR(
         params,
@@ -116,7 +117,7 @@ function useSearch(params: MULSearchParams): Unit[] | string {
     return data.Units
 }
 
-function QuickFilter({label, action, filterCallback}:{label: string, action: string, filterCallback: (act: FilterAction)=>void}) {
+function QuickFilter({ label, action, filterCallback }: { label: string, action: string, filterCallback: (act: FilterAction) => void }) {
     const [nameFilter, setNameFilter] = useState('')
 
     function filter(name: string) {
@@ -129,16 +130,16 @@ function QuickFilter({label, action, filterCallback}:{label: string, action: str
 
     return (
         <label className="mx-2">
-            {label}: <input className="inline-block border border-solid border-black dark:border-white ml-2 h-5 min-h-full" type='text' value={nameFilter} onChange={e => filter(e.target.value)}/>
+            {label}: <input className="inline-block border border-solid border-black dark:border-white ml-2 h-5 min-h-full" type='text' value={nameFilter} onChange={e => filter(e.target.value)} />
             <span className="inline-block border border-solid border-black dark:border-white px-2 rounded-md" onClick={e => {
-                       filter("")
-                    }
-                }>X</span>
+                filter("")
+            }
+            }>X</span>
         </label>
     )
 }
 
-function SortOrder({initial, sortCallback}:{initial: Sort, sortCallback:(sort: Sort)=>void}) {
+function SortOrder({ initial, sortCallback }: { initial: Sort, sortCallback: (sort: Sort) => void }) {
     const [sortState, setSortState] = useState(initial)
 
     const sortText = (sortState.order > 0) ? "\u21D1" : "\u21D3"
@@ -146,29 +147,29 @@ function SortOrder({initial, sortCallback}:{initial: Sort, sortCallback:(sort: S
     return (
         <>
             <label className="mx-0">
-                Sort Order:         
+                Sort Order:
                 <select className="border border-solid border-black dark:border-white ml-2 h-5" value={sortState.column} onChange={e => {
-                        const newState = {
-                            column: e.target.value,
-                            order: sortState.order, 
-                        }
-                        setSortState(newState) 
-                        sortCallback(newState)
+                    const newState = {
+                        column: e.target.value,
+                        order: sortState.order,
                     }
+                    setSortState(newState)
+                    sortCallback(newState)
+                }
                 }>
                     <option value="Name">Name</option>
                     <option value="BFPointValue">PV</option>
                     <option value="BFMove">Movement Speed</option>
                     <option value="SyntHP">Hit Points</option>
-                </select>    
+                </select>
                 <span className="inline-block border border-solid border-black dark:border-white px-2 rounded-md" onClick={e => {
-                        const newState = {
-                            column: sortState.column,
-                            order: -sortState.order, 
-                        }
-                        setSortState(newState) 
-                        sortCallback(newState)
+                    const newState = {
+                        column: sortState.column,
+                        order: -sortState.order,
                     }
+                    setSortState(newState)
+                    sortCallback(newState)
+                }
                 }>
                     {sortText}
                 </span>
@@ -177,62 +178,64 @@ function SortOrder({initial, sortCallback}:{initial: Sort, sortCallback:(sort: S
     )
 }
 
-function FilteredTable({data}:{data:Unit[]}) {
+const FilteredTable = memo(
+    function FilteredTable({ data, onAdd}: { data: IUnit[], onAdd: AddUnitCallback }) {
 
-    function reduceFilter(filter: Filter, action: FilterAction) {
-        switch (action.type) {
-            case 'name':
-                return filter.withName(action.filter)
-            case 'abilities':
-                return filter.withAbilities(action.filter)
-            default:
-                return filter
+        function reduceFilter(filter: Filter, action: FilterAction) {
+            switch (action.type) {
+                case 'name':
+                    return filter.withName(action.filter)
+                case 'abilities':
+                    return filter.withAbilities(action.filter)
+                default:
+                    return filter
+            }
         }
-    }
 
-    const [units, setUnits] = useState(data)
-    const [filter, setFilter] = useReducer(reduceFilter, new Filter(null, null))
-    const [sort, setSort] = useState({
-        column: 'Name',
-        order: 1
-    })
+        const [units, setUnits] = useState(data)
+        const [filter, setFilter] = useReducer(reduceFilter, new Filter(null, null))
+        const [sort, setSort] = useState({
+            column: 'Name',
+            order: 1
+        })
 
-    function sortAndFilter(data: Unit[]) {
-        return data
-            .filter((unit) => filter.matches(unit))
-            .sort((a, b) => UnitComparators[sort.column](a, b) * sort.order)
-    }
+        function sortAndFilter(data: IUnit[]) {
+            return data
+                .filter((unit) => filter.matches(unit))
+                .sort((a, b) => UnitComparators[sort.column](a, b) * sort.order)
+        }
 
-    return (
-        <>
-            <div className="sticky top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
-                <QuickFilter label="Unit Name" action="name" filterCallback={setFilter}/>
-                <QuickFilter label="Abilities" action="abilities" filterCallback={setFilter}/>
-                <SortOrder initial={sort} sortCallback={setSort}/>
-                <div className="mx-20 text-sm">
-                    <UnitHeader/>
+        return (
+            <div className="bg-inherit">
+                <div className="sticky z-0 top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
+                    <QuickFilter label="Unit Name" action="name" filterCallback={setFilter} />
+                    <QuickFilter label="Abilities" action="abilities" filterCallback={setFilter} />
+                    <SortOrder initial={sort} sortCallback={setSort} />
+                    <div className="mx-5 text-sm">
+                        <UnitHeader />
+                    </div>
+                </div>
+                <div className="mx-5 text-sm mb-2">
+                    {
+                        sortAndFilter(units).map(entry => {
+                            return <UnitLine key={entry.Id} unit={entry} onAdd={onAdd} />
+                        })
+                    }
                 </div>
             </div>
-            <div className="mx-20 text-sm mb-2">
-            {
-                sortAndFilter(units).map(entry => {
-                    return <UnitLine key={entry.Id} unit={entry} />
-                })
-            }
-            </div>
-        </>
-    )
-}
+        )
+    }
+)
 
-export default function ResultGrid({search}:{search:MULSearchParams}) {
+export default function ResultGrid({ search, onAdd }: { search: MULSearchParams, onAdd: AddUnitCallback }) {
     const data = useSearch(search)
-    
+
     if (typeof (data) === "string") {
         return data
     }
 
     return (
-        <FilteredTable data={data}/>
+        <FilteredTable data={data} onAdd={onAdd} />
     )
 
 }

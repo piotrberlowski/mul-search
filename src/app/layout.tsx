@@ -13,7 +13,7 @@ function Header() {
   return (
     <div className='flex flex-row h-12 min-h-full border border-black border-black dark:border-white border-solid rounded-md items-center align-bottom'>
       <span className='basis-full inline-block text-2xl text-center'>
-        <a className='mx-auto text-red-600 hover:text-red-300 visited:text-red-700' href="http://www.masterunitlist.info">MasterUnitList</a> Search for Alpha Strike
+        List Builder for Alpha Strike
       </span>
     </div>
   )
@@ -36,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className='max-w-screen-lg mx-auto items-center bg-inherit'>
+        <div className='max-w-screen-lg mx-auto items-center bg-inherit translate-y-0'>
           <Header/>
           {children}
           <FloatingFooter/>

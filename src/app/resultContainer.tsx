@@ -2,9 +2,10 @@
 
 import { ReadonlyURLSearchParams, useSearchParams } from 'next/navigation'
 import ResultGrid, { MULSearchParams } from './resultGrid'
-import React from 'react'
+import React, {memo} from 'react'
+import { AddUnitCallback } from './unitListApi'
 
-function resultBody(searchParams: ReadonlyURLSearchParams): React.ReactNode {
+function resultBody(searchParams: ReadonlyURLSearchParams, onAdd: AddUnitCallback): React.ReactNode {
 
     const mulSearch = new MULSearchParams(searchParams)
 
@@ -13,15 +14,15 @@ function resultBody(searchParams: ReadonlyURLSearchParams): React.ReactNode {
     }
 
     return (
-        <ResultGrid search={mulSearch}/>
+        <ResultGrid search={mulSearch} onAdd={onAdd} />
     )
 }
 
-export default function ResultContainer() {
+export default function ResultContainer({ onAdd }: { onAdd: AddUnitCallback }) {
 
     const searchParams = useSearchParams()
 
-    const children = resultBody(searchParams)
+    const children = resultBody(searchParams, onAdd)
 
     return (
         <div id="resultContainer" className='bg-inherit'>
