@@ -11,6 +11,7 @@
   --link-hover-color: #ef4444;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 214, 219, 220;
+  --input-border-color: #0a1e32;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +24,7 @@
     --link-hover-color: #ef4444;
     --background-start-rgb: 0, 0, 0;
     --background-end-rgb: 0, 0, 0;
+    --input-border-color: #b8b8b8;
   }
 }
 
@@ -39,7 +41,19 @@ body {
 select, input {
   color: rgb(var(--input-foreground-rgb));
   background-color: rgb(var(--input-background-rgb));
+  border: 1px solid var(--input-border-color);
   padding-left: 5pt;
+}
+
+button {
+  color: rgb(var(--input-foreground-rgb));
+  background-color: rgb(var(--input-background-rgb));
+  border: 1px solid var(--input-border-color);
+  padding-left: 2pt;
+  padding-right: 2pt;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
 }
 
 a {

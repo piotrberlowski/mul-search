@@ -30,6 +30,7 @@ export interface IUnit {
     Id: number,
     Name: string,
     Role: IRole,
+    ImageUrl: string,
     BFDamageShort: number,
     BFDamageMedium: number,
     BFDamageLong: number,
@@ -38,6 +39,11 @@ export interface IUnit {
     BFArmor: number,
     BFStructure: number,
     BFAbilities: string,
+    BFTMM: number,
+    BFOverheat: number,
+    BFSize: number,
+    BFThreshold: number,
+    BFType: string,
 }
 
 
@@ -59,7 +65,7 @@ export function UnitHeader() {
 
 export default function UnitLine({ unit, onAdd }: { unit: IUnit, onAdd: AddUnitCallback }) {
 
-    const onAddClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    const onAddClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault()
         console.log(onAdd)
         onAdd(unit)
@@ -77,9 +83,9 @@ export default function UnitLine({ unit, onAdd }: { unit: IUnit, onAdd: AddUnitC
                 <div>{unit.BFDamageShort}/{unit.BFDamageMedium}/{unit.BFDamageLong}</div>
                 <div>{unit.BFArmor} + {unit.BFStructure}</div>
                 <div className="text-xs truncate col-span-3 text-left">{unit.BFAbilities}</div>
-                <a className="block text-center font-bold text-xs" onClick={onAddClick} href="#">
+                <button className="block text-center font-bold text-xs" onClick={onAddClick}>
                     +
-                </a>
+                </button>
             </div>
             </>
     )

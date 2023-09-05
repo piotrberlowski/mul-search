@@ -14,7 +14,7 @@ export default function SearchForm({factions}: {factions:Faction[]}) {
                 </div>
             </div>
             <div className="w-100 border border-solid border-black dark:border-white text-center">
-                <input type="submit" value="Search"/>
+                <input className="w-full" type="submit" value="Search"/>
             </div>
         </form>
     )
