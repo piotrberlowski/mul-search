@@ -130,7 +130,7 @@ function BuilderFooter({ storedLists,
             <button className="mx-1 h-full" onClick={e => {
                 onExport(listName)
             }
-            }>Export to Jeff's Tools</button>
+            }>Export to Jeff&apos;s Tools</button>
         </div>
     )
 
