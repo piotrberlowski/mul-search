@@ -148,18 +148,24 @@ function saveLists(lists: string[]) {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(lists))
 }
 
+function compactOrdinals(units: ISelectedUnit[]) {
+    units.forEach((u, idx) => u.ordinal = idx)
+}
+
 function loadByName(name: string): ISelectedUnit[] {
     const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
     const result = localStorage.getItem(listKey)
-    console.log("Loaded data for key: " + listKey)
-    return JSON.parse(result || "[]")
+    const units = JSON.parse(result || "[]")
+    compactOrdinals(units)
+    console.log("Loaded list %s (%d units)", listKey, units.length)
+    return units
 }
 
 function saveByName(units: ISelectedUnit[], name: string) {
     const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
     const unitList = JSON.stringify(units)
     localStorage.setItem(listKey, unitList)
-    console.log("Saved data for key: " + listKey)
+    console.log("Saved list %s (%d units)", listKey, units.length)
 }
 
 function exportData(name: string, units: ISelectedUnit[]) {
@@ -189,7 +195,7 @@ export default function ListBuilder({ onCreate }: { onCreate: (cb: AddUnitCallba
 
     function addUnit(unit: IUnit) {
         const selected = {
-            ordinal: units.length,
+            ordinal: Math.max(...units.map(u => u.ordinal))+1,
             skill: 4,
             ...unit
         }
@@ -199,7 +205,9 @@ export default function ListBuilder({ onCreate }: { onCreate: (cb: AddUnitCallba
     }
 
     function removeUnit(ord: number) {
+        console.log("Removing unit: " + ord)
         const newUnits = units.filter(u => u.ordinal != ord)
+        console.log("previous length: " + units.length + " Current length:" + newUnits.length)
         setUnits(newUnits)
         updateTotal(newUnits)
     }

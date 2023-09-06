@@ -130,8 +130,8 @@ function QuickFilter({ label, action, filterCallback }: { label: string, action:
 
     return (
         <label className="mx-2">
-            {label}: <input className="inline-block border border-solid border-black dark:border-white ml-2 h-5 min-h-full" type='text' value={nameFilter} onChange={e => filter(e.target.value)} />
-            <span className="inline-block border border-solid border-black dark:border-white px-2 rounded-md" onClick={e => {
+            {label}: <input className="inline-block h-5 min-h-full" type='text' value={nameFilter} onChange={e => filter(e.target.value)} />
+            <span className="inline-block px-2 rounded-md" onClick={e => {
                 filter("")
             }
             }>X</span>
