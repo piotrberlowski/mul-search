@@ -36,7 +36,7 @@ function ListLine({ unit, onUpdate, onRemove }: { unit: ISelectedUnit, onUpdate:
 
     return (
         <div className="grid grid-cols-12 my-0 border border-solid border-gray-400 dark:border-gray-800 font-small text-center items-center">
-            <div className="col-span-3 text-left">
+            <div id={"line-"+unit.ordinal} className="col-span-3 text-left">
                 <a href={"http://www.masterunitlist.info/Unit/Details/" + unit.Id} target="_blank">{unit.Name}</a>
             </div>
             <div>
@@ -194,8 +194,9 @@ export default function ListBuilder({ onCreate }: { onCreate: (cb: AddUnitCallba
     const [storedLists, setStoredList] = useState(loadLists())
 
     function addUnit(unit: IUnit) {
+        const ord = (units.length == 0) ? 0 : Math.max(...units.map(u => u.ordinal)) + 1
         const selected = {
-            ordinal: Math.max(...units.map(u => u.ordinal))+1,
+            ordinal: ord,
             skill: 4,
             ...unit
         }
