@@ -1,28 +1,14 @@
 'use client'
 import { useState, useCallback } from 'react'
 import { IUnit } from './unitLine';
-import { AddUnitCallback, ISelectedUnit, toJeffsUnits } from './unitListApi';
+import { AddUnitCallback, ISelectedUnit, currentPV, toJeffsUnits } from './unitListApi';
 import { createPortal } from 'react-dom';
+import ShareLink from './share/shareLink';
 
 const LOCAL_STORAGE_KEY = 'alphaStrikeLists'
 const LOCAL_STORAGE_LIST_KEY_PREFIX = 'alphaStrikeList_'
 const LOCAL_STORAGE_NAME_AUTOSAVE = 'autosave'
 
-function currentPV(unit: ISelectedUnit) {
-    var multiplier = 0;
-    if (unit.skill < 4) {
-        if (unit.BFPointValue < 8)
-            multiplier = (4 - unit.skill);
-        else
-            multiplier = (4 - unit.skill) * Math.ceil((Math.max((unit.BFPointValue - 7), 1) / 5) + 1);
-    } else {
-        if (unit.BFPointValue < 15)
-            multiplier = -(unit.skill - 4);
-        else
-            multiplier = -((unit.skill - 4) * Math.ceil(((unit.BFPointValue - 14) / 10.0) + 1));
-    }
-    return (Math.max(unit.BFPointValue + multiplier, 1))
-}
 
 function ListLine({ unit, onUpdate, onRemove }: { unit: ISelectedUnit, onUpdate: () => void, onRemove: (id: number) => void }) {
     const [skill, setSkill] = useState(unit.skill)
@@ -36,7 +22,7 @@ function ListLine({ unit, onUpdate, onRemove }: { unit: ISelectedUnit, onUpdate:
 
     return (
         <div className="grid grid-cols-12 my-0 border border-solid border-gray-400 dark:border-gray-800 font-small text-center items-center">
-            <div id={"line-"+unit.ordinal} className="col-span-3 text-left">
+            <div id={"line-" + unit.ordinal} className="col-span-3 text-left">
                 <a href={"http://www.masterunitlist.info/Unit/Details/" + unit.Id} target="_blank">{unit.Name}</a>
             </div>
             <div>
@@ -65,10 +51,14 @@ function ListLine({ unit, onUpdate, onRemove }: { unit: ISelectedUnit, onUpdate:
     )
 }
 
-function BuilderHeader({ count, total, onClose }: { count: number, total: number, onClose: () => void }) {
+function BuilderHeader({ name, count, total, onClose, onNameChange }: { name: string, count: number, total: number, onClose: () => void, onNameChange: (name: string) => void }) {
     return (
         <div className="w-full">
-            <div className="grid grid-cols-2 w-full">
+            <div className="grid grid-cols-3 w-full">
+                <div className="flex">
+                    <span className="mr-1 flex-none">Name: </span>
+                    <input className="inline flex-1 h-5 p-0 overflow-hidden" type='text' onChange={e => onNameChange(e.target.value)} value={name} />
+                </div>
                 <div className="text-center">Units: {count}</div>
                 <div className="text-center">Total PV: {total}</div>
             </div>
@@ -77,42 +67,37 @@ function BuilderHeader({ count, total, onClose }: { count: number, total: number
     )
 }
 
-function BuilderFooter({ storedLists,
+function BuilderFooter({
+    listName,
+    storedLists,
     onClear,
     onSave,
     onLoad,
     onExport
 }: {
+    listName: string,
     storedLists: string[],
     onClear: () => void,
     onSave: (name: string) => void,
     onLoad: (name: string) => void,
     onExport: (name: string) => void,
 }) {
-    const [listName, setListName] = useState("")
-    const [selectedList, setSelectedList] = useState<string>("")
+    const [selectedList, setSelectedList] = useState<string>(listName)
     return (
-        <div className="absolute bottom-0 w-full bg-inherit grid grid-cols-4 items-center text-center">
+        <div className="bg-inherit grid grid-cols-4 items-center text-center w-full">
             <button className="h-full" onClick={e => onClear()}>Clear</button>
-            <div className="mx-1">
+            <button className="h-full" onClick={
+                e => {
+                    onSave(listName)
+                    setSelectedList(listName)
+                }
+            }>Save</button>
+            <div className="h-full">
                 <div className="flex">
-                    <span className="mr-1 flex-none">Name: </span>
-                    <input className="inline flex-1 h-5 p-0 overflow-hidden" type='text' onChange={e => setListName(e.target.value)} value={listName} />
-                </div>
-                <button onClick={
-                    e => {
-                        onSave(listName)
-                        setSelectedList(listName)
-                    }
-                }>Save</button>
-            </div>
-            <div className="mx-1">
-                <div className="flex">
-                    <span className="flex-none mr-1">Pick:</span>
+                    <span className="flex-none mx-1">Pick:</span>
                     <select className="inline flex-1 overflow-hidden" value={selectedList} onChange={
                         e => {
                             setSelectedList(e.target.value)
-                            setListName(e.target.value)
                         }
                     }>
                         <option key="" value=""></option>
@@ -123,11 +108,10 @@ function BuilderFooter({ storedLists,
                 </div>
                 <button onClick={e => {
                     onLoad(selectedList)
-                    setListName(selectedList)
                 }
                 }>Load</button>
             </div>
-            <button className="mx-1 h-full" onClick={e => {
+            <button className="h-full" onClick={e => {
                 onExport(listName)
             }
             }>Export to Jeff&apos;s Tools</button>
@@ -161,14 +145,14 @@ function loadByName(name: string): ISelectedUnit[] {
     return units
 }
 
-function saveByName(units: ISelectedUnit[], name: string) {
+export function saveByName(units: ISelectedUnit[], name: string) {
     const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
     const unitList = JSON.stringify(units)
     localStorage.setItem(listKey, unitList)
     console.log("Saved list %s (%d units)", listKey, units.length)
 }
 
-function exportData(name: string, units: ISelectedUnit[]) {
+function exportJeffsJson(name: string, units: ISelectedUnit[]) {
     const data = {
         name: name,
         members: toJeffsUnits(units),
@@ -189,7 +173,8 @@ function exportData(name: string, units: ISelectedUnit[]) {
 
 export default function ListBuilder({ onCreate }: { onCreate: (cb: AddUnitCallback) => void }) {
     const [visible, setVisible] = useState(false)
-    const [units, setUnits] = useState<ISelectedUnit[]>(loadByName(LOCAL_STORAGE_NAME_AUTOSAVE))
+    const [name, setName] = useState(LOCAL_STORAGE_NAME_AUTOSAVE)
+    const [units, setUnits] = useState<ISelectedUnit[]>(loadByName(name))
     const [total, setTotal] = useState(totalPV(units))
     const [storedLists, setStoredList] = useState(loadLists())
 
@@ -244,18 +229,19 @@ export default function ListBuilder({ onCreate }: { onCreate: (cb: AddUnitCallba
         }
     }
 
-    function loadFromLocal(name: string) {
-        const selectedUnits = loadByName(name)
+    function loadFromLocal(loadName: string) {
+        const selectedUnits = loadByName(loadName)
         if (selectedUnits.length > 0) {
+            setName(loadName)
             setUnits(selectedUnits)
             updateTotal(selectedUnits)
         } else {
-            console.log("Loaded empty list... " + name)
+            console.log("Loaded empty list... " + loadName)
         }
     }
 
     function exportToJeffs(name: string) {
-        exportData(name, units)
+        exportJeffsJson(name, units)
     }
 
     const count = units.length
@@ -265,9 +251,12 @@ export default function ListBuilder({ onCreate }: { onCreate: (cb: AddUnitCallba
             return (
 
                 <div className="fixed bg-inherit top-20 bottom-20 max-xl:inset-x-[1%] xl:inset-x-[10%] 2xl:inset-x-[20%] z-10 border border-red-500 items-center text-center">
-                    <BuilderHeader count={count} total={total} onClose={() => setVisible(false)} />
+                    <BuilderHeader name={name} count={count} total={total} onNameChange={n => setName(n)} onClose={() => setVisible(false)} />
                     {units.map(u => <ListLine key={u.ordinal} unit={u} onRemove={removeUnit} onUpdate={updateTotal} />)}
-                    <BuilderFooter storedLists={storedLists} onClear={clear} onSave={storeToLocal} onLoad={loadFromLocal} onExport={exportToJeffs} />
+                    <div className="absolute bottom-0 w-full bg-inherit grid grid-cols-1">
+                        <ShareLink name={name} total={total} units={units} />
+                        <BuilderFooter listName={name} storedLists={storedLists} onClear={clear} onSave={storeToLocal} onLoad={loadFromLocal} onExport={exportToJeffs} />
+                    </div>
                 </div>
             )
         } else {

@@ -1,5 +1,3 @@
-import SearchForm from './searchForm'
-import ResultContainer from './resultContainer'
 import { fetchFactions } from './data'
 import { Suspense } from "react"
 import CsrPage from './csrPage'

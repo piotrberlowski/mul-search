@@ -49,6 +49,23 @@ function toMoveArray(move: string): JeffsMove[] {
 
 } 
 
+export function currentPV(unit: ISelectedUnit) {
+    var multiplier = 0;
+    if (unit.skill < 4) {
+        if (unit.BFPointValue < 8)
+            multiplier = (4 - unit.skill);
+        else
+            multiplier = (4 - unit.skill) * Math.ceil((Math.max((unit.BFPointValue - 7), 1) / 5) + 1);
+    } else {
+        if (unit.BFPointValue < 15)
+            multiplier = -(unit.skill - 4);
+        else
+            multiplier = -((unit.skill - 4) * Math.ceil(((unit.BFPointValue - 14) / 10.0) + 1));
+    }
+    return (Math.max(unit.BFPointValue + multiplier, 1))
+}
+
+
 export function toJeffsUnits(units: ISelectedUnit[]): JeffsUnit[] {
     return units.map(
         unit => {

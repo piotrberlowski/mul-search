@@ -1,5 +1,28 @@
 import { AddUnitCallback } from "./unitListApi"
 
+
+export const EMPTY_UNIT = {
+    Id: 0,
+    Name: "",
+    Role: {
+        Name: "None"
+    },
+    ImageUrl: "",
+    BFDamageShort: 0,
+    BFDamageMedium: 0,
+    BFDamageLong: 0,
+    BFMove: "0",
+    BFPointValue: 0,
+    BFArmor: 0,
+    BFStructure: 0,
+    BFAbilities: "",
+    BFTMM: 0,
+    BFOverheat: 0,
+    BFSize: 0,
+    BFThreshold: 0,
+    BFType: "Empty"    
+}
+
 type comparator = (a: IUnit, b: IUnit) => number
 
 function normalizeMove(move: string) {
