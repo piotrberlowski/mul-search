@@ -7,15 +7,15 @@ import useSWR from 'swr'
 import { useReducer, useState, memo } from 'react'
 import { AddUnitCallback } from './unitListApi'
 
-function matchesIfFilterSet(filter: string | null, value: string) {
+function matchesIfFilter<T>(filter: T | undefined, predicate: (filter: T) => boolean) {
     if (filter) {
-        if (value) {
-            return value.toLowerCase().includes(filter.toLowerCase())
-        } else {
-            return false
-        }
+        return predicate(filter)
     }
     return true
+}
+
+function includesIfFilter(filter: string | undefined, value: string) {
+    return matchesIfFilter(filter, (f) => (value) ? value.toLowerCase().includes(f.toLowerCase()) : false)
 }
 
 type Sort = {
@@ -23,37 +23,48 @@ type Sort = {
     order: number,
 }
 
+type FilterFields = {
+    name?: string
+    abilities?: string
+    minPV?: number
+    maxPV?: number
+    dmg?: string
+    move?: string
+}
+
 class Filter {
 
-    name: string | null
-    abilities: string | null
+    fields: FilterFields
 
     constructor(
-        name: string | null,
-        abilities: string | null,
+        overrides?: FilterFields
     ) {
-        this.name = name
-        this.abilities = abilities
+        this.fields = {}
+        if (overrides) {
+            this.fields = {...overrides}
+        }
     }
 
     public matches(unit: IUnit) {
-        return matchesIfFilterSet(this.name, unit.Name)
-            && matchesIfFilterSet(this.abilities, unit.BFAbilities)
+        return includesIfFilter(this.fields.name, unit.Name)
+            && includesIfFilter(this.fields.abilities, unit.BFAbilities)
+            && includesIfFilter(this.fields.move, unit.BFMove)
+            && matchesIfFilter(this.fields.minPV, (f) => unit.BFPointValue >= f)
+            && matchesIfFilter(this.fields.maxPV, (f) => unit.BFPointValue <= f)
+            && includesIfFilter(this.fields.dmg, `${unit.BFDamageShort}/${unit.BFDamageMedium}/${unit.BFDamageLong}`)
     }
 
-    public withName(name: string) {
-        return new Filter(name, this.abilities)
+    public withOverrides(overrides: FilterFields) {
+        return new Filter({
+            ...this.fields,
+            ...overrides
+        })
     }
-
-    public withAbilities(abilities: string) {
-        return new Filter(this.name, abilities)
-    }
-
 }
 
 type FilterAction = {
     type: string,
-    filter: string,
+    filter: string | undefined,
 }
 
 export class MULSearchParams {
@@ -118,24 +129,25 @@ function useSearch(params: MULSearchParams): IUnit[] | string {
 }
 
 function QuickFilter({ label, action, filterCallback }: { label: string, action: string, filterCallback: (act: FilterAction) => void }) {
-    const [nameFilter, setNameFilter] = useState('')
+    const [value, setValue] = useState<string|undefined>('')
 
-    function filter(name: string) {
-        setNameFilter(name)
+    function filter(v: string|undefined) {
+        setValue(v)
         filterCallback({
             type: action,
-            filter: name,
+            filter: v,
         })
     }
 
     return (
-        <label className="mx-2">
-            {label}: <input className="inline-block h-5 min-h-full" type='text' value={nameFilter} onChange={e => filter(e.target.value)} />
-            <span className="inline-block px-2 rounded-md" onClick={e => {
-                filter("")
+        <>
+            <span className="flex-none mr-1">{label}:</span> 
+            <input className="h-5 min-h-full flex-1 w-8" type='text' value={value} onChange={e => filter(e.target.value)} />
+            <span className="px-2 border border-solid rounded-md flex-none mr-2" onClick={e => {
+                filter(undefined)
             }
             }>X</span>
-        </label>
+        </>
     )
 }
 
@@ -179,21 +191,29 @@ function SortOrder({ initial, sortCallback }: { initial: Sort, sortCallback: (so
 }
 
 const FilteredTable = memo(
-    function FilteredTable({ data, onAdd}: { data: IUnit[], onAdd: AddUnitCallback }) {
+    function FilteredTable({ data, onAdd }: { data: IUnit[], onAdd: AddUnitCallback }) {
 
         function reduceFilter(filter: Filter, action: FilterAction) {
             switch (action.type) {
                 case 'name':
-                    return filter.withName(action.filter)
+                    return filter.withOverrides({name: action.filter})
                 case 'abilities':
-                    return filter.withAbilities(action.filter)
+                    return filter.withOverrides({abilities: action.filter})
+                case 'min-pv':
+                    return filter.withOverrides({minPV: (action.filter) ? parseInt(action.filter) : undefined})
+                case 'max-pv':
+                    return filter.withOverrides({maxPV: (action.filter) ? parseInt(action.filter) : undefined})
+                case 'move':
+                    return filter.withOverrides({move: action.filter})
+                case 'dmg':
+                    return filter.withOverrides({dmg: action.filter})
                 default:
                     return filter
             }
         }
 
         const [units, setUnits] = useState(data)
-        const [filter, setFilter] = useReducer(reduceFilter, new Filter(null, null))
+        const [filter, setFilter] = useReducer(reduceFilter, new Filter())
         const [sort, setSort] = useState({
             column: 'Name',
             order: 1
@@ -208,9 +228,17 @@ const FilteredTable = memo(
         return (
             <div className="bg-inherit">
                 <div className="sticky z-0 top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
-                    <QuickFilter label="Unit Name" action="name" filterCallback={setFilter} />
-                    <QuickFilter label="Abilities" action="abilities" filterCallback={setFilter} />
-                    <SortOrder initial={sort} sortCallback={setSort} />
+                    <div className="flex">
+                        <QuickFilter label="Unit Name" action="name" filterCallback={setFilter} />
+                        <QuickFilter label="Abilities" action="abilities" filterCallback={setFilter} />
+                        <SortOrder initial={sort} sortCallback={setSort} />
+                    </div>
+                    <div className="flex w-full max-w-full">
+                        <QuickFilter label="Min PV" action="min-pv" filterCallback={setFilter} />
+                        <QuickFilter label="Max PV" action="max-pv" filterCallback={setFilter} />
+                        <QuickFilter label="Move" action="move" filterCallback={setFilter} />
+                        <QuickFilter label="Dmg" action="dmg" filterCallback={setFilter} />
+                    </div>
                     <div className="mx-5 text-sm">
                         <UnitHeader />
                     </div>

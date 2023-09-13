@@ -1,19 +1,20 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import Link from 'next/link'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'MUL Search',
-  description: 'A minimal app to search MasterUnitList for AlphaStrike units',
+  title: 'Alpha Strike Builder',
+  description: 'A minimal search interface and List Builder backed by MasterUnitList.info',
 }
 
 function Header() {
   return (
     <div className='flex flex-row h-12 min-h-full border border-black border-black dark:border-white border-solid rounded-md items-center align-bottom'>
       <span className='basis-full inline-block text-2xl text-center'>
-        List Builder for Alpha Strike
+        <Link href="/">List Builder for AS</Link> powered by <Link href="http://masterunitlist.info" target="_blank">Master Unit List API</Link>
       </span>
     </div>
   )

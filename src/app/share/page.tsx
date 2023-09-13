@@ -12,7 +12,6 @@ export default function SharedList() {
 
     return (
         <main className="relative items-center align-top bg-inherit">
-            <Link href="/">Back to Builder</Link>
             <Suspense fallback={<ListFallback/>}>
                 <VisualList/>
             </Suspense>

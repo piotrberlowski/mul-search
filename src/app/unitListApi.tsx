@@ -1,5 +1,8 @@
 import { IUnit } from "./unitLine";
 
+export const LOCAL_STORAGE_NAME_AUTOSAVE = 'autosave'
+const LOCAL_STORAGE_KEY = 'alphaStrikeLists'
+const LOCAL_STORAGE_LIST_KEY_PREFIX = 'alphaStrikeList_'
 
 export type AddUnitCallback = (unit: IUnit) => void
 
@@ -95,4 +98,37 @@ export function toJeffsUnits(units: ISelectedUnit[]): JeffsUnit[] {
             }
         }
     )
+}
+
+export function loadLists(): string[] {
+    return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]")
+}
+
+export function saveLists(lists: string[]) {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(lists))
+}
+
+export function compactOrdinals(units: ISelectedUnit[]) {
+    units.forEach((u, idx) => u.ordinal = idx)
+}
+
+export function loadByName(name: string): ISelectedUnit[] {
+    const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
+    const result = localStorage.getItem(listKey)
+    const units = JSON.parse(result || "[]")
+    compactOrdinals(units)
+    console.log("Loaded list %s (%d units)", listKey, units.length)
+    return units
+}
+
+export function saveByName(units: ISelectedUnit[], name: string) {
+    const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
+    const unitList = JSON.stringify(units)
+    localStorage.setItem(listKey, unitList)
+    console.log("Saved list %s (%d units)", listKey, units.length)
+}
+
+export function removeByName(name: string) {
+    const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
+    localStorage.removeItem(listKey)
 }

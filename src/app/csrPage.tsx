@@ -6,6 +6,7 @@ import ResultContainer from './resultContainer';
 import { Faction } from './data';
 import { IUnit } from './unitLine';
 import dynamic from "next/dynamic";
+import { useSearchParams } from 'next/navigation';
 
 function Loading({name}:{name:string}) {
     return (<div>{name} loading...</div>)
@@ -22,6 +23,7 @@ const ListBuilder = dynamic(
 
 export default function CsrPage({factions}: {factions:Faction[]}) {
     let [onAdd, setOnAdd] = useState<AddUnitCallback>((u) => {})
+    const params = useSearchParams()
 
     function onAddProxy(unit: IUnit) {
 
@@ -36,7 +38,7 @@ export default function CsrPage({factions}: {factions:Faction[]}) {
             <Suspense fallback={<Loading name="Search Results"/>}>
                 <ResultContainer onAdd={onAddProxy}/>
             </Suspense>
-            <ListBuilder onCreate={ cb => onAdd = cb }/>
+            <ListBuilder defaultVisible={Boolean(params.get("builder"))} onCreate={ cb => onAdd = cb }/>
         </div>
     </>
 

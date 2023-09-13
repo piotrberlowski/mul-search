@@ -6,8 +6,8 @@ export default function ShareLink({name, total, units}:{name:string, total: numb
     const params = new URLSearchParams("")
     params.set('list', exportShare(name, total, units))
     return (
-        <div className="w-full text-center items-center border border-solid">
-            <Link href={`/share?${params.toString()}`} target="_blank">Show List</Link>
+        <div className="w-full text-center items-center border border-solid dark:border-white border-black">
+            <Link href={`/share/?${params.toString()}`} target="_blank">Show List</Link>
         </div>
     )
 }

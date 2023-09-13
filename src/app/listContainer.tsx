@@ -1,14 +1,9 @@
 'use client'
 import { useState, useCallback } from 'react'
 import { IUnit } from './unitLine';
-import { AddUnitCallback, ISelectedUnit, currentPV, toJeffsUnits } from './unitListApi';
+import { AddUnitCallback, ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, currentPV, loadByName, loadLists, removeByName, saveByName, saveLists, toJeffsUnits } from './unitListApi';
 import { createPortal } from 'react-dom';
 import ShareLink from './share/shareLink';
-
-const LOCAL_STORAGE_KEY = 'alphaStrikeLists'
-const LOCAL_STORAGE_LIST_KEY_PREFIX = 'alphaStrikeList_'
-const LOCAL_STORAGE_NAME_AUTOSAVE = 'autosave'
-
 
 function ListLine({ unit, onUpdate, onRemove }: { unit: ISelectedUnit, onUpdate: () => void, onRemove: (id: number) => void }) {
     const [skill, setSkill] = useState(unit.skill)
@@ -73,7 +68,8 @@ function BuilderFooter({
     onClear,
     onSave,
     onLoad,
-    onExport
+    onExport,
+    onSelect
 }: {
     listName: string,
     storedLists: string[],
@@ -81,6 +77,7 @@ function BuilderFooter({
     onSave: (name: string) => void,
     onLoad: (name: string) => void,
     onExport: (name: string) => void,
+    onSelect: (name: string) => void,
 }) {
     const [selectedList, setSelectedList] = useState<string>(listName)
     return (
@@ -89,7 +86,6 @@ function BuilderFooter({
             <button className="h-full" onClick={
                 e => {
                     onSave(listName)
-                    setSelectedList(listName)
                 }
             }>Save</button>
             <div className="h-full">
@@ -98,6 +94,7 @@ function BuilderFooter({
                     <select className="inline flex-1 overflow-hidden" value={selectedList} onChange={
                         e => {
                             setSelectedList(e.target.value)
+                            onSelect(e.target.value)
                         }
                     }>
                         <option key="" value=""></option>
@@ -124,33 +121,7 @@ function totalPV(units: ISelectedUnit[]): number {
     return units.map(u => currentPV(u)).reduce((p, n) => p + n, 0)
 }
 
-function loadLists(): string[] {
-    return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]")
-}
 
-function saveLists(lists: string[]) {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(lists))
-}
-
-function compactOrdinals(units: ISelectedUnit[]) {
-    units.forEach((u, idx) => u.ordinal = idx)
-}
-
-function loadByName(name: string): ISelectedUnit[] {
-    const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
-    const result = localStorage.getItem(listKey)
-    const units = JSON.parse(result || "[]")
-    compactOrdinals(units)
-    console.log("Loaded list %s (%d units)", listKey, units.length)
-    return units
-}
-
-export function saveByName(units: ISelectedUnit[], name: string) {
-    const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
-    const unitList = JSON.stringify(units)
-    localStorage.setItem(listKey, unitList)
-    console.log("Saved list %s (%d units)", listKey, units.length)
-}
 
 function exportJeffsJson(name: string, units: ISelectedUnit[]) {
     const data = {
@@ -171,8 +142,8 @@ function exportJeffsJson(name: string, units: ISelectedUnit[]) {
     link.click();
 };
 
-export default function ListBuilder({ onCreate }: { onCreate: (cb: AddUnitCallback) => void }) {
-    const [visible, setVisible] = useState(false)
+export default function ListBuilder({ defaultVisible, onCreate }: { defaultVisible: boolean, onCreate: (cb: AddUnitCallback) => void }) {
+    const [visible, setVisible] = useState(defaultVisible)
     const [name, setName] = useState(LOCAL_STORAGE_NAME_AUTOSAVE)
     const [units, setUnits] = useState<ISelectedUnit[]>(loadByName(name))
     const [total, setTotal] = useState(totalPV(units))
@@ -224,15 +195,13 @@ export default function ListBuilder({ onCreate }: { onCreate: (cb: AddUnitCallba
                 setStoredList(newLists)
                 saveLists(newLists)
             }
-            const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
-            localStorage.removeItem(listKey)
+            removeByName(name)
         }
     }
 
     function loadFromLocal(loadName: string) {
         const selectedUnits = loadByName(loadName)
         if (selectedUnits.length > 0) {
-            setName(loadName)
             setUnits(selectedUnits)
             updateTotal(selectedUnits)
         } else {
@@ -255,7 +224,14 @@ export default function ListBuilder({ onCreate }: { onCreate: (cb: AddUnitCallba
                     {units.map(u => <ListLine key={u.ordinal} unit={u} onRemove={removeUnit} onUpdate={updateTotal} />)}
                     <div className="absolute bottom-0 w-full bg-inherit grid grid-cols-1">
                         <ShareLink name={name} total={total} units={units} />
-                        <BuilderFooter listName={name} storedLists={storedLists} onClear={clear} onSave={storeToLocal} onLoad={loadFromLocal} onExport={exportToJeffs} />
+                        <BuilderFooter 
+                            listName={name} 
+                            storedLists={storedLists} 
+                            onClear={clear} 
+                            onSave={storeToLocal} 
+                            onLoad={loadFromLocal} 
+                            onExport={exportToJeffs}
+                            onSelect={(name:string)=>setName(name)}/>
                     </div>
                 </div>
             )
@@ -270,9 +246,9 @@ export default function ListBuilder({ onCreate }: { onCreate: (cb: AddUnitCallba
         return (
             createPortal(
                 <>
-                    <div className="fixed w-full top-2 left-0">
+                    <div className="fixed w-full top-2 left-0 pointer-events-none">
                         <div className="max-w-screen-lg mx-auto items-right">
-                            <div className="float-right grid grid-cols-2 w-40 text-xs bg-red-500 text-white hover:text-black text-center border border-black-500 dark:border-white-500" onClick={(e) => setVisible(v => !v)}>
+                            <div className="pointer-events-auto float-right grid grid-cols-2 w-40 text-xs bg-red-500 text-white hover:text-black text-center border dark:border-white border-black" onClick={(e) => setVisible(v => !v)}>
                                 <div className="col-span-2">Current List</div>
                                 <div>Count: {count}</div>
                                 <div>Total: {total}</div>
