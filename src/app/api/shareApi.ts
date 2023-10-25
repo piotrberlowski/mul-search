@@ -1,4 +1,4 @@
-import { ISelectedUnit } from "../unitListApi";
+import { ISelectedUnit, currentPV } from "./unitListApi";
 
 export type MulUnit = {
     name: string,
@@ -12,8 +12,19 @@ type ParsedMulList = {
     units: MulUnit[]
 }
 
+export function compareSelectedUnits(a: ISelectedUnit, b:ISelectedUnit):number {
+    let val = currentPV(b) - currentPV(a)
+    if (0 == val) {
+        val = b.BFSize - a.BFSize
+    }
+    if (0 == val) {
+        val = a.Name.localeCompare(b.Name)
+    }
+    return val
+}
+
 export function exportShare(name:string, total:number, units: ISelectedUnit[]) {
-    const unitsString = units.map(u => `${u.Id}:${u.skill}:${u.Name.trim()}`).join(',')
+    const unitsString = [...units].sort(compareSelectedUnits).map(u => `${u.Id}:${u.skill}:${u.Name.trim()}`).join(',')
     return `${name};${total};${unitsString}`
 }
 

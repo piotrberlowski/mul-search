@@ -1,11 +1,13 @@
 'use client'
 import { useSearchParams } from 'next/navigation'
-import { MulUnit, parseShare } from './shareApi'
-import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, loadLists, saveByName, saveLists } from '../unitListApi'
+import { MulUnit, compareSelectedUnits, parseShare } from '../api/shareApi'
+import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, loadLists, saveByName, saveLists } from '../api/unitListApi'
 import Image from 'next/image'
 import { useMemo, useState } from "react"
 import { MulUnitLine } from './mulUnitLine'
 import { useRouter } from 'next/navigation'
+import Head from 'next/head'
+import Combinations from './combinations'
 
 function MemoImage({ordinal, unit}:{ordinal:number, unit:MulUnit}) {
     return useMemo(() => (
@@ -24,7 +26,7 @@ function SaveButton({target, onClick, ready}: {target: number, onClick: (tweak: 
 
     if (count >= target) {
         return (
-            <div className="w-full mx-auto flex">
+            <div className="w-full mx-auto flex print:hidden">
                 <button className="flex-1 w-1/2" onClick={(e)=>onClick(true)}>Tweak Now</button>
                 <button className="flex-1 w-1/2" onClick={(e)=>onClick(false)}>Save to Local Storage</button>
             </div>
@@ -49,13 +51,20 @@ export default function VisualList() {
 
     const fetchedList = new Array<ISelectedUnit>()
     let saveButtonFeed = (len:number) => {}
+    let combinationsFeed = (len:number) => {}
     function onFetch(u: ISelectedUnit) {
         fetchedList.push(u)
+        fetchedList.sort(compareSelectedUnits)
         saveButtonFeed(fetchedList.length)
+        combinationsFeed(fetchedList.length)
     }
 
     function saveButtonReady(feed: (len:number) => void) {
         saveButtonFeed = feed
+    }
+
+    function combinationsReady(feed: (len:number) => void) {
+        combinationsFeed = feed
     }
 
     function saveList(tweak: boolean) {
@@ -75,10 +84,18 @@ export default function VisualList() {
 
     return (
         <>
+            <Head>
+                <title>{`AS: ${parsed.name}`}</title>
+                <meta property="og:title" content={`AS: ${parsed.name}`} key="title" />
+                <meta property="og:description" content={`Alpha Strike list shared via AS Builder`} key="description" />
+            </Head>
             <div className='text-center w-full'>
                 <div>{parsed.name}</div>
             </div>
             <SaveButton target={parsed.units.length} onClick={saveList} ready={saveButtonReady}/>
+            <div className='text-center w-full print:hidden'>
+                <button className="w-full" onClick={(e)=>window.print()}>Print</button>
+            </div>
             <div>
                 {
                     parsed.units.map((u,idx) => (
@@ -87,6 +104,7 @@ export default function VisualList() {
                 }
             </div>
             <div className='w-full text-center my-2'>Total PV: {parsed.total}</div>
+            <Combinations target={parsed.units.length} ready={combinationsReady} units={fetchedList}/>
             <div className='grid grid-cols-2'>
                 {
                     parsed.units.map((u, idx) => (

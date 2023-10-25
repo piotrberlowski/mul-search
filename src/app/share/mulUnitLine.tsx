@@ -1,7 +1,7 @@
 'use client'
-import { ISelectedUnit, currentPV } from "../unitListApi";
+import { ISelectedUnit, currentPV } from "../api/unitListApi";
 import useSWR from "swr"
-import { MulUnit } from "./shareApi";
+import { MulUnit } from "../api/shareApi";
 import { EMPTY_UNIT, IUnit } from "../unitLine";
 
 async function fetchFromMul(search: string) {
@@ -22,7 +22,7 @@ function TempUnit({mulUnit, description}:{mulUnit: MulUnit, description: string}
 
 function FetchedUnit({unit}:{unit: ISelectedUnit}) {
     return (
-        <div className="grid grid-cols-11 my-0 border border-solid border-gray-400 dark:border-gray-800 font-small text-center items-center">
+        <div className="grid grid-cols-11 my-0 border border-solid border-gray-400 dark:border-gray-800 font-small text-center items-center w-full">
             <div className="col-span-3 text-left">
                 <a href={"http://www.masterunitlist.info/Unit/Details/" + unit.Id} target="_blank">{unit.Name}</a>
             </div>

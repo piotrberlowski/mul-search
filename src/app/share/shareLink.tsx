@@ -1,5 +1,5 @@
-import { ISelectedUnit } from "../unitListApi";
-import { exportShare } from "./shareApi";
+import { ISelectedUnit } from "../api/unitListApi";
+import { exportShare } from "../api/shareApi";
 import Link from "next/link";
 
 export default function ShareLink({name, total, units}:{name:string, total: number, units:ISelectedUnit[]}) {

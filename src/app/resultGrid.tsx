@@ -5,7 +5,7 @@ import UnitLine, { UnitHeader, IUnit, UnitComparators } from './unitLine'
 import './unitLine'
 import useSWR from 'swr'
 import { useReducer, useState, memo } from 'react'
-import { AddUnitCallback } from './unitListApi'
+import { AddUnitCallback } from './api/unitListApi'
 
 function matchesIfFilter<T>(filter: T | undefined, predicate: (filter: T) => boolean) {
     if (filter) {
@@ -132,7 +132,7 @@ function QuickFilter({ label, action, filterCallback }: { label: string, action:
     const [value, setValue] = useState<string|undefined>('')
 
     function filter(v: string|undefined) {
-        setValue(v)
+        setValue((v==undefined) ? '' : v)
         filterCallback({
             type: action,
             filter: v,

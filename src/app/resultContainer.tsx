@@ -2,8 +2,8 @@
 
 import { ReadonlyURLSearchParams, useSearchParams } from 'next/navigation'
 import ResultGrid, { MULSearchParams } from './resultGrid'
-import React, {memo} from 'react'
-import { AddUnitCallback } from './unitListApi'
+import React from 'react'
+import { AddUnitCallback } from './api/unitListApi'
 
 function resultBody(searchParams: ReadonlyURLSearchParams, onAdd: AddUnitCallback): React.ReactNode {
 

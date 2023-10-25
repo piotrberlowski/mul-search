@@ -1,9 +1,10 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { IUnit } from './unitLine';
-import { AddUnitCallback, ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, currentPV, loadByName, loadLists, removeByName, saveByName, saveLists, toJeffsUnits } from './unitListApi';
+import { AddUnitCallback, ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, currentPV, totalPV, loadByName, loadLists, removeByName, saveByName, saveLists, toJeffsUnits } from './api/unitListApi';
 import { createPortal } from 'react-dom';
 import ShareLink from './share/shareLink';
+import { compareSelectedUnits } from './api/shareApi';
 
 function ListLine({ unit, onUpdate, onRemove }: { unit: ISelectedUnit, onUpdate: () => void, onRemove: (id: number) => void }) {
     const [skill, setSkill] = useState(unit.skill)
@@ -117,12 +118,6 @@ function BuilderFooter({
 
 }
 
-function totalPV(units: ISelectedUnit[]): number {
-    return units.map(u => currentPV(u)).reduce((p, n) => p + n, 0)
-}
-
-
-
 function exportJeffsJson(name: string, units: ISelectedUnit[]) {
     const data = {
         name: name,
@@ -156,7 +151,7 @@ export default function ListBuilder({ defaultVisible, onCreate }: { defaultVisib
             skill: 4,
             ...unit
         }
-        const newUnits = [...units, selected]
+        const newUnits = [...units, selected].sort(compareSelectedUnits)
         setUnits(newUnits)
         updateTotal(newUnits)
     }
@@ -218,22 +213,23 @@ export default function ListBuilder({ defaultVisible, onCreate }: { defaultVisib
     const unitList = () => {
         if (visible) {
             return (
-
-                <div className="fixed bg-inherit top-20 bottom-20 max-xl:inset-x-[1%] xl:inset-x-[10%] 2xl:inset-x-[20%] z-10 border border-red-500 items-center text-center">
-                    <BuilderHeader name={name} count={count} total={total} onNameChange={n => setName(n)} onClose={() => setVisible(false)} />
-                    {units.map(u => <ListLine key={u.ordinal} unit={u} onRemove={removeUnit} onUpdate={updateTotal} />)}
-                    <div className="absolute bottom-0 w-full bg-inherit grid grid-cols-1">
-                        <ShareLink name={name} total={total} units={units} />
-                        <BuilderFooter 
-                            listName={name} 
-                            storedLists={storedLists} 
-                            onClear={clear} 
-                            onSave={storeToLocal} 
-                            onLoad={loadFromLocal} 
-                            onExport={exportToJeffs}
-                            onSelect={(name:string)=>setName(name)}/>
+                <>
+                    <div className="fixed bg-inherit top-20 bottom-20 max-xl:inset-x-[1%] xl:inset-x-[10%] 2xl:inset-x-[20%] z-10 border border-red-500 items-center text-center">
+                        <BuilderHeader name={name} count={count} total={total} onNameChange={n => setName(n)} onClose={() => setVisible(false)} />
+                        {units.map(u => <ListLine key={u.ordinal} unit={u} onRemove={removeUnit} onUpdate={updateTotal} />)}
+                        <div className="absolute bottom-0 w-full bg-inherit grid grid-cols-1">
+                            <ShareLink name={name} total={total} units={units} />
+                            <BuilderFooter 
+                                listName={name} 
+                                storedLists={storedLists} 
+                                onClear={clear} 
+                                onSave={storeToLocal} 
+                                onLoad={loadFromLocal} 
+                                onExport={exportToJeffs}
+                                onSelect={(name:string)=>setName(name)}/>
+                        </div>
                     </div>
-                </div>
+                </>
             )
         } else {
             return <></>

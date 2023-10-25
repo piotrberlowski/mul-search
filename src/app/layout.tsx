@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 function Header() {
   return (
-    <div className='flex flex-row h-12 min-h-full border border-black border-black dark:border-white border-solid rounded-md items-center align-bottom'>
+    <div className='flex flex-row h-12 min-h-full border border-black border-black dark:border-white border-solid rounded-md items-center align-bottom print:hidden'>
       <span className='basis-full inline-block text-2xl text-center'>
         <Link href="/">List Builder for AS</Link> powered by <Link href="http://masterunitlist.info" target="_blank">Master Unit List API</Link>
       </span>
@@ -22,7 +22,7 @@ function Header() {
 
 function FloatingFooter() {
   return (
-    <div className='grid grid-cols-3 sticky bottom-0 mt-2 items-justified text-center bg-inherit border-t border-t-solid border-t-1 border-t-black dark:border-t-white text-xs'>
+    <div className='grid grid-cols-3 sticky bottom-0 mt-2 items-justified text-center bg-inherit border-t border-t-solid border-t-1 border-t-black dark:border-t-white text-xs print:hidden'>
         <span>Data and search API courtesy of <a href="http://www.masterunitlist.info">Master Unit List.</a>.</span>
         <span>Import for play in <a href="https://jdgwf.github.io/battletech-tools/alpha-strike/roster">Jeff&apos;s Battletech Tools</a></span>
         <span>App source available at <a href="https://github.com/piotrberlowski/mul-search">GitHub</a>.</span> 

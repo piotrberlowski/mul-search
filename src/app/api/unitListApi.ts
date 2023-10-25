@@ -1,4 +1,4 @@
-import { IUnit } from "./unitLine";
+import { IUnit } from "../unitLine";
 
 export const LOCAL_STORAGE_NAME_AUTOSAVE = 'autosave'
 const LOCAL_STORAGE_KEY = 'alphaStrikeLists'
@@ -9,6 +9,11 @@ export type AddUnitCallback = (unit: IUnit) => void
 export interface ISelectedUnit extends IUnit {
     ordinal: number,
     skill: number,
+}
+
+export interface PvEntity {
+    skill: number,
+    BFPointValue: number,
 }
 
 export type JeffsMove = {
@@ -52,7 +57,7 @@ function toMoveArray(move: string): JeffsMove[] {
 
 } 
 
-export function currentPV(unit: ISelectedUnit) {
+export function currentPV(unit: PvEntity) {
     var multiplier = 0;
     if (unit.skill < 4) {
         if (unit.BFPointValue < 8)
@@ -68,6 +73,9 @@ export function currentPV(unit: ISelectedUnit) {
     return (Math.max(unit.BFPointValue + multiplier, 1))
 }
 
+export function totalPV(units: PvEntity[]): number {
+    return units.map(u => currentPV(u)).reduce((p, n) => p + n, 0)
+}
 
 export function toJeffsUnits(units: ISelectedUnit[]): JeffsUnit[] {
     return units.map(
@@ -91,7 +99,7 @@ export function toJeffsUnits(units: ISelectedUnit[]): JeffsUnit[] {
                 type: unit.BFType,
                 size: unit.BFSize,
                 showDetails: false,
-                abilities: unit.BFAbilities.split(","),
+                abilities: (unit.BFAbilities) ? unit.BFAbilities.split(",") : [],
                 overheat: unit.BFOverheat,
                 basePoints: unit.BFPointValue,
                 currentSkill: unit.skill
