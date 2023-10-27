@@ -56,6 +56,17 @@ button {
   width: 100%;
 }
 
+.button-link {
+  color: rgb(var(--input-foreground-rgb));
+  background-color: rgb(var(--input-background-rgb));
+  border: 1px solid var(--input-border-color);
+  padding-left: 2pt;
+  padding-right: 2pt;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
 a {
   color: var(--link-color);
 }

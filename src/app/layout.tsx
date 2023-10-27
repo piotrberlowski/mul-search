@@ -23,7 +23,7 @@ function Header() {
 function FloatingFooter() {
   return (
     <div className='grid grid-cols-3 sticky bottom-0 mt-2 items-justified text-center bg-inherit border-t border-t-solid border-t-1 border-t-black dark:border-t-white text-xs print:hidden'>
-        <span>Data and search API courtesy of <a href="http://www.masterunitlist.info">Master Unit List.</a>.</span>
+        <span>Data and search API courtesy of <a href="http://www.masterunitlist.info">Master Unit List.</a></span>
         <span>Import for play in <a href="https://jdgwf.github.io/battletech-tools/alpha-strike/roster">Jeff&apos;s Battletech Tools</a></span>
         <span>App source available at <a href="https://github.com/piotrberlowski/mul-search">GitHub</a>.</span> 
     </div>

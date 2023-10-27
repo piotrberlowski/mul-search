@@ -1,11 +1,13 @@
 'use client'
 
 import { ReadonlyURLSearchParams } from 'next/navigation'
-import UnitLine, { UnitHeader, IUnit, UnitComparators } from './unitLine'
-import './unitLine'
+import UnitLine, { UnitHeader, IUnit, UnitComparators } from '../unitLine'
+import '../unitLine'
 import useSWR from 'swr'
 import { useReducer, useState, memo } from 'react'
-import { AddUnitCallback } from './api/unitListApi'
+import { AddUnitCallback } from '../api/unitListApi'
+import SearchInputPanel from '../searchInputPanel'
+import { Factions, eraMap } from '../data'
 
 function matchesIfFilter<T>(filter: T | undefined, predicate: (filter: T) => boolean) {
     if (filter) {
@@ -41,7 +43,7 @@ class Filter {
     ) {
         this.fields = {}
         if (overrides) {
-            this.fields = {...overrides}
+            this.fields = { ...overrides }
         }
     }
 
@@ -71,7 +73,6 @@ export class MULSearchParams {
     public canSearch: boolean
     specific: string | null
     era: string | null
-    unitType: string | null
     general: string | null
 
     constructor(
@@ -79,25 +80,26 @@ export class MULSearchParams {
     ) {
         const era = searchParams.get('era')
         const specific = searchParams.get('specific')
-        const unitType = searchParams.get('unitType')
         const general = searchParams.get('general')
 
-        this.canSearch = !(!era || !specific || !unitType)
+        this.canSearch = !(!era || !specific)
 
         this.specific = specific
         this.era = era
-        this.unitType = unitType
         this.general = general
     }
 
-    public toUrl() {
+    public toUrl(unitType?: string) {
         const target = new URL("http://masterunitlist.info/Unit/QuickList")
 
         target.searchParams.append('minPV', '1')
         target.searchParams.append('maxPV', '999')
         target.searchParams.append('Factions', this.specific ?? '')
         target.searchParams.append('AvailableEras', this.era ?? '')
-        target.searchParams.append('Types', this.unitType ?? '')
+
+        if (unitType) {
+            target.searchParams.append('Types', unitType)
+        }
 
         if (this.general) {
             target.searchParams.append('Factions', this.general)
@@ -105,16 +107,25 @@ export class MULSearchParams {
 
         return target.href
     }
+
+    public describe(factions: Factions) {
+        if (!this.specific || !this.era) {
+            return "[Unknown]"
+        }
+        return `[${factions.getFactionName(this.specific)} including ${factions.getGeneralName(this.general)} during ${eraMap.get(this.era)}]`
+    }
 }
 
 
 
-const fetcher = (params: MULSearchParams) => fetch(params.toUrl()).then((r) => r.json())
+const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-function useSearch(params: MULSearchParams): IUnit[] | string {
+function useSearch(url: string): IUnit[] | string {
+
+    console.log(`Trying to fetch ${url}`)
 
     const { data, error } = useSWR(
-        params,
+        url,
         fetcher
     )
 
@@ -129,10 +140,10 @@ function useSearch(params: MULSearchParams): IUnit[] | string {
 }
 
 function QuickFilter({ label, action, filterCallback }: { label: string, action: string, filterCallback: (act: FilterAction) => void }) {
-    const [value, setValue] = useState<string|undefined>('')
+    const [value, setValue] = useState<string | undefined>('')
 
-    function filter(v: string|undefined) {
-        setValue((v==undefined) ? '' : v)
+    function filter(v: string | undefined) {
+        setValue((v == undefined) ? '' : v)
         filterCallback({
             type: action,
             filter: v,
@@ -141,7 +152,7 @@ function QuickFilter({ label, action, filterCallback }: { label: string, action:
 
     return (
         <>
-            <span className="flex-none mr-1">{label}:</span> 
+            <span className="flex-none mr-1">{label}:</span>
             <input className="h-5 min-h-full flex-1 w-8" type='text' value={value} onChange={e => filter(e.target.value)} />
             <span className="px-2 border border-solid rounded-md flex-none mr-2" onClick={e => {
                 filter(undefined)
@@ -190,80 +201,94 @@ function SortOrder({ initial, sortCallback }: { initial: Sort, sortCallback: (so
     )
 }
 
-const FilteredTable = memo(
-    function FilteredTable({ data, onAdd }: { data: IUnit[], onAdd: AddUnitCallback }) {
+function reduceFilter(filter: Filter, action: FilterAction) {
+    switch (action.type) {
+        case 'name':
+            return filter.withOverrides({ name: action.filter })
+        case 'abilities':
+            return filter.withOverrides({ abilities: action.filter })
+        case 'min-pv':
+            return filter.withOverrides({ minPV: (action.filter) ? parseInt(action.filter) : undefined })
+        case 'max-pv':
+            return filter.withOverrides({ maxPV: (action.filter) ? parseInt(action.filter) : undefined })
+        case 'move':
+            return filter.withOverrides({ move: action.filter })
+        case 'dmg':
+            return filter.withOverrides({ dmg: action.filter })
+        default:
+            return filter
+    }
+}
 
-        function reduceFilter(filter: Filter, action: FilterAction) {
-            switch (action.type) {
-                case 'name':
-                    return filter.withOverrides({name: action.filter})
-                case 'abilities':
-                    return filter.withOverrides({abilities: action.filter})
-                case 'min-pv':
-                    return filter.withOverrides({minPV: (action.filter) ? parseInt(action.filter) : undefined})
-                case 'max-pv':
-                    return filter.withOverrides({maxPV: (action.filter) ? parseInt(action.filter) : undefined})
-                case 'move':
-                    return filter.withOverrides({move: action.filter})
-                case 'dmg':
-                    return filter.withOverrides({dmg: action.filter})
-                default:
-                    return filter
-            }
-        }
+function FilteredTable({ data, onAdd }: { data: IUnit[], onAdd: AddUnitCallback }) {
 
-        const [units, setUnits] = useState(data)
-        const [filter, setFilter] = useReducer(reduceFilter, new Filter())
-        const [sort, setSort] = useState({
-            column: 'Name',
-            order: 1
-        })
+    const [units, setUnits] = useState(data)
+    const [filter, setFilter] = useReducer(reduceFilter, new Filter())
+    const [sort, setSort] = useState({
+        column: 'Name',
+        order: 1
+    })
 
-        function sortAndFilter(data: IUnit[]) {
-            return data
-                .filter((unit) => filter.matches(unit))
-                .sort((a, b) => UnitComparators[sort.column](a, b) * sort.order)
-        }
+    function sortAndFilter(data: IUnit[]) {
+        return data
+            .filter((unit) => filter.matches(unit))
+            .sort((a, b) => UnitComparators[sort.column](a, b) * sort.order)
+    }
 
-        return (
-            <div className="bg-inherit">
-                <div className="sticky z-0 top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
-                    <div className="flex">
-                        <QuickFilter label="Unit Name" action="name" filterCallback={setFilter} />
-                        <QuickFilter label="Abilities" action="abilities" filterCallback={setFilter} />
-                        <SortOrder initial={sort} sortCallback={setSort} />
-                    </div>
-                    <div className="flex w-full max-w-full">
-                        <QuickFilter label="Min PV" action="min-pv" filterCallback={setFilter} />
-                        <QuickFilter label="Max PV" action="max-pv" filterCallback={setFilter} />
-                        <QuickFilter label="Move" action="move" filterCallback={setFilter} />
-                        <QuickFilter label="Dmg" action="dmg" filterCallback={setFilter} />
-                    </div>
-                    <div className="mx-5 text-sm">
-                        <UnitHeader />
-                    </div>
+    return (
+        <div className="bg-inherit">
+            <div className="sticky z-0 top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
+                <div className="flex fex-wrap">
+                    <QuickFilter label="Unit Name" action="name" filterCallback={setFilter} />
+                    <QuickFilter label="Abilities" action="abilities" filterCallback={setFilter} />
+                    <SortOrder initial={sort} sortCallback={setSort} />
                 </div>
-                <div className="mx-5 text-sm mb-2">
-                    {
-                        sortAndFilter(units).map(entry => {
-                            return <UnitLine key={entry.Id} unit={entry} onAdd={onAdd} />
-                        })
-                    }
+                <div className="flex w-full max-w-full flex-wrap">
+                    <QuickFilter label="Min PV" action="min-pv" filterCallback={setFilter} />
+                    <QuickFilter label="Max PV" action="max-pv" filterCallback={setFilter} />
+                    <QuickFilter label="Move" action="move" filterCallback={setFilter} />
+                    <QuickFilter label="Dmg" action="dmg" filterCallback={setFilter} />
+                </div>
+                <div className="mx-5 text-sm">
+                    <UnitHeader />
                 </div>
             </div>
-        )
-    }
-)
+            <div className="mx-5 text-sm mb-2">
+                {
+                    sortAndFilter(units).map(entry => {
+                        return <UnitLine key={entry.Id} unit={entry} onAdd={onAdd} />
+                    })
+                }
+            </div>
+        </div>
+    )
+}
 
-export default function ResultGrid({ search, onAdd }: { search: MULSearchParams, onAdd: AddUnitCallback }) {
-    const data = useSearch(search)
+
+export default function ResultGrid({ search, onAdd, constraints }: { search: MULSearchParams, onAdd: AddUnitCallback, constraints: string }) {
+    const [unitType, setUnitType] = useState("18")
+    const data = useSearch(search.toUrl(unitType))
 
     if (typeof (data) === "string") {
         return data
     }
 
     return (
-        <FilteredTable data={data} onAdd={onAdd} />
+        <>
+            <div className="flex flex-wrap-reverse w-full"> 
+                <SearchInputPanel title="Unit Type" className="flex-1/4 w-1/4">
+                    <select name="unitType" className='w-full' value={unitType} onChange={e => setUnitType(e.target.value)}>
+                        <option value="18">Battle Mech</option>
+                        <option value="19">Vehicle</option>
+                        <option value="21">Infantry</option>
+                    </select>
+                </SearchInputPanel>
+                <div className="flex-3/4 flex justify-items-center items-center text-sm w-8/12 mx-auto my-2 min-h-max align-middle border border-solid border-red-500">
+                    <div className="mx-auto text-center">Building: {constraints}</div>
+                </div>
+            </div>
+            <FilteredTable key={unitType} data={data} onAdd={onAdd} />
+        </>
     )
 
 }

@@ -45,13 +45,13 @@ export default function VisualList() {
     const params = useSearchParams()
 
     const listString = params.get('list')
+    const constraints = params.get('constraints') ?? "legacy"
     const parsed = parseShare( listString || 'empty;')
-
-    console.log(`List String: ${listString}, list name: ${parsed.name}`)
 
     const fetchedList = new Array<ISelectedUnit>()
     let saveButtonFeed = (len:number) => {}
     let combinationsFeed = (len:number) => {}
+
     function onFetch(u: ISelectedUnit) {
         fetchedList.push(u)
         fetchedList.sort(compareSelectedUnits)
@@ -68,13 +68,17 @@ export default function VisualList() {
     }
 
     function saveList(tweak: boolean) {
+        const save = {
+            units: fetchedList,
+            constraints: constraints,
+        }
         if (tweak) {
-            saveByName(fetchedList, LOCAL_STORAGE_NAME_AUTOSAVE)
+            saveByName(save, LOCAL_STORAGE_NAME_AUTOSAVE)
             router.push("/?builder=_")
         } else {
             const name = `imported-${parsed.name}`
             const lists = loadLists()
-            saveByName(fetchedList, name)
+            saveByName(save, name)
             if (!lists.find(item => item == name)) {
                 lists.push(name)
                 saveLists(lists)
@@ -90,7 +94,7 @@ export default function VisualList() {
                 <meta property="og:description" content={`Alpha Strike list shared via AS Builder`} key="description" />
             </Head>
             <div className='text-center w-full'>
-                <div>{parsed.name}</div>
+                <div>{constraints} : {parsed.name}</div>
             </div>
             <SaveButton target={parsed.units.length} onClick={saveList} ready={saveButtonReady}/>
             <div className='text-center w-full print:hidden'>

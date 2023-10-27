@@ -3,8 +3,16 @@ import { IUnit } from "../unitLine";
 export const LOCAL_STORAGE_NAME_AUTOSAVE = 'autosave'
 const LOCAL_STORAGE_KEY = 'alphaStrikeLists'
 const LOCAL_STORAGE_LIST_KEY_PREFIX = 'alphaStrikeList_'
+const LOCAL_STORAGE_CONSTRAINT_KEY_PREFIX = 'alphaStrikeList_constraint_'
+const LOCAL_STORAGE_TTS = 'alphaStrikeTTS'
+
 
 export type AddUnitCallback = (unit: IUnit) => void
+
+export type Save = {
+    units: ISelectedUnit[],
+    constraints: string
+}
 
 export interface ISelectedUnit extends IUnit {
     ordinal: number,
@@ -120,23 +128,49 @@ export function compactOrdinals(units: ISelectedUnit[]) {
     units.forEach((u, idx) => u.ordinal = idx)
 }
 
-export function loadByName(name: string): ISelectedUnit[] {
+export function loadByName(name: string): Save {
     const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
     const result = localStorage.getItem(listKey)
     const units = JSON.parse(result || "[]")
     compactOrdinals(units)
-    console.log("Loaded list %s (%d units)", listKey, units.length)
-    return units
+    
+    const constraintKey = LOCAL_STORAGE_CONSTRAINT_KEY_PREFIX + name
+    const constraints = localStorage.getItem(constraintKey) ?? "legacy"
+
+    return {
+        units: units,
+        constraints: constraints,
+    }
 }
 
-export function saveByName(units: ISelectedUnit[], name: string) {
+export function saveByName(save: Save, name: string) {
     const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
-    const unitList = JSON.stringify(units)
+    const constraintKey = LOCAL_STORAGE_CONSTRAINT_KEY_PREFIX + name
+    const unitList = JSON.stringify(save.units)
     localStorage.setItem(listKey, unitList)
-    console.log("Saved list %s (%d units)", listKey, units.length)
+    localStorage.setItem(constraintKey, save.constraints)
 }
 
 export function removeByName(name: string) {
     const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
+    const constraintKey = LOCAL_STORAGE_CONSTRAINT_KEY_PREFIX + name
     localStorage.removeItem(listKey)
+    localStorage.removeItem(constraintKey)
+}
+
+function storeTTSString(tts: string) {
+    localStorage.setItem(LOCAL_STORAGE_TTS, tts)
+}
+
+export function loadTTSString():string {
+    const data =  localStorage.getItem(LOCAL_STORAGE_TTS)
+    if (!data) {
+        return ''
+    }
+    return data
+}
+
+export function exportTTSString(name: string, units: ISelectedUnit[]) {
+    const ttsUnits = units.map(u => `{${u.Id},${u.skill}}`).join(',')
+    storeTTSString(`{${ttsUnits}}`)
 }

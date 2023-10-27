@@ -1,10 +1,11 @@
 'use client'
 import { useState } from 'react'
-import { IUnit } from './unitLine';
-import { AddUnitCallback, ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, currentPV, totalPV, loadByName, loadLists, removeByName, saveByName, saveLists, toJeffsUnits } from './api/unitListApi';
+import { IUnit } from '../unitLine';
+import { AddUnitCallback, ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, currentPV, totalPV, loadByName, loadLists, removeByName, saveByName, saveLists, toJeffsUnits, exportTTSString, Save } from '../api/unitListApi';
 import { createPortal } from 'react-dom';
-import ShareLink from './share/shareLink';
-import { compareSelectedUnits } from './api/shareApi';
+import ShareLink from '../share/shareLink';
+import { compareSelectedUnits } from '../api/shareApi';
+import Link from 'next/link';
 
 function ListLine({ unit, onUpdate, onRemove }: { unit: ISelectedUnit, onUpdate: () => void, onRemove: (id: number) => void }) {
     const [skill, setSkill] = useState(unit.skill)
@@ -47,16 +48,13 @@ function ListLine({ unit, onUpdate, onRemove }: { unit: ISelectedUnit, onUpdate:
     )
 }
 
-function BuilderHeader({ name, count, total, onClose, onNameChange }: { name: string, count: number, total: number, onClose: () => void, onNameChange: (name: string) => void }) {
+function BuilderHeader({ constraints, count, total, onClose }: { constraints: string, count: number, total: number, onClose: () => void }) {
     return (
         <div className="w-full">
-            <div className="grid grid-cols-3 w-full">
-                <div className="flex">
-                    <span className="mr-1 flex-none">Name: </span>
-                    <input className="inline flex-1 h-5 p-0 overflow-hidden" type='text' onChange={e => onNameChange(e.target.value)} value={name} />
-                </div>
-                <div className="text-center">Units: {count}</div>
-                <div className="text-center">Total PV: {total}</div>
+            <div className="text-center">{constraints}</div>
+            <div className="flex">
+                <div className="text-center flex-1">Units: {count}</div>
+                <div className="text-center flex-1">Total PV: {total}</div>
             </div>
             <button className="absolute right-0 top-0 border border-solid px-1 border-red-500 w-5" onClick={e => onClose()}>X</button>
         </div>
@@ -77,7 +75,7 @@ function BuilderFooter({
     onClear: () => void,
     onSave: (name: string) => void,
     onLoad: (name: string) => void,
-    onExport: (name: string) => void,
+    onExport: (name: string, format: string) => void,
     onSelect: (name: string) => void,
 }) {
     const [selectedList, setSelectedList] = useState<string>(listName)
@@ -90,9 +88,9 @@ function BuilderFooter({
                 }
             }>Save</button>
             <div className="h-full">
-                <div className="flex">
-                    <span className="flex-none mx-1">Pick:</span>
-                    <select className="inline flex-1 overflow-hidden" value={selectedList} onChange={
+                <div className="flex h-1/2">
+                    <span className="flex-none mx-1 h-1/2">Pick:</span>
+                    <select className="inline flex-1 overflow-hidden h-full" value={selectedList} onChange={
                         e => {
                             setSelectedList(e.target.value)
                             onSelect(e.target.value)
@@ -109,10 +107,16 @@ function BuilderFooter({
                 }
                 }>Load</button>
             </div>
-            <button className="h-full" onClick={e => {
-                onExport(listName)
-            }
-            }>Export to Jeff&apos;s Tools</button>
+            <div className="h-full">
+                <button className="w-full" onClick={e => {
+                    onExport(listName, "jeff")
+                }
+                }>Export to Jeff&apos;s Tools</button>
+                <Link href="/tts/" target="_blank" className="button-link w-full block" onClick={e => {
+                    onExport(listName, "tts")
+                }
+                }>Export to TTS</Link>
+            </div>
         </div>
     )
 
@@ -137,48 +141,64 @@ function exportJeffsJson(name: string, units: ISelectedUnit[]) {
     link.click();
 };
 
-export default function ListBuilder({ defaultVisible, onCreate }: { defaultVisible: boolean, onCreate: (cb: AddUnitCallback) => void }) {
+export default function ListBuilder({ defaultVisible, onCreate, constraints }: { defaultVisible: boolean, onCreate: (onAddUnit: AddUnitCallback) => void, constraints: string }) {
     const [visible, setVisible] = useState(defaultVisible)
     const [name, setName] = useState(LOCAL_STORAGE_NAME_AUTOSAVE)
-    const [units, setUnits] = useState<ISelectedUnit[]>(loadByName(name))
-    const [total, setTotal] = useState(totalPV(units))
+    const [save, setSave] = useState<Save>(loadByName(name))
+    const [total, setTotal] = useState(totalPV(save.units))
     const [storedLists, setStoredList] = useState(loadLists())
 
     function addUnit(unit: IUnit) {
-        const ord = (units.length == 0) ? 0 : Math.max(...units.map(u => u.ordinal)) + 1
+        if (save.constraints != constraints) {
+            alert(`Cannot add unit. Please clear the list or set your search to: \n ${constraints} `)
+            return
+        }
+        const ord = (save.units.length == 0) ? 0 : Math.max(...save.units.map(u => u.ordinal)) + 1
         const selected = {
             ordinal: ord,
             skill: 4,
             ...unit
         }
-        const newUnits = [...units, selected].sort(compareSelectedUnits)
-        setUnits(newUnits)
+        const newUnits = [...save.units, selected].sort(compareSelectedUnits)
+        setSave({
+            units: newUnits,
+            constraints: save.constraints,
+        })
         updateTotal(newUnits)
     }
 
     function removeUnit(ord: number) {
         console.log("Removing unit: " + ord)
-        const newUnits = units.filter(u => u.ordinal != ord)
-        console.log("previous length: " + units.length + " Current length:" + newUnits.length)
-        setUnits(newUnits)
+        const newUnits = save.units.filter(u => u.ordinal != ord)
+        console.log("previous length: " + save.units.length + " Current length:" + newUnits.length)
+        setSave({
+            units: newUnits,
+            constraints: save.constraints,
+        })
         updateTotal(newUnits)
     }
 
     function updateTotal(optionalUnits?: ISelectedUnit[]) {
-        let subject = optionalUnits || units
+        let subject = optionalUnits || save.units
         setTotal(totalPV(subject))
-        saveByName(subject, LOCAL_STORAGE_NAME_AUTOSAVE)
+        saveByName({
+            units: subject,
+            constraints: constraints,
+        }, LOCAL_STORAGE_NAME_AUTOSAVE)
     }
 
     function clear() {
-        setUnits([])
+        setSave({
+            units: [],
+            constraints: constraints,
+        })
         updateTotal([])
     }
 
     function storeToLocal(name: string) {
         const listPosition = storedLists.indexOf(name)
-        if (units.length > 0) {
-            saveByName(units, name)
+        if (save.units.length > 0) {
+            saveByName(save, name)
             if (listPosition == -1) {
                 const newLists = [...storedLists, name]
                 setStoredList(newLists)
@@ -195,38 +215,49 @@ export default function ListBuilder({ defaultVisible, onCreate }: { defaultVisib
     }
 
     function loadFromLocal(loadName: string) {
-        const selectedUnits = loadByName(loadName)
-        if (selectedUnits.length > 0) {
-            setUnits(selectedUnits)
-            updateTotal(selectedUnits)
+        const load = loadByName(loadName)
+        if (load.units.length > 0) {
+            setSave(load)
+            updateTotal(load.units)
         } else {
             console.log("Loaded empty list... " + loadName)
         }
     }
 
-    function exportToJeffs(name: string) {
-        exportJeffsJson(name, units)
+    function exportExternal(name: string, format: string) {
+        switch (format) {
+            case "jeff":
+                exportJeffsJson(`${name}`, save.units)
+                break
+            case "tts":
+                exportTTSString(name, save.units)
+                break
+        }
     }
 
-    const count = units.length
+    const count = save.units.length
 
     const unitList = () => {
         if (visible) {
             return (
                 <>
                     <div className="fixed bg-inherit top-20 bottom-20 max-xl:inset-x-[1%] xl:inset-x-[10%] 2xl:inset-x-[20%] z-10 border border-red-500 items-center text-center">
-                        <BuilderHeader name={name} count={count} total={total} onNameChange={n => setName(n)} onClose={() => setVisible(false)} />
-                        {units.map(u => <ListLine key={u.ordinal} unit={u} onRemove={removeUnit} onUpdate={updateTotal} />)}
+                        <BuilderHeader constraints={save.constraints} count={count} total={total} onClose={() => setVisible(false)} />
+                        <div className="w-full flex">
+                            <span className="mr-1 flex-none">Name: </span>
+                            <input className="inline flex-1 h-5 p-0 overflow-hidden" type='text' onChange={e => setName(e.target.value)} value={name} />
+                        </div>
+                        {save.units.map(u => <ListLine key={u.ordinal} unit={u} onRemove={removeUnit} onUpdate={updateTotal} />)}
                         <div className="absolute bottom-0 w-full bg-inherit grid grid-cols-1">
-                            <ShareLink name={name} total={total} units={units} />
-                            <BuilderFooter 
-                                listName={name} 
-                                storedLists={storedLists} 
-                                onClear={clear} 
-                                onSave={storeToLocal} 
-                                onLoad={loadFromLocal} 
-                                onExport={exportToJeffs}
-                                onSelect={(name:string)=>setName(name)}/>
+                            <ShareLink constraints={constraints} name={name} total={total} units={save.units} />
+                            <BuilderFooter
+                                listName={name}
+                                storedLists={storedLists}
+                                onClear={clear}
+                                onSave={storeToLocal}
+                                onLoad={loadFromLocal}
+                                onExport={exportExternal}
+                                onSelect={(name: string) => setName(name)} />
                         </div>
                     </div>
                 </>
