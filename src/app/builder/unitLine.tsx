@@ -1,4 +1,4 @@
-import { AddUnitCallback } from "./api/unitListApi"
+import { SearchResultsController, useSearchResultsContext } from "./searchResultsController"
 
 
 export const EMPTY_UNIT = {
@@ -20,7 +20,7 @@ export const EMPTY_UNIT = {
     BFOverheat: 0,
     BFSize: 0,
     BFThreshold: 0,
-    BFType: "Empty"    
+    BFType: "Empty"
 }
 
 type comparator = (a: IUnit, b: IUnit) => number
@@ -72,44 +72,45 @@ export interface IUnit {
 
 export function UnitHeader() {
     return (
-        <div className="grid grid-cols-12 my-0 font-bold text-center items-center">
-            <div className="col-span-3 text-left">
+        <div className="font-bold grid grid-cols-8 md:grid-cols-12 my-0 text-xs md:text-sm text-center items-center w-full">
+            <div className="md:col-span-3 text-left">
                 Name
             </div>
-            <div className="col-start-4">PV</div>
+            <div className="md:col-start-4">PV</div>
             <div>Role</div>
             <div>Move</div>
             <div>Damage<br />(S/M/L)</div>
             <div>HP<br />(A + S)</div>
-            <div className="col-span-3 text-left">Abilities...</div>
+            <div className="md:col-span-3 text-left">Abilities...</div>
         </div>
     )
 }
 
-export default function UnitLine({ unit, onAdd }: { unit: IUnit, onAdd: AddUnitCallback }) {
+export default function UnitLine({ unit }: { unit: IUnit }) {
+
+    const controller: SearchResultsController = useSearchResultsContext()
 
     const onAddClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault()
-        console.log(onAdd)
-        onAdd(unit)
+        controller.notify(unit)
     }
 
     return (
-            <>
-            <div className="grid grid-cols-12 my-0 border border-solid border-gray-400 dark:border-gray-800 font-small text-center items-center">
-                <div className="col-span-3 text-left">
+        <>
+            <div className="grid grid-cols-8 md:grid-cols-12 my-0 border border-solid border-gray-400 dark:border-gray-800 text-xs md:text-sm text-center items-center w-full">
+                <div className="md:col-span-3 text-left">
                     <a href={"http://www.masterunitlist.info/Unit/Details/" + unit.Id} target="_blank">{unit.Name}</a>
                 </div>
-                <div className="col-start-4">{unit.BFPointValue}</div>
+                <div className="md:col-start-4">{unit.BFPointValue}</div>
                 <div>{unit.Role.Name}</div>
                 <div>{unit.BFMove}</div>
                 <div>{unit.BFDamageShort}/{unit.BFDamageMedium}/{unit.BFDamageLong}</div>
                 <div>{unit.BFArmor} + {unit.BFStructure}</div>
-                <div className="text-xs truncate col-span-3 text-left">{unit.BFAbilities}</div>
+                <div className="text-xs truncate md:col-span-3 text-left">{unit.BFAbilities}</div>
                 <button className="block text-center font-bold text-xs" onClick={onAddClick}>
                     +
                 </button>
             </div>
-            </>
+        </>
     )
 }

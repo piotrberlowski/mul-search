@@ -1,11 +1,10 @@
 'use client'
-import { Suspense, useState } from 'react'
-import { AddUnitCallback } from '../api/unitListApi';
-import ResultContainer from './resultContainer';
-import { Faction, Factions } from '../data';
-import { IUnit } from '../unitLine';
 import dynamic from "next/dynamic";
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+import { Faction, Factions } from '../data';
+import { SearchResultsContext, SearchResultsController } from './searchResultsController';
+import SearchResults from './searchResults';
 import { MULSearchParams } from './resultGrid';
 
 function Loading({ name }: { name: string }) {
@@ -14,7 +13,7 @@ function Loading({ name }: { name: string }) {
 
 const ListBuilder = dynamic(
     () => {
-        return import('./listContainer')
+        return import('./listBuilder')
     },
     {
         ssr: false
@@ -22,23 +21,20 @@ const ListBuilder = dynamic(
 )
 
 export default function CsrPage({ factions }: { factions: Faction[] }) {
-    let [onAdd, setOnAdd] = useState<AddUnitCallback>((u) => { })
+
     const params = useSearchParams()
     const mulSP = new MULSearchParams(params)
 
     const listConstraints = mulSP.describe(new Factions(factions))
 
-    function onAddProxy(unit: IUnit) {
-
-        onAdd(unit)
-    }
-
     return <>
         <div className="bg-inherit">
-            <Suspense fallback={<Loading name="Search Results" />}>
-                <ResultContainer onAdd={onAddProxy} search={mulSP} constraints={listConstraints} />
-            </Suspense>
-            <ListBuilder defaultVisible={Boolean(params.get("builder"))} onCreate={cb => onAdd = cb} constraints={listConstraints} />
+            <SearchResultsContext.Provider value={new SearchResultsController(listConstraints)}>
+                <Suspense fallback={<Loading name="Search Results" />}>
+                    <SearchResults search={mulSP} />
+                </Suspense>
+                <ListBuilder defaultVisible={Boolean(params.get("builder"))} />
+            </SearchResultsContext.Provider>
         </div>
     </>
 

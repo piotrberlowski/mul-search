@@ -1,6 +1,5 @@
-import { cachedDataVersionTag } from "v8";
-import { ISelectedUnit, currentPV, totalPV } from "./unitListApi";
 import { compareSelectedUnits } from "./shareApi";
+import { ISelectedUnit, currentPV, totalPV } from "./unitListApi";
 
 interface IUnitWithPV extends ISelectedUnit {
     pv: number
@@ -19,8 +18,13 @@ export function generateSubsets(units: ISelectedUnit[], minPV: number, maxPV: nu
 }
 
 function selectUnits(candidates: IUnitWithPV[], selected: ISelectedUnit[], results: ISelectedUnit[][], minPV: number, maxPV: number) {
+    const pickedWeight = totalPV(candidates)
+    if (pickedWeight > maxPV) {
+        console.log(`Picked Weight: ${pickedWeight} -> solution overweight, bounding`)
+        return     
+    }
     let solution = [...candidates, ...selected]
-    let weight = totalPV(solution)
+    const weight = totalPV(solution)
     if (weight > maxPV) {
         if (candidates.length == 0) {
             return

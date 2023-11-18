@@ -1,13 +1,13 @@
 'use client'
 
 import { ReadonlyURLSearchParams } from 'next/navigation'
-import UnitLine, { UnitHeader, IUnit, UnitComparators } from '../unitLine'
-import '../unitLine'
+import { useReducer, useState } from 'react'
 import useSWR from 'swr'
-import { useReducer, useState, memo } from 'react'
-import { AddUnitCallback } from '../api/unitListApi'
-import SearchInputPanel from '../searchInputPanel'
 import { Factions, eraMap } from '../data'
+import SearchInputPanel from '../searchInputPanel'
+import './unitLine'
+import UnitLine, { IUnit, UnitComparators, UnitHeader } from './unitLine'
+import { SearchResultsController, useSearchResultsContext } from './searchResultsController'
 
 function matchesIfFilter<T>(filter: T | undefined, predicate: (filter: T) => boolean) {
     if (filter) {
@@ -152,12 +152,13 @@ function QuickFilter({ label, action, filterCallback }: { label: string, action:
 
     return (
         <>
-            <span className="flex-none mr-1">{label}:</span>
-            <input className="h-5 min-h-full flex-1 w-8" type='text' value={value} onChange={e => filter(e.target.value)} />
-            <span className="px-2 border border-solid rounded-md flex-none mr-2" onClick={e => {
-                filter(undefined)
-            }
-            }>X</span>
+            <div className="flex flex-1 sm:w-1/4">
+                <div className="flex-none">{label}:</div>
+                <div className="flex-1 h-full">
+                    <input className="w-full h-full" type='text' value={value} onChange={e => filter(e.target.value)} />
+                </div>
+                <div className="border border-solid rounded-md flex-none w-5" onClick={e => filter(undefined)}>X</div>
+            </div>
         </>
     )
 }
@@ -169,9 +170,9 @@ function SortOrder({ initial, sortCallback }: { initial: Sort, sortCallback: (so
 
     return (
         <>
-            <label className="mx-0">
-                Sort Order:
-                <select className="border border-solid border-black dark:border-white ml-2 h-5" value={sortState.column} onChange={e => {
+            <div className="flex flex-1 sm:w-1/4">
+                Sort:
+                <select className="flex-1 border border-solid border-black dark:border-white ml-2 h-full" value={sortState.column} onChange={e => {
                     const newState = {
                         column: e.target.value,
                         order: sortState.order,
@@ -185,7 +186,7 @@ function SortOrder({ initial, sortCallback }: { initial: Sort, sortCallback: (so
                     <option value="BFMove">Movement Speed</option>
                     <option value="SyntHP">Hit Points</option>
                 </select>
-                <span className="inline-block border border-solid border-black dark:border-white px-2 rounded-md" onClick={e => {
+                <div className="flex-none border border-solid border-black dark:border-white px-2 rounded-md" onClick={e => {
                     const newState = {
                         column: sortState.column,
                         order: -sortState.order,
@@ -195,9 +196,9 @@ function SortOrder({ initial, sortCallback }: { initial: Sort, sortCallback: (so
                 }
                 }>
                     {sortText}
-                </span>
-            </label>
-        </>
+                </div>
+            </div>
+        </> 
     )
 }
 
@@ -220,7 +221,7 @@ function reduceFilter(filter: Filter, action: FilterAction) {
     }
 }
 
-function FilteredTable({ data, onAdd }: { data: IUnit[], onAdd: AddUnitCallback }) {
+function FilteredTable({ data }: { data: IUnit[] }) {
 
     const [units, setUnits] = useState(data)
     const [filter, setFilter] = useReducer(reduceFilter, new Filter())
@@ -238,16 +239,16 @@ function FilteredTable({ data, onAdd }: { data: IUnit[], onAdd: AddUnitCallback 
     return (
         <div className="bg-inherit">
             <div className="sticky z-0 top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
-                <div className="flex fex-wrap">
+                <div className="w-full flex flex-wrap gap-2">
                     <QuickFilter label="Unit Name" action="name" filterCallback={setFilter} />
                     <QuickFilter label="Abilities" action="abilities" filterCallback={setFilter} />
-                    <SortOrder initial={sort} sortCallback={setSort} />
+                    <QuickFilter label="Dmg" action="dmg" filterCallback={setFilter} />
                 </div>
-                <div className="flex w-full max-w-full flex-wrap">
+                <div className=" w-full flex flex-wrap gap-2">
                     <QuickFilter label="Min PV" action="min-pv" filterCallback={setFilter} />
                     <QuickFilter label="Max PV" action="max-pv" filterCallback={setFilter} />
                     <QuickFilter label="Move" action="move" filterCallback={setFilter} />
-                    <QuickFilter label="Dmg" action="dmg" filterCallback={setFilter} />
+                    <SortOrder initial={sort} sortCallback={setSort} />
                 </div>
                 <div className="mx-5 text-sm">
                     <UnitHeader />
@@ -256,7 +257,7 @@ function FilteredTable({ data, onAdd }: { data: IUnit[], onAdd: AddUnitCallback 
             <div className="mx-5 text-sm mb-2">
                 {
                     sortAndFilter(units).map(entry => {
-                        return <UnitLine key={entry.Id} unit={entry} onAdd={onAdd} />
+                        return <UnitLine key={entry.Id} unit={entry} />
                     })
                 }
             </div>
@@ -265,7 +266,8 @@ function FilteredTable({ data, onAdd }: { data: IUnit[], onAdd: AddUnitCallback 
 }
 
 
-export default function ResultGrid({ search, onAdd, constraints }: { search: MULSearchParams, onAdd: AddUnitCallback, constraints: string }) {
+export default function ResultGrid({ search }: { search: MULSearchParams }) {
+    const controller: SearchResultsController = useSearchResultsContext()
     const [unitType, setUnitType] = useState("18")
     const data = useSearch(search.toUrl(unitType))
 
@@ -275,7 +277,7 @@ export default function ResultGrid({ search, onAdd, constraints }: { search: MUL
 
     return (
         <>
-            <div className="flex flex-wrap-reverse w-full"> 
+            <div className="flex flex-wrap-reverse w-full">
                 <SearchInputPanel title="Unit Type" className="flex-1/4 w-1/4">
                     <select name="unitType" className='w-full' value={unitType} onChange={e => setUnitType(e.target.value)}>
                         <option value="18">Battle Mech</option>
@@ -284,10 +286,10 @@ export default function ResultGrid({ search, onAdd, constraints }: { search: MUL
                     </select>
                 </SearchInputPanel>
                 <div className="flex-3/4 flex justify-items-center items-center text-sm w-8/12 mx-auto my-2 min-h-max align-middle border border-solid border-red-500">
-                    <div className="mx-auto text-center">Building: {constraints}</div>
+                    <div className="mx-auto text-center">Building: {controller.getListConstraints()}</div>
                 </div>
             </div>
-            <FilteredTable key={unitType} data={data} onAdd={onAdd} />
+            <FilteredTable key={unitType} data={data} />
         </>
     )
 

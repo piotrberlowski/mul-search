@@ -2,7 +2,7 @@
 import { ISelectedUnit, currentPV } from "../api/unitListApi";
 import useSWR from "swr"
 import { MulUnit } from "../api/shareApi";
-import { EMPTY_UNIT, IUnit } from "../unitLine";
+import { EMPTY_UNIT, IUnit } from "../builder/unitLine";
 
 async function fetchFromMul(search: string) {
     const url = new URL("http://masterunitlist.info/Unit/QuickList")

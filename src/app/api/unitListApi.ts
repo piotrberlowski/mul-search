@@ -1,4 +1,4 @@
-import { IUnit } from "../unitLine";
+import { IUnit } from "../builder/unitLine";
 
 export const LOCAL_STORAGE_NAME_AUTOSAVE = 'autosave'
 const LOCAL_STORAGE_KEY = 'alphaStrikeLists'
@@ -65,20 +65,17 @@ function toMoveArray(move: string): JeffsMove[] {
 
 } 
 
+export interface PvEntity {
+    skill: number,
+    BFPointValue: number,
+}
+
+
 export function currentPV(unit: PvEntity) {
-    var multiplier = 0;
-    if (unit.skill < 4) {
-        if (unit.BFPointValue < 8)
-            multiplier = (4 - unit.skill);
-        else
-            multiplier = (4 - unit.skill) * Math.ceil((Math.max((unit.BFPointValue - 7), 1) / 5) + 1);
-    } else {
-        if (unit.BFPointValue < 15)
-            multiplier = -(unit.skill - 4);
-        else
-            multiplier = -((unit.skill - 4) * Math.ceil(((unit.BFPointValue - 14) / 10.0) + 1));
-    }
-    return (Math.max(unit.BFPointValue + multiplier, 1))
+    const levels = 4 - unit.skill
+    const multiplier = (levels > 0) ? 0.2 : 0.1
+    const adjustment = (Math.round(unit.BFPointValue * multiplier) || 1) * levels
+    return Math.max(unit.BFPointValue + adjustment, 1)
 }
 
 export function totalPV(units: PvEntity[]): number {
