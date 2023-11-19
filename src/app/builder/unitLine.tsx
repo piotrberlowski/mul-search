@@ -102,7 +102,7 @@ export default function UnitLine({ unit }: { unit: IUnit }) {
                     <a href={"http://www.masterunitlist.info/Unit/Details/" + unit.Id} target="_blank">{unit.Name}</a>
                 </div>
                 <div className="md:col-start-4">{unit.BFPointValue}</div>
-                <div>{unit.Role.Name}</div>
+                <div className="truncate">{unit.Role.Name}</div>
                 <div>{unit.BFMove}</div>
                 <div>{unit.BFDamageShort}/{unit.BFDamageMedium}/{unit.BFDamageLong}</div>
                 <div>{unit.BFArmor} + {unit.BFStructure}</div>

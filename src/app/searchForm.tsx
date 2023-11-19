@@ -51,7 +51,7 @@ export default function SearchForm({ factions }: { factions: Faction[] }) {
                         {renderOptions(fData.getFactions())}
                     </select>
             </SearchInputPanel>
-            <SearchInputPanel title="Availability Era"className="text-center items-center bg-inherit w-3/4 mx-auto">
+            <SearchInputPanel title="Availability Era" className="text-center items-center bg-inherit w-3/4 mx-auto">
                 <select name="era" className="flex w-full" value={era} onChange={e => setEra(e.target.value)}>
                     <option value=''></option>
                     {renderEras()}

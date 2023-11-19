@@ -139,7 +139,7 @@ function useSearch(url: string): IUnit[] | string {
     return data.Units
 }
 
-function QuickFilter({ label, action, filterCallback }: { label: string, action: string, filterCallback: (act: FilterAction) => void }) {
+function QuickFilter({ label, action, className, filterCallback }: { label: string, action: string, className?:string, filterCallback: (act: FilterAction) => void }) {
     const [value, setValue] = useState<string | undefined>('')
 
     function filter(v: string | undefined) {
@@ -152,8 +152,8 @@ function QuickFilter({ label, action, filterCallback }: { label: string, action:
 
     return (
         <>
-            <div className="flex flex-1 sm:w-1/4">
-                <div className="flex-none">{label}:</div>
+            <div className={`flex flex-1 ${className} text-xs md:text-base`}>
+                <div className="flex-none mr-1">{label}:</div>
                 <div className="flex-1 h-full">
                     <input className="w-full h-full" type='text' value={value} onChange={e => filter(e.target.value)} />
                 </div>
@@ -163,16 +163,16 @@ function QuickFilter({ label, action, filterCallback }: { label: string, action:
     )
 }
 
-function SortOrder({ initial, sortCallback }: { initial: Sort, sortCallback: (sort: Sort) => void }) {
+function SortOrder({ initial, className, sortCallback }: { initial: Sort, className?: string, sortCallback: (sort: Sort) => void }) {
     const [sortState, setSortState] = useState(initial)
 
     const sortText = (sortState.order > 0) ? "\u21D1" : "\u21D3"
 
     return (
         <>
-            <div className="flex flex-1 sm:w-1/4">
+            <div className={`flex flex-1 text-xs md:text-base ${className}`}>
                 Sort:
-                <select className="flex-1 border border-solid border-black dark:border-white ml-2 h-full" value={sortState.column} onChange={e => {
+                <select className="flex-1 border border-solid border-black dark:border-white ml-1 h-full" value={sortState.column} onChange={e => {
                     const newState = {
                         column: e.target.value,
                         order: sortState.order,
@@ -183,8 +183,8 @@ function SortOrder({ initial, sortCallback }: { initial: Sort, sortCallback: (so
                 }>
                     <option value="Name">Name</option>
                     <option value="BFPointValue">PV</option>
-                    <option value="BFMove">Movement Speed</option>
-                    <option value="SyntHP">Hit Points</option>
+                    <option value="BFMove">Move</option>
+                    <option value="SyntHP">A+S</option>
                 </select>
                 <div className="flex-none border border-solid border-black dark:border-white px-2 rounded-md" onClick={e => {
                     const newState = {
@@ -239,16 +239,14 @@ function FilteredTable({ data }: { data: IUnit[] }) {
     return (
         <div className="bg-inherit">
             <div className="sticky z-0 top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
-                <div className="w-full flex flex-wrap gap-2">
-                    <QuickFilter label="Unit Name" action="name" filterCallback={setFilter} />
-                    <QuickFilter label="Abilities" action="abilities" filterCallback={setFilter} />
-                    <QuickFilter label="Dmg" action="dmg" filterCallback={setFilter} />
-                </div>
-                <div className=" w-full flex flex-wrap gap-2">
-                    <QuickFilter label="Min PV" action="min-pv" filterCallback={setFilter} />
-                    <QuickFilter label="Max PV" action="max-pv" filterCallback={setFilter} />
-                    <QuickFilter label="Move" action="move" filterCallback={setFilter} />
-                    <SortOrder initial={sort} sortCallback={setSort} />
+                <div className="w-full flex flex-wrap gap-x-2">
+                    <QuickFilter label="Unit Name" className="basis-full md:basis-5/12" action="name" filterCallback={setFilter} />
+                    <QuickFilter label="Abilities" className="basis-2/5 md:basis-1/4" action="abilities" filterCallback={setFilter} />
+                    <QuickFilter label="Dmg" className="basis-1/5 md:basis-1/4" action="dmg" filterCallback={setFilter} />
+                    <QuickFilter label="Move" className="basis-1/5 md:basis-1/4" action="move" filterCallback={setFilter} />
+                    <QuickFilter label="MinPV" className="basis-1/5 md:basis-1/12" action="min-pv" filterCallback={setFilter} />
+                    <QuickFilter label="MaxPV" className="basis-1/5 md:basis-1/12" action="max-pv" filterCallback={setFilter} />
+                    <SortOrder initial={sort} className="grow-0 basis-2/5 md:basis-1/4" sortCallback={setSort} />
                 </div>
                 <div className="mx-5 text-sm">
                     <UnitHeader />
