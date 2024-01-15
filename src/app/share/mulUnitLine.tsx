@@ -3,9 +3,10 @@ import { ISelectedUnit, currentPV } from "../api/unitListApi";
 import useSWR from "swr"
 import { MulUnit } from "../api/shareApi";
 import { EMPTY_UNIT, IUnit } from "../builder/unitLine";
+import {MASTER_UNIT_LIST} from "../data";
 
 async function fetchFromMul(search: string) {
-    const url = new URL("http://masterunitlist.info/Unit/QuickList")
+    const url = new URL("/Unit/QuickList", MASTER_UNIT_LIST)
     url.searchParams.append('Name', search)
     return fetch(url.href).then(r => r.json())
 }

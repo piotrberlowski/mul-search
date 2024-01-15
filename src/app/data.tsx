@@ -1,3 +1,4 @@
+export const MASTER_UNIT_LIST = "https://masterunitlist.azurewebsites.net/"
 const BLANK = "Blank General List"
 
 export type Faction = {
@@ -6,7 +7,8 @@ export type Faction = {
 }
 
 export async function fetchFactions() {
-    const res = await fetch("http://www.masterunitlist.info/Faction/Autocomplete?term=")
+    const url = new URL("/Faction/Autocomplete?term=", MASTER_UNIT_LIST)
+    const res = await fetch(url.toString())
 
     if (!res.ok) {
         // This will activate the closest `error.js` Error Boundary

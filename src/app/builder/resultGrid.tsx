@@ -3,7 +3,7 @@
 import { ReadonlyURLSearchParams } from 'next/navigation'
 import { useReducer, useState } from 'react'
 import useSWR from 'swr'
-import { Factions, eraMap } from '../data'
+import { Factions, eraMap, MASTER_UNIT_LIST } from '../data'
 import SearchInputPanel from '../searchInputPanel'
 import './unitLine'
 import UnitLine, { IUnit, UnitComparators, UnitHeader } from './unitLine'
@@ -90,7 +90,7 @@ export class MULSearchParams {
     }
 
     public toUrl(unitType?: string) {
-        const target = new URL("http://masterunitlist.info/Unit/QuickList")
+        const target = new URL("/Unit/QuickList", MASTER_UNIT_LIST)
 
         target.searchParams.append('minPV', '1')
         target.searchParams.append('maxPV', '999')

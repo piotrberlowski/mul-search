@@ -18,7 +18,7 @@ export function generateSubsets(units: ISelectedUnit[], minPV: number, maxPV: nu
 }
 
 function selectUnits(candidates: IUnitWithPV[], selected: ISelectedUnit[], results: ISelectedUnit[][], minPV: number, maxPV: number) {
-    const pickedWeight = totalPV(candidates)
+    const pickedWeight = totalPV(selected)
     if (pickedWeight > maxPV) {
         console.log(`Picked Weight: ${pickedWeight} -> solution overweight, bounding`)
         return     
