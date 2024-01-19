@@ -7,7 +7,7 @@ import { useMemo, useState } from "react"
 import { MulUnitLine } from './mulUnitLine'
 import { useRouter } from 'next/navigation'
 import Head from 'next/head'
-import Combinations from './combinations'
+import Combinations from '../api/combinations'
 
 function MemoImage({ordinal, unit}:{ordinal:number, unit:MulUnit}) {
     return useMemo(() => (

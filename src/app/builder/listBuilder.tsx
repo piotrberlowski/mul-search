@@ -7,6 +7,7 @@ import ShareLink from '../share/shareLink';
 import { IUnit } from './unitLine';
 import { ChangeListener, ListBuilderController } from './listBuilderController';
 import { SearchResultsController, useSearchResultsContext } from './searchResultsController';
+import Combinations from '../api/combinations';
 
 function ListLine({ unit, controller }: { unit: ISelectedUnit, controller: ListBuilderController }) {
     const [skill, setSkill] = useState(unit.skill)
@@ -157,6 +158,7 @@ export default function ListBuilder({ defaultVisible }: { defaultVisible: boolea
                         </div>
 
                         <div className="flex-none w-full bg-inherit grid grid-cols-1">
+                            <Combinations target={save.units.length} units={save.units}/>
                             <ShareLink constraints={searchResultsController.getListConstraints()} name={name} total={total} units={save.units} />
                             <BuilderFooter
                                 listName={name}

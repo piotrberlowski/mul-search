@@ -1,5 +1,5 @@
-import { generateSubsets } from "../api/subsets";
-import { ISelectedUnit, currentPV, totalPV } from "../api/unitListApi";
+import { generateSubsets } from "./subsets";
+import { ISelectedUnit, currentPV, totalPV } from "./unitListApi";
 import { useState } from "react";
 
 function CombinationLine({units}:{units:ISelectedUnit[]}) {
@@ -31,7 +31,7 @@ function CombinationsPanel({units, hide}:{units:ISelectedUnit[], hide:()=>void})
     )
 }
 
-export default function Combinations ({target, units, ready}: {target: number, units:ISelectedUnit[], ready: (callback: (len:number)=>void)=>void}) {
+export default function Combinations ({target, units, ready}: {target: number, units:ISelectedUnit[], ready?: (callback: (len:number)=>void)=>void}) {
     const [count, setCount] = useState(0)
     const [visible, setVisible] = useState(false)
     var entryPanel = (
@@ -40,7 +40,9 @@ export default function Combinations ({target, units, ready}: {target: number, u
         </div>
     )
     var combinationsDisplay = visible ? (<CombinationsPanel units={units} hide={()=>setVisible(false)}/>):''
-    ready((len:number) => setCount(len))
+    if (ready) {
+        ready((len:number) => setCount(len))
+    } 
     if (units && target == units.length) {
         return (
             <>
