@@ -1,11 +1,37 @@
-import { IUnit } from "../builder/unitLine";
-
 export const LOCAL_STORAGE_NAME_AUTOSAVE = 'autosave'
 const LOCAL_STORAGE_KEY = 'alphaStrikeLists'
 const LOCAL_STORAGE_LIST_KEY_PREFIX = 'alphaStrikeList_'
 const LOCAL_STORAGE_CONSTRAINT_KEY_PREFIX = 'alphaStrikeList_constraint_'
 const LOCAL_STORAGE_TTS = 'alphaStrikeTTS'
 
+export interface IRole {
+    Name: string,
+}
+
+export interface IType {
+    Name: string,
+}
+
+export interface IUnit {
+    Id: number,
+    Name: string,
+    Type: IType,
+    Role: IRole,
+    ImageUrl: string,
+    BFDamageShort: number,
+    BFDamageMedium: number,
+    BFDamageLong: number,
+    BFMove: string,
+    BFPointValue: number,
+    BFArmor: number,
+    BFStructure: number,
+    BFAbilities: string,
+    BFTMM: number,
+    BFOverheat: number,
+    BFSize: number,
+    BFThreshold: number,
+    BFType: string,
+}
 
 export type AddUnitCallback = (unit: IUnit) => void
 

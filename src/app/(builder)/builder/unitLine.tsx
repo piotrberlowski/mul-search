@@ -1,10 +1,13 @@
+import { IUnit } from "@/api/unitListApi"
 import { SearchResultsController, useSearchResultsContext } from "./searchResultsController"
-
 
 export const EMPTY_UNIT = {
     Id: 0,
     Name: "",
     Role: {
+        Name: "None"
+    },
+    Type: {
         Name: "None"
     },
     ImageUrl: "",
@@ -43,30 +46,6 @@ export const UnitComparators: Record<string, comparator> = {
         return (order != 0) ? order : movA.length - movB.length
     },
     SyntHP: (a, b) => a.BFStructure + a.BFArmor - b.BFStructure - b.BFArmor
-}
-
-export interface IRole {
-    Name: string,
-}
-
-export interface IUnit {
-    Id: number,
-    Name: string,
-    Role: IRole,
-    ImageUrl: string,
-    BFDamageShort: number,
-    BFDamageMedium: number,
-    BFDamageLong: number,
-    BFMove: string,
-    BFPointValue: number,
-    BFArmor: number,
-    BFStructure: number,
-    BFAbilities: string,
-    BFTMM: number,
-    BFOverheat: number,
-    BFSize: number,
-    BFThreshold: number,
-    BFType: string,
 }
 
 

@@ -6,8 +6,9 @@ import useSWR from 'swr'
 import { Factions, eraMap, MASTER_UNIT_LIST } from '../data'
 import SearchInputPanel from '../searchInputPanel'
 import './unitLine'
-import UnitLine, { IUnit, UnitComparators, UnitHeader } from './unitLine'
+import UnitLine, { UnitComparators, UnitHeader } from './unitLine'
 import { SearchResultsController, useSearchResultsContext } from './searchResultsController'
+import { IUnit } from '@/api/unitListApi'
 
 function matchesIfFilter<T>(filter: T | undefined, predicate: (filter: T) => boolean) {
     if (filter) {

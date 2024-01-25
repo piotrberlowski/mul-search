@@ -1,7 +1,6 @@
-import { ISelectedUnit } from "../api/unitListApi";
-import { exportShare } from "../api/shareApi";
+import { ISelectedUnit } from "@/api/unitListApi";
+import { exportShare } from "@/api/shareApi";
 import Link from "next/link";
-import { constants } from "buffer";
 
 export default function ShareLink({constraints, name, total, units}:{constraints: string, name:string, total: number, units:ISelectedUnit[]}) {
     const params = new URLSearchParams("")

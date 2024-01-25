@@ -15,6 +15,9 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require("daisyui"),
+    require("tailwindcss-bg-patterns")
+  ],
 }
 export default config

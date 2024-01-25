@@ -1,21 +1,24 @@
-import { generateSubsets } from "./subsets";
-import { ISelectedUnit, currentPV, totalPV } from "./unitListApi";
+import { generateSubsets } from "@/api/subsets";
+import { ISelectedUnit, currentPV, totalPV } from "@/api/unitListApi";
 import { useState } from "react";
+import PlayLink from "./playLink";
+import { PlayCircleIcon } from "@heroicons/react/20/solid";
 
 function CombinationLine({units}:{units:ISelectedUnit[]}) {
     return (
-        <div className="flex my-0 border border-solid border-gray-400 dark:border-gray-800 font-small text-center items-center">
-            <div className="flex-none p-2">{totalPV(units)}PV: </div>
-            {
-                units.map(unit => (<div key={unit.ordinal} className="flex-initial p-2">{unit.ordinal}:{unit.Name}</div>))
-            }
-        </div>
+            <PlayLink units={units} className="flex my-0 border border-solid border-gray-400 dark:border-gray-800 font-small text-center items-center"> 
+                <PlayCircleIcon className="h-5 w-5 stroke-red-600"/>
+                <div className="flex-none p-2">{totalPV(units)}PV: </div>
+                {
+                    units.map(unit => (<div key={unit.ordinal} className="flex-initial p-2">{unit.ordinal}:{unit.Name}</div>))
+                }
+            </PlayLink>
     )
 }
 
 function CombinationsPanel({units, hide}:{units:ISelectedUnit[], hide:()=>void}) {
-    const [minPV, setMinPv] = useState(199)
-    const [maxPV, setMaxPv] = useState(200)
+    const [minPV, setMinPv] = useState(249)
+    const [maxPV, setMaxPv] = useState(250)
 
     return (
         <div className="fixed bg-inherit inset-y-10 inset-x-[1%] z-10 border border-red-500 items-center text-center overflow-scroll text-xs">

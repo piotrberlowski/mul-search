@@ -1,0 +1,49 @@
+import './globals.css'
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import Link from 'next/link'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: 'Alpha Strike Builder',
+  description: 'A minimal search interface and List Builder backed by MasterUnitList.info',
+}
+
+function Header() {
+  return (
+    <div className='flex flex-row h-12 min-h-full border border-black dark:border-white border-solid rounded-md items-center align-bottom print:hidden'>
+      <span className='basis-full inline-block sm:text-xl md:text-2xl text-center'>
+        <Link href="/">List Builder for AS</Link> powered by <Link href="http://masterunitlist.info" target="_blank">Master Unit List API</Link>
+      </span>
+    </div>
+  )
+}
+
+function FloatingFooter() {
+  return (
+    <div className='grid grid-cols-3 sticky bottom-0 mt-2 items-justified text-center bg-inherit border-t border-t-solid border-t-1 border-t-black dark:border-t-white text-xs print:hidden'>
+        <span>Data and search API courtesy of <a href="http://www.masterunitlist.info">Master Unit List.</a></span>
+        <span>Play UI based on <a href="https://itvbbjorn.github.io">ITVBBjorn UI</a></span>
+        <span>App source available at <a href="https://github.com/piotrberlowski/mul-search">GitHub</a>.</span> 
+    </div>
+  )
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>
+        <div className='max-w-screen-lg mx-auto items-center bg-inherit translate-y-0'>
+          <Header/>
+          {children}
+          <FloatingFooter/>
+        </div>
+      </body>
+    </html>
+  )
+}
