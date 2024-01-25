@@ -149,6 +149,7 @@ export default function MyUnits() {
                 ))}
 
             </div>
+            <div className='invisible text-yellow-500 bg-yellow-500 pattern-bg-yellow-500 text-orange-500 bg-orange-500 pattern-bg-orange-500 text-orange-700 bg-orange-700 pattern-bg-orange-700 text-red-800 bg-red-800 pattern-bg-red-800'> Invisible TailwindCSS pallette for dynamic heat colors</div>
         </div>
     );
 };

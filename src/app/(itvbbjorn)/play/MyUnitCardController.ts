@@ -15,7 +15,6 @@ function moveToTMM(moveDistance: number): number {
 export type UpdateCallback = (card: Card) => void
 
 export class UnitCardController {
-    
     private card: Card;
     private updateCallback: UpdateCallback;
 
@@ -53,11 +52,15 @@ export class UnitCardController {
         return this.set(counter, current + adj)
     }
 
-    public value(counter: Counter): number {
-        
+    public value(counter: Counter): number {        
         return this.card.counters?.[counter] ?? 0
     }
 
+    public update(editedName: string, editedBorderColor: string) {
+        this.card = {...this.card, Name: editedName, MyBorderColor: editedBorderColor}
+        this.updateCallback(this.card)
+    }
+    
     private processMoves<T>(consumer: (v: number, t?: string) => T): T[] {
         const originalParts = this.card.BFMove.split('/');
         const mpHits = this.value("cr_mp")
@@ -92,23 +95,5 @@ export class UnitCardController {
             return `${adjustedMove}${t || ''}`
         }).join('/')
     }
-
-    public getNameFontSize() {
-        const name = this.card.Name
-        if (name.length > 46) {
-            return 'text-xs'
-        } else if (name.length > 38) {
-            return 'text-sm';
-        } else if (name.length > 32) {
-            return 'text-base';
-        } else if (name.length > 26) {
-            return 'test-lg';
-        } else if (name.length > 18) {
-            return 'text-xl';
-        } else {
-            return 'text-2xl';  // default size
-        }
-    };
-
 
 }

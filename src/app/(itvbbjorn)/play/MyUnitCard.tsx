@@ -1,4 +1,4 @@
-import { Stack, Icon, Panel, TextField, Label } from '@fluentui/react';
+import { Icon, Panel, TextField, Label } from '@fluentui/react';
 import React, { useState } from 'react';
 import HeatPanel from './HeatPanel';
 import DamagePanel from './DamagePanel';
@@ -9,8 +9,63 @@ import SpecialModal from './SpecialModal';
 import { UnitCardController } from './MyUnitCardController';
 import './Styles-UnitDetailsPanel.css'
 
+function fontSize(name: string) {
+    if (name.length > 46) {
+        return 'text-[8px] text-ellipsis'
+    } else if (name.length > 38) {
+        return 'text-xs';
+    } else if (name.length > 32) {
+        return 'text-sm';
+    } else if (name.length > 26) {
+        return 'test-base';
+    } else if (name.length > 18) {
+        return 'text-lg';
+    } else {
+        return 'text-xl';  // default size
+    }
+};
 
-export function MyUnitCard({controller, useHexes}: {controller: UnitCardController, useHexes: boolean}) {
+function UnitDetails({ className, controller, useHexes }: { className: string, controller: UnitCardController, useHexes: boolean }) {
+    return (
+        <div className={className}>
+            <div className="flex w-full flex-wrap">
+                <div className="flex w-full gap-1">
+                    <span className="w-1/5 text-left text-sm">
+                        Type:
+                    </span>
+                    <span className="w-4/5 text-left text-sm">
+                        {controller.getCard().Type.Name}
+                    </span>
+                </div>
+                <div className="flex w-full gap-1">
+                    <span className="w-1/5 text-left text-sm">
+                        Role:
+                    </span>
+                    <span className="w-4/5 text-left text-sm">
+                        {controller.getCard().Role.Name}
+                    </span>
+                </div>
+            </div>
+            <div className='flex w-full justify-around my-1'>
+                <div className='game-properties-container'>
+                    <span className='game-properties-title'>SZ:</span>
+                    <span className='game-properties-value'>{controller.getCard().BFSize}</span>
+                </div>
+                <div className='game-properties-container'>
+                    <span className='game-properties-title'>TMM:</span>
+                    <span className='game-properties-value'>{controller.getTmmString()}</span>
+                </div>
+                <div className='game-properties-container'>
+                    <span className='game-properties-title'>MV:</span>
+                    <span className='game-properties-value'>{controller.getMvString(useHexes)}</span>
+                </div>
+            </div>
+            <AttackDamageTable controller={controller} />
+        </div >
+    )
+}
+
+export function MyUnitCard({ controller, useHexes }: { controller: UnitCardController, useHexes: boolean }) {
     const [isEditPanelOpen, setIsEditPanelOpen] = useState(false);
     const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -22,154 +77,54 @@ export function MyUnitCard({controller, useHexes}: {controller: UnitCardControll
     const displayedCost = controller.getCard().MyCalculatedPointValue ?? controller.getCard().BFPointValue;
 
     const saveEdits = () => {
-
+        controller.update(editedName, editedBorderColor)
         setIsEditPanelOpen(false);
     };
 
     return (
-        <div style={{
-            padding: 5,
-            backgroundColor: 'darkgrey',
-            border: 'solid',
-            borderColor: editedBorderColor,
-            borderRadius: 10,
-            margin: 10,
-            position: 'relative',
-            width: '322px',
-            height: '493px',
-            overflow: 'hidden'
-        }}>
-            <Icon
-                iconName='Edit'
-                style={{ cursor: 'pointer', position: 'absolute', top: 11, right: 30 }}
-                onClick={() => setIsEditPanelOpen(true)}
-            ></Icon>
-
-            <div style={{
-                height: '32px',
-                display: 'flex',
-                justifyContent: 'left',
-                alignItems: 'center',
-                overflow: 'hidden'
-            }}>
-                <span style={{ fontSize: controller.getNameFontSize(), fontWeight: 'bold' }}>
-                    {controller.getCard().Name}
+        <div className={`p-1 bg-gray-400 border border-solid rounded-lg m-2 overflow-hidden w-[310px] h-[490px]`}>
+            <div className="flex h-6 text-left justify-between items-center">
+                <span className={`font-bold ${fontSize(editedName)}`}>
+                    {editedName}
                 </span>
+                <div className="flex-none">
+                    <Icon iconName='Edit' onClick={() => setIsEditPanelOpen(true)} />
+                </div>
             </div>
 
-            <Stack horizontal tokens={{ childrenGap: 10 }} horizontalAlign="space-between">
-                <Stack verticalAlign="space-between" style={{ height: '100%' }} tokens={{ childrenGap: 30 }}>
-                    <Stack>
-                        <Stack horizontal style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Stack horizontal tokens={{ childrenGap: 10 }}>
-
-                                <Stack tokens={{ childrenGap: 5 }}>
-                                    <span>Type: {controller.getCard().Type.Name}</span>
-                                    <span>Role: {controller.getCard().Role.Name} </span>
-                                </Stack>
-                            </Stack>
-                        </Stack>
-                        <Stack className='game-properties-stack' horizontal tokens={{ childrenGap: 10 }}>
-                            <div className='game-properties-container'>
-                                <span className='game-properties-title'>SZ:</span>
-                                <span className='game-properties-value'>{controller.getCard().BFSize}</span>
-                            </div>
-                            <div className='game-properties-container'>
-                                <span className='game-properties-title'>TMM:</span>
-                                <span className='game-properties-value'>{controller.getTmmString()}</span>
-                            </div>
-                            <div className='game-properties-container'>
-                                <span className='game-properties-title'>MV:</span>
-                                <span className='game-properties-value'>{controller.getMvString(useHexes)}</span>
-                            </div>
-                        </Stack>
-
-                    </Stack>
-                    <AttackDamageTable controller={controller} />
-                </Stack>
-                <Stack.Item
-                    styles={{
-                        root: {
-                            width: '35%',
-                            height: 'auto',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            border: 'solid black',
-                            backgroundColor: 'white',
-                            position: 'relative'
-                        }
-                    }}
-                >
-                    <img src={controller.getCard().ImageUrl} alt={`${controller.getCard().Name}`} className='unit-image' />
-                    <div
-                        style={{
-                            position: 'absolute',
-                            top: '0%',
-                            right: '0%',
-                            fontSize: 'large',
-                            fontWeight: 'bold',
-                            color: 'darkred',
-                            padding: '5px 5px'
-                        }}
-                    >
+            <div className="flex gap-1">
+                <UnitDetails className="w-2/3" controller={controller} useHexes={useHexes} />
+                <div className='flex w-1/3 grow-0 justify-center items-center bg-white align-middle relative'>
+                    <img src={controller.getCard().ImageUrl} alt={`${controller.getCard().Name}`} className='align-middle' />
+                    <div className="absolute top-0 right-0 text-lg font-bold text-red-700 p-1 border border-gray-400 border-1 bg-white">
                         {displayedCost}
                     </div>
-                    {/* {!isPreview && */}
-                    <div
-                        style={{
-                            position: 'absolute',
-                            top: '0%',
-                            left: '0%',
-                            fontSize: 'large',
-                            fontWeight: 'bold',
-                            color: 'black',
-                            background: 'white',
-                            borderRight: 'solid black',
-                            borderBottom: 'solid black',
-                            padding: '5px 10px'
-                        }}
-                    >
+                    <div className="absolute top-0 left-0 text-lg font-bold text-black p-1 border border-gray-400 border-1 bg-white" >
                         {displayedSkill}
                     </div>
-                    {/* } */}
-
-                </Stack.Item>
-            </Stack>
+                </div>
+            </div>
             <HeatPanel controller={controller} />
             <DamagePanel controller={controller} />
-            <Stack horizontal styles={{ root: { display: 'flex', width: '100%' } }}>
-                <Stack.Item grow={1} styles={{ root: { border: 'solid black', borderRadius: 10, padding: 5, backgroundColor: 'lightgray', marginTop: "5px" } }}>
-                    <div style={{
-                        fontWeight: 'bold',
-                        color: "darkred",
-                        marginLeft: "5px",
-                        pointerEvents: 'all' // force on to override in unit preview mode
-                    }}>
-                        <span style={{color: "black"}}>SPECIAL: </span>
-                        {controller.getCard().BFAbilities ? controller.getCard().BFAbilities.split(',').map((ability, index) => (
-                            <span
-                                key={index}
-                                style={{ cursor: 'pointer' }}
-                                onClick={() => {
-                                    setSelectedAbility(ability.trim());
-                                    setIsModalOpen(true);
-                                }}
-                            >
-                                {ability.trim()}
-                                {index !== controller.getCard().BFAbilities.split(',').length - 1 && ', '}
-                            </span>
-                        )) : null}
-                    </div>
-
-
-                    <CriticalHitsPanel controller={controller} />
-
-                </Stack.Item>
-                <Stack.Item grow={1}>
-
-                </Stack.Item>
-            </Stack>
+            <div className="flex flex-wrap bg-neutral-400 rounded-md border border-2 mt-1">
+                <div className="text-sm w-full p-1">
+                    <span className="font-bold text-red-700 text-xs">SPECIAL: </span>
+                    {controller.getCard().BFAbilities ? controller.getCard().BFAbilities.split(',').map((ability, index) => (
+                        <span
+                            key={index}
+                            className="cursor-pointer text-xs"
+                            onClick={() => {
+                                setSelectedAbility(ability.trim());
+                                setIsModalOpen(true);
+                            }}
+                        >
+                            {ability.trim()}
+                            {index !== controller.getCard().BFAbilities.split(',').length - 1 && ', '}
+                        </span>
+                    )) : null}
+                </div>
+                <CriticalHitsPanel controller={controller} />
+            </div>
 
             <Panel isOpen={isEditPanelOpen} onDismiss={() => setIsEditPanelOpen(false)} headerText="Edit Unit">
                 <TextField
@@ -206,7 +161,7 @@ export function MyUnitCard({controller, useHexes}: {controller: UnitCardControll
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
             />
-        </div>
+        </div >
 
     )
 }

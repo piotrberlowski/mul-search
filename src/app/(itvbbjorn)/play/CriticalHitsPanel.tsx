@@ -1,7 +1,5 @@
-import { Stack } from '@fluentui/react';
 import React from 'react';
 import CriticalHitsCircles from './CriticalHitsCircles';
-import { Card, Counter } from '@/api/card';
 import { UnitCardController } from './MyUnitCardController';
 
 function CriticalHitsPanel ({controller}:{controller: UnitCardController}) {
@@ -9,33 +7,32 @@ function CriticalHitsPanel ({controller}:{controller: UnitCardController}) {
         return null;
     }
     return (
-        <Stack>
-            <span style={{ color: 'white', backgroundColor: 'black', textAlign: 'center', fontWeight: 'bold', padding: 2, borderRadius: 10, marginTop: 5, marginBottom: 5 }}>CRITICAL HITS</span>
-            <div>
-                <Stack>
-                    <Stack horizontal style={{ display: 'flex' }}>
-                        <span style={{ flexBasis: "120px", flexGrow: "0", textAlign: "right", fontWeight: "bold", paddingRight: "5px"}}>ENGINE</span>
+        <div className="w-full">
+            <div className='w-full text-center bg-black text-white font-bold text-xs py-0.5 rounded-xl'>CRITICAL HITS</div>
+            <div className="w-full items-center justify-center">
+                    <div className="flex items-center">
+                        <span className="flex-none w-28 text-right mr-1 font-bold text-sm">ENGINE</span>
                         <CriticalHitsCircles count={1} controller={controller} counter="cr_eng"/>
-                        <span>+1 Heat/firing weapons</span>
-                    </Stack>
-                    <Stack horizontal style={{ display: 'flex' }}>
-                        <span style={{ flexBasis: "120px", flexGrow: "0", textAlign: "right", fontWeight: "bold", paddingRight: "5px"}}>FIRE CONTROL</span>
+                        <span className='ml-1 flex-auto text-sm'>+1 Heat/firing weapons</span>
+                    </div>
+                    <div className="flex items-center">
+                        <span className="flex-none w-28 text-right mr-1 font-bold text-sm">FIRE CONTROL</span>
                         <CriticalHitsCircles count={4} controller={controller} counter="cr_fc"/>
-                        <span>+2TN Each</span>
-                    </Stack>
-                    <Stack horizontal style={{ display: 'flex'}}>
-                        <span style={{ flexBasis: "120px", flexGrow: "0", textAlign: "right", fontWeight: "bold", paddingRight: "5px"}}>MP</span>
+                        <span className='ml-1 flex-auto text-sm'>+2TN Each</span>
+                    </div>
+                        <div className="flex items-center">
+                        <span className="flex-none w-28 text-right mr-1 font-bold text-sm">MP</span>
                         <CriticalHitsCircles count={4} controller={controller} counter="cr_mp" />
-                        <span>1/2 MV Each</span>
-                    </Stack>
-                    <Stack horizontal style={{ display: 'flex'}}>
-                        <span style={{ flexBasis: "120px", flexGrow: "0", textAlign: "right", fontWeight: "bold", paddingRight: "5px"}}>WEAPONS</span>
+                        <span className='ml-1 flex-auto text-sm'>1/2 MV Each</span>
+                    </div>
+                        
+                    <div className="flex items-center">
+                        <span className="flex-none w-28 text-right mr-1 font-bold text-sm">WEAPONS</span>
                         <CriticalHitsCircles count={4} controller={controller} counter="cr_wp"/>
-                        <span>-1 Damage Each</span>
-                    </Stack>
-                </Stack>
+                        <span className='ml-1 flex-auto text-sm'>-1 Damage Each</span>
+                    </div>
             </div>
-        </Stack>
+        </div>
     )
 }
 

@@ -6,6 +6,7 @@ const calculateBackgroundColor = (damage: number, armor: number, structure: numb
     const percentageDamage = (damage - armor) / structure;
 
     if (percentageDamage <= 0) return 'bg-neutral-350';
+    if (percentageDamage >= 1) return 'pattern-diagonal-lines pattern-size-3 pattern-black pattern-bg-red-700 pattern-opacity-100'
     if (percentageDamage > 0.5) return 'bg-red-500';
     
     return 'bg-yellow-500';
@@ -49,17 +50,15 @@ function DamagePanel ({ controller }: {controller: UnitCardController}) {
 
 
     const totalDamage = clickedArmorButtons.filter(btn => btn).length + clickedSButtons.filter(btn => btn).length;
-    const percentageDamage = totalDamage / (controller.getCard().BFArmor + controller.getCard().BFStructure);
-    const backgroundColor = calculateBackgroundColor(totalDamage, controller.getCard().BFArmor, controller.getCard().BFStructure);
-    const isFullyDamaged = percentageDamage === 1;
+    const backgroundStyle = calculateBackgroundColor(totalDamage, controller.getCard().BFArmor, controller.getCard().BFStructure);
 
     return (
         <div
-            className={`border border-black dark:border-white rounded-lg p-1 mt-1 ${backgroundColor} ${isFullyDamaged ? 'colored-stripes' : ''}`}
+            className={`border border-black dark:border-white rounded-lg p-1 mt-1 ${backgroundStyle}`}
         >
 
                 <div className='flex items-center'>
-                    <span className="label font-bold h-6">A:</span>
+                    <span className="label font-bold h-6 w-6 text-right">A:</span>
                     {clickedArmorButtons.map((clicked, i) => (
                         <button
                             key={i}
@@ -69,7 +68,7 @@ function DamagePanel ({ controller }: {controller: UnitCardController}) {
                     ))}
                 </div>
                 <div className='flex items-center'>
-                    <span className='label font-bold h-6'>S:</span>
+                    <span className='label font-bold h-6 w-6 text-right'>S:</span>
                     {clickedSButtons.map((clicked, i) => (
                         <button
                             key={i}

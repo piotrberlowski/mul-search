@@ -48,3 +48,15 @@ code {
     animation: App-logo-spin infinite 20s linear;
   }
 }
+
+a {
+  color: var(--link-color);
+}
+
+a:visited {
+  color: var(--link-visited-color);
+}
+
+a:hover {
+  color: var(--link-hover-color);
+}
