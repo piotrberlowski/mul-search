@@ -1,5 +1,5 @@
+import { IUnit } from "@/api/unitListApi"
 import { createContext, useContext } from "react"
-import { IUnit } from "./unitLine"
 
 export type UnitReceiver = (u: IUnit) => void
 

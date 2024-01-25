@@ -1,0 +1,59 @@
+.unit-image {
+    width: 100%;
+    /* It will take full width of the container */
+    max-height: 100%;
+    /* It will not exceed the height of the container */
+    object-fit: contain;
+    /* It will maintain the aspect ratio */
+    margin: auto;
+    /* Centering the image */
+    display: block;
+    /* Making it a block-level element */
+}
+
+.dialogContainer {
+    width: 100%; /* or any specific width you desire */
+    max-width: 400px; /* adjust as necessary */
+}
+
+.game-properties-stack {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: -20px;
+}
+
+/* .game-properties {
+    flex-grow: 1;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+} */
+.game-properties-container {
+    background-color: lightgrey;
+    border: solid black;
+    border-radius: 10px;
+    padding: 5px;
+    text-align: center;
+    width: 40px;
+    /* Adjust the width as needed */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.game-properties-title {
+    color: black;
+    font-weight: bold;
+    font-size: 12px;
+    /* Adjust the font size as needed */
+    margin-bottom: 0px;
+    /* Space between title and value */
+}
+
+.game-properties-value {
+    font-weight: bold;
+    color: darkred;
+    font-size: small;
+}

@@ -1,0 +1,17 @@
+.critical-hit-circle {
+    background: #FAFAFA;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    border: 1px solid black;
+    margin-right: 2px;
+    display: inline-block;
+    text-align: center;
+    line-height: 20px;
+    vertical-align: middle;
+}
+
+.critical-hit-circle.clicked {
+    background: black;
+    color: white;
+}

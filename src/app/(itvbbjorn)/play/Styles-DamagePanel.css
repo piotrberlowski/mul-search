@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.circleButton {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid black;
+    background: #FAFAFA;
+    display: inline-block;
+    margin-left: 3px;
+    padding: 0;
+    text-align: center;
+    line-height: 20px;
+}
+
+.circleButton.clicked {
+    background-color: black;
+}
+
+
+.sCircleButton {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid black;
+    background-color: red;
+    display: inline-block;
+    margin-left: 3px;
+    padding: 0;
+    text-align: center;
+    line-height: 20px;
+}
+
+.sCircleButton.clicked {
+    background-color: black;
+}
+
+.colored-stripes {
+    background-image: linear-gradient(-45deg, black 25%, transparent 25%, transparent 50%, black 50%, black 75%, transparent 75%, transparent);
+    background-size: 20px 20px;
+}

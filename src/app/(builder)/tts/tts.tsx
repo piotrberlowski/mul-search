@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from "react";
-import { loadTTSString } from "../api/unitListApi";
+import { loadTTSString } from "../../../api/unitListApi";
 
 
 export function TTSText() {

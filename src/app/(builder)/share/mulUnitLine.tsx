@@ -1,8 +1,8 @@
 'use client'
-import { ISelectedUnit, currentPV } from "../api/unitListApi";
+import { ISelectedUnit, IUnit, currentPV } from "@/api/unitListApi";
 import useSWR from "swr"
-import { MulUnit } from "../api/shareApi";
-import { EMPTY_UNIT, IUnit } from "../builder/unitLine";
+import { MulUnit } from "../../../api/shareApi";
+import { EMPTY_UNIT } from "../builder/unitLine";
 import {MASTER_UNIT_LIST} from "../data";
 
 async function fetchFromMul(search: string) {
@@ -38,7 +38,7 @@ function FetchedUnit({unit}:{unit: ISelectedUnit}) {
     )
 }
 
-function selectUnit(ordinal: number, mulUnit: MulUnit, units:IUnit[]): ISelectedUnit {
+function selectUnit(ordinal: number, mulUnit: MulUnit, units: IUnit[]): ISelectedUnit {
     const data = units.find(u => u.Id == mulUnit.id) || EMPTY_UNIT 
     return {
         ordinal: ordinal, 

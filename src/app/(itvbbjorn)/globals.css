@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --input-background-rgb: 200, 200, 200;
+  --input-foreground-rgb: 10, 30, 50;
+  --link-color: #7f1d1d;
+  --link-visited-color: #f97316;
+  --link-hover-color: #ef4444;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 214, 219, 220;
+  --input-border-color: #0a1e32;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --input-background-rgb: 10, 30, 50;
+    --input-foreground-rgb: 200, 200, 200;
+    --link-color: #fecaca;
+    --link-visited-color: #f97316;
+    --link-hover-color: #ef4444;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+    --input-border-color: #b8b8b8;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}

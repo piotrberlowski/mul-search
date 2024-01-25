@@ -2,12 +2,13 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, currentPV, loadByName, loadLists, totalPV } from '../api/unitListApi';
+import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, currentPV, loadByName, loadLists, totalPV } from '../../../api/unitListApi';
 import ShareLink from '../share/shareLink';
-import { IUnit } from './unitLine';
+import { IUnit } from '../../../api/unitListApi';
 import { ChangeListener, ListBuilderController } from './listBuilderController';
 import { SearchResultsController, useSearchResultsContext } from './searchResultsController';
-import Combinations from '../api/combinations';
+import Combinations from '../../../components/combinations';
+import PlayLink from '../../../components/playLink';
 
 function ListLine({ unit, controller }: { unit: ISelectedUnit, controller: ListBuilderController }) {
     const [skill, setSkill] = useState(unit.skill)
@@ -159,6 +160,7 @@ export default function ListBuilder({ defaultVisible }: { defaultVisible: boolea
 
                         <div className="flex-none w-full bg-inherit grid grid-cols-1">
                             <Combinations target={save.units.length} units={save.units}/>
+                            <PlayLink units={save.units}>Play This</PlayLink>
                             <ShareLink constraints={searchResultsController.getListConstraints()} name={name} total={total} units={save.units} />
                             <BuilderFooter
                                 listName={name}
