@@ -61,7 +61,7 @@ export default function MyUnits() {
         localStorage.setItem(USE_HEXES_KEY, JSON.stringify(useHexes));
         localStorage.setItem(OP_KEY, JSON.stringify(op));
         localStorage.setItem(SP_KEY, JSON.stringify(sp));
-    }, [units, useHexes, op, sp]);
+    }, [units, useHexes, op, sp, complete]);
 
     const toggleUseHexes = (_: any) => {
         setUseHexes(!useHexes);

@@ -12,10 +12,10 @@ export default function AttackDamageTable ({ controller }: {controller: UnitCard
     return (
         <div className="grid grid-cols-3 w-full text-center border border-2">
             {ranges.map((r) => (
-                <div className='text-white bg-black text-xs p-1'>{`${r}(+${ranges.indexOf(r) * 2 + fcHits * 2 + heat})`}</div>
+                <div key={r} className='text-white bg-black text-xs p-1'>{`${r}(+${ranges.indexOf(r) * 2 + fcHits * 2 + heat})`}</div>
             ))}
             {dmg.map((d) => (
-                <div className="bg-neutral-300 text-red-800 font-bold">{Math.max(0, d-weaponHits)}</div>
+                <div key={d} className="bg-neutral-300 text-red-800 font-bold">{Math.max(0, d-weaponHits)}</div>
             ))}
         </div>
     );

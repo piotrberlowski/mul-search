@@ -2,10 +2,12 @@ import { generateSubsets } from "@/api/subsets";
 import { ISelectedUnit, currentPV, totalPV } from "@/api/unitListApi";
 import { useState } from "react";
 import PlayLink from "./playLink";
+import { PlayCircleIcon } from "@heroicons/react/20/solid";
 
 function CombinationLine({units}:{units:ISelectedUnit[]}) {
     return (
             <PlayLink units={units} className="flex my-0 border border-solid border-gray-400 dark:border-gray-800 font-small text-center items-center"> 
+                <PlayCircleIcon className="h-5 w-5 stroke-red-600"/>
                 <div className="flex-none p-2">{totalPV(units)}PV: </div>
                 {
                     units.map(unit => (<div key={unit.ordinal} className="flex-initial p-2">{unit.ordinal}:{unit.Name}</div>))

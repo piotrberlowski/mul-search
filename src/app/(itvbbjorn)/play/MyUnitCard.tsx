@@ -1,4 +1,5 @@
-import { Icon, Panel, TextField, Label } from '@fluentui/react';
+import { Panel, TextField, Label } from '@fluentui/react';
+import { PencilSquareIcon } from '@heroicons/react/20/solid';
 import React, { useState } from 'react';
 import HeatPanel from './HeatPanel';
 import DamagePanel from './DamagePanel';
@@ -8,17 +9,18 @@ import { PrimaryButton, DefaultButton } from '@fluentui/react';
 import SpecialModal from './SpecialModal';
 import { UnitCardController } from './MyUnitCardController';
 import './Styles-UnitDetailsPanel.css'
+import Image from 'next/image';
 
 function fontSize(name: string) {
-    if (name.length > 46) {
+    if (name.length > 40) {
         return 'text-[8px] text-ellipsis'
-    } else if (name.length > 38) {
+    } else if (name.length > 36) {
         return 'text-xs';
-    } else if (name.length > 32) {
+    } else if (name.length > 30) {
         return 'text-sm';
-    } else if (name.length > 26) {
+    } else if (name.length > 24) {
         return 'test-base';
-    } else if (name.length > 18) {
+    } else if (name.length > 12) {
         return 'text-lg';
     } else {
         return 'text-xl';  // default size
@@ -88,14 +90,14 @@ export function MyUnitCard({ controller, useHexes }: { controller: UnitCardContr
                     {editedName}
                 </span>
                 <div className="flex-none">
-                    <Icon iconName='Edit' onClick={() => setIsEditPanelOpen(true)} />
+                    <PencilSquareIcon className="h-5 w-5" title="edit" onClick={() => setIsEditPanelOpen(true)}/>
                 </div>
             </div>
 
             <div className="flex gap-1">
                 <UnitDetails className="w-2/3" controller={controller} useHexes={useHexes} />
                 <div className='flex w-1/3 grow-0 justify-center items-center bg-white align-middle relative'>
-                    <img src={controller.getCard().ImageUrl} alt={`${controller.getCard().Name}`} className='align-middle' />
+                    <Image src={controller.getCard().ImageUrl} alt={`${controller.getCard().Name}`} className='align-middle' fill style={{objectFit: 'contain',}}/>
                     <div className="absolute top-0 right-0 text-lg font-bold text-red-700 p-1 border border-gray-400 border-1 bg-white">
                         {displayedCost}
                     </div>

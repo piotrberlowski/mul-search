@@ -13,19 +13,20 @@ const calculateBackgroundColor = (damage: number, armor: number, structure: numb
 };
 
 function DamagePanel ({ controller }: {controller: UnitCardController}) {
-    const armorDamage = Math.min(controller.getCard().BFArmor, controller.value("dmg") ?? 0);
-    const structureDamage = Math.max(0, (controller.value("dmg") ?? 0) - controller.getCard().BFArmor);
+    const[dmg, setDmg] = useState(controller.value("dmg") ?? 0)
+    const armorDamage = Math.min(controller.getCard().BFArmor, dmg);
+    const structureDamage = Math.max(0, dmg - controller.getCard().BFArmor);
 
     const [clickedArmorButtons, setClickedArmorButtons] = useState<boolean[]>(Array(controller.getCard().BFArmor).fill(false).map((_, i) => i < armorDamage));
     const [clickedSButtons, setClickedSButtons] = useState<boolean[]>(Array(controller.getCard().BFStructure).fill(false).map((_, i) => i < structureDamage));
 
     useEffect(() => {
-        const armorDamageCalculation = Math.min(controller.getCard().BFArmor, controller.value("dmg") ?? 0);
-        const structureDamageCalculation = Math.max(0, (controller.value("dmg") ?? 0) - controller.getCard().BFArmor);
+        const armorDamageCalculation = Math.min(controller.getCard().BFArmor, dmg);
+        const structureDamageCalculation = Math.max(0, dmg - controller.getCard().BFArmor);
 
         setClickedArmorButtons(Array(controller.getCard().BFArmor).fill(false).map((_, i) => i < armorDamageCalculation));
         setClickedSButtons(Array(controller.getCard().BFStructure).fill(false).map((_, i) => i < structureDamageCalculation));
-    }, [controller.value("dmg"), controller.getCard().BFArmor, controller.getCard().BFStructure]);
+    }, [dmg, controller]);
 
 
     const handleArmorButtonClick = (index: number) => {
@@ -34,7 +35,7 @@ function DamagePanel ({ controller }: {controller: UnitCardController}) {
         setClickedArmorButtons(newClickedButtons);
 
         const totalDamage = newClickedButtons.filter(btn => btn).length + clickedSButtons.filter(btn => btn).length;
-        controller.set("dmg", totalDamage);
+        setDmg(controller.set("dmg", totalDamage));
     };
 
     const handleStructureButtonClick = (index: number) => {
@@ -45,7 +46,7 @@ function DamagePanel ({ controller }: {controller: UnitCardController}) {
         setClickedSButtons(newClickedButtons);
 
         const totalDamage = clickedArmorButtons.filter(btn => btn).length + newClickedButtons.filter(btn => btn).length;
-        controller.set("dmg", totalDamage);
+        setDmg(controller.set("dmg", totalDamage));
     };
 
 
