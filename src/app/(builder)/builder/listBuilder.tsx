@@ -171,8 +171,8 @@ export default function ListBuilder({ defaultVisible }: { defaultVisible: boolea
                         </div>
 
                         <div className="flex-none w-full bg-inherit grid grid-cols-1">
-                            <div className="grid grid-cols-1 md:grid-cols-3">
-                                <Combinations target={save.units.length} units={save.units}/>
+                            <div className="bg-inherit grid grid-cols-1 md:grid-cols-3">
+                                <Combinations units={save.units}/>
                                 <PlayLink units={save.units} className='button-link w-full block'>Play This</PlayLink>
                                 <ShareLink constraints={searchResultsController.getListConstraints()} name={name} total={total} units={save.units} className='button-link w-full block'/>
                             </div>

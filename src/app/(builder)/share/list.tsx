@@ -114,9 +114,9 @@ export default function VisualList() {
                 }
             </div>
             <div className='w-full text-center my-2'>Total PV: {parsed.total}</div>
-            <div className={`w-full grid grid-cols-2 text-center ${ready ? '' : 'hidden'}`}>
+            <div className={`bg-inherit w-full grid grid-cols-2 text-center ${ready ? '' : 'hidden'}`}>
                 <div className='bg-inherit'>
-                    <Combinations target={parsed.units.length} ready={combinationsReady} units={fetchedList}/>
+                    <Combinations units={fetchedList}/>
                 </div>
                 <div>
                     <PlayLink units={fetchedList} className='w-full h-full button-link block'>Play This!</PlayLink>
