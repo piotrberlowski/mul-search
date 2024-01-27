@@ -9,9 +9,11 @@ import { ChangeListener, ListBuilderController } from './listBuilderController';
 import { SearchResultsController, useSearchResultsContext } from './searchResultsController';
 import Combinations from '../../../components/combinations';
 import PlayLink from '../../../components/playLink';
+import { Ubuntu } from 'next/font/google';
 
 function ListLine({ unit, controller }: { unit: ISelectedUnit, controller: ListBuilderController }) {
     const [skill, setSkill] = useState(unit.skill)
+    const [checked, setChecked] = useState(false)
 
     function skillOnSelect(newSkill: string) {
         const nSkill = parseInt(newSkill)
@@ -22,7 +24,11 @@ function ListLine({ unit, controller }: { unit: ISelectedUnit, controller: ListB
 
     return (
         <div className="grid grid-cols-8 md:grid-cols-12 my-0 border border-solid border-gray-400 dark:border-gray-800 text-xs lg:text-sm text-center items-center">
-            <div id={"line-" + unit.ordinal} className="col-span-1 md:col-span-3 text-left">
+            <input type="checkbox" className="toggle toggle-xs toggle-warning max-md:hidden" checked={checked} onChange={() => {
+                controller.setSelected(unit, !checked)
+                setChecked(!checked)
+            }}/>
+            <div id={"line-" + unit.ordinal} className="col-span-1 md:col-span-2 text-left">
                 <a href={"http://www.masterunitlist.info/Unit/Details/" + unit.Id} target="_blank">{unit.Name}</a>
             </div>
             <div>
@@ -51,13 +57,17 @@ function ListLine({ unit, controller }: { unit: ISelectedUnit, controller: ListB
     )
 }
 
-function BuilderHeader({ constraints, count, total, onClose }: { constraints: string, count: number, total: number, onClose: () => void }) {
+function BuilderHeader({ controller, onClose }: { controller: ListBuilderController, onClose: () => void }) {
+    const [selected, setSelected] = useState<ISelectedUnit[]>([])
+    const units = controller.getUnits()
+    const constraints = controller.getConstraints()
+    controller.setSelectionHandler(setSelected)
     return (
         <div className="w-full flex-none">
             <div className="text-center">{constraints}</div>
             <div className="flex">
-                <div className="text-center flex-1">Units: {count}</div>
-                <div className="text-center flex-1">Total PV: {total}</div>
+                <div className="text-center flex-1">Units: {units.length}</div>
+                <div className="text-center flex-1">PV: {totalPV(units)} (Selected: {totalPV(selected)})</div>
             </div>
             <button className="absolute right-0 top-0 border border-solid px-1 border-red-500 w-5" onClick={e => onClose()}>X</button>
         </div>
@@ -112,14 +122,16 @@ export default function ListBuilder({ defaultVisible }: { defaultVisible: boolea
     const [save, setSave] = useState<Save>(loadByName(name))
     const [total, setTotal] = useState(totalPV(save.units))
     const [storedLists, setStoredLists] = useState(loadLists())
+    const [selected, setSelected] = useState<ISelectedUnit[]>([])
 
     const controller = new ListBuilderController(
         save,
         searchResultsController.getListConstraints(),
         storedLists,
+        selected,
         setSave,
         setTotal,
-        setStoredLists
+        setStoredLists,
     )
 
     searchResultsController.register(
@@ -148,7 +160,7 @@ export default function ListBuilder({ defaultVisible }: { defaultVisible: boolea
             return (
                 <>
                     <div className="fixed bg-inherit inset-y-20 max-xl:inset-x-[1%] xl:inset-x-[10%] 2xl:inset-x-[20%] z-10 border border-red-500 items-center text-center flex flex-col">
-                        <BuilderHeader constraints={save.constraints} count={count} total={total} onClose={() => setVisible(false)} />
+                        <BuilderHeader controller={controller} onClose={() => setVisible(false)} />
                         <div className="flex-none w-full flex">
                             <span className="mr-1 flex-none">Name: </span>
                             <input className="inline flex-1 h-5 p-0 overflow-hidden" type='text' onChange={e => setName(e.target.value)} value={name} />
@@ -159,9 +171,11 @@ export default function ListBuilder({ defaultVisible }: { defaultVisible: boolea
                         </div>
 
                         <div className="flex-none w-full bg-inherit grid grid-cols-1">
-                            <Combinations target={save.units.length} units={save.units}/>
-                            <PlayLink units={save.units}>Play This</PlayLink>
-                            <ShareLink constraints={searchResultsController.getListConstraints()} name={name} total={total} units={save.units} />
+                            <div className="grid grid-cols-1 md:grid-cols-3">
+                                <Combinations target={save.units.length} units={save.units}/>
+                                <PlayLink units={save.units} className='button-link w-full block'>Play This</PlayLink>
+                                <ShareLink constraints={searchResultsController.getListConstraints()} name={name} total={total} units={save.units} className='button-link w-full block'/>
+                            </div>
                             <BuilderFooter
                                 listName={name}
                                 controller={controller}

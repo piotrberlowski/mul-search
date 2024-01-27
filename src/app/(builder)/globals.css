@@ -67,6 +67,7 @@ button {
   width: 100%;
 }
 
+
 a {
   color: var(--link-color);
 }
@@ -77,4 +78,8 @@ a:visited {
 
 a:hover {
   color: var(--link-hover-color);
+}
+
+.button-link:visited {
+  color: rgb(var(--input-foreground-rgb));  
 }

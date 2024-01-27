@@ -52,7 +52,7 @@ export const UnitComparators: Record<string, comparator> = {
 export function UnitHeader() {
     return (
         <div className="font-bold grid grid-cols-8 md:grid-cols-12 my-0 text-xs md:text-sm text-center items-center w-full">
-            <div className="md:col-span-3 text-left">
+            <div className="md:col-span-2 text-left">
                 Name
             </div>
             <div className="md:col-start-4">PV</div>

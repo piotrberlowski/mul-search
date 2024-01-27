@@ -12,20 +12,36 @@ export class ListBuilderController {
     private setSave: ChangeListener<Save>;
     private setTotal: ChangeListener<number>;
     private setStoredLists: ChangeListener<string[]>;
+    private selectedSet: Set<number> = new Set()
+    private notifySelectionChanged?: ChangeListener<ISelectedUnit[]>
 
     constructor(
         initialSave: Save,
         searchConstraints: string,
         storedLists: string[],
+        selected: ISelectedUnit[],
         setSave: ChangeListener<Save>, 
         setTotal: ChangeListener<number>,
-        setStoredLists: ChangeListener<string[]>) {
+        setStoredLists: ChangeListener<string[]>,
+        ) {
         this.save = initialSave
         this.constraints = searchConstraints
         this.storedLists = storedLists
         this.setSave = setSave
         this.setTotal = setTotal
         this.setStoredLists = setStoredLists
+    }
+
+    public getConstraints() {
+        return this.constraints
+    }
+
+    public getUnits() {
+        return this.save.units
+    }
+
+    public setSelectionHandler(handler: ChangeListener<ISelectedUnit[]>) {
+        this.notifySelectionChanged = handler
     }
 
     public addUnit(unit: IUnit) {
@@ -82,6 +98,17 @@ export class ListBuilderController {
         }
         this.setStoredLists(this.storedLists)
         saveLists(this.storedLists)
+    }
+
+    public setSelected(unit: ISelectedUnit, selected: boolean) {
+        if (selected) {
+            this.selectedSet.add(unit.ordinal)
+            console.log(`Selected unit ${unit.ordinal} - selected values ${[...this.selectedSet.values()].join(',')}`)
+        } else {
+            this.selectedSet.delete(unit.ordinal)
+            console.log(`Removed unit ${unit.ordinal} - selected values ${this.selectedSet}`)
+        }
+        this.notifySelectionChanged && this.notifySelectionChanged(this.save.units.filter(u => this.selectedSet.has(u.ordinal)))
     }
 
     public load(loadName: string) {

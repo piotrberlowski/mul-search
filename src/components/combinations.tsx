@@ -37,27 +37,14 @@ function CombinationsPanel({units, hide}:{units:ISelectedUnit[], hide:()=>void})
 export default function Combinations ({target, units, ready}: {target: number, units:ISelectedUnit[], ready?: (callback: (len:number)=>void)=>void}) {
     const [count, setCount] = useState(0)
     const [visible, setVisible] = useState(false)
-    var entryPanel = (
-        <div className="w-full print:hidden flex">
-            <button className="flex-6 w-6/8 text-center" onClick={(e)=>{setVisible(true)}}>Generate Possible Sublists</button>
-        </div>
-    )
     var combinationsDisplay = visible ? (<CombinationsPanel units={units} hide={()=>setVisible(false)}/>):''
     if (ready) {
         ready((len:number) => setCount(len))
     } 
-    if (units && target == units.length) {
-        return (
-            <>
-                {entryPanel}
-                {combinationsDisplay}
-            </>
-        )
-    } else {
-        return (
-            <>
-            </>
-        )
-    }
-
+    return (
+        <>
+            <button className="text-center" onClick={(e)=>{setVisible(true)}}>Generate Possible Sublists</button>
+            {combinationsDisplay}
+        </>
+    )
 }

@@ -8,6 +8,8 @@ import { MulUnitLine } from './mulUnitLine'
 import { useRouter } from 'next/navigation'
 import Head from 'next/head'
 import Combinations from '../../../components/combinations'
+import PlayLink from '@/components/playLink'
+import { unstable_noStore } from 'next/cache'
 
 function MemoImage({ordinal, unit}:{ordinal:number, unit:MulUnit}) {
     return useMemo(() => (
@@ -41,6 +43,7 @@ function SaveButton({target, onClick, ready}: {target: number, onClick: (tweak: 
 }
 
 export default function VisualList() {
+    const [ready, setReady] = useState(false)
     const router = useRouter()
     const params = useSearchParams()
 
@@ -53,8 +56,11 @@ export default function VisualList() {
     let combinationsFeed = (len:number) => {}
 
     function onFetch(u: ISelectedUnit) {
-        fetchedList.push(u)
+        if (!fetchedList.find( x => x.ordinal == u.ordinal)) {
+            fetchedList.push(u)
+        }
         fetchedList.sort(compareSelectedUnits)
+        setReady(fetchedList.length == parsed.units.length)
         saveButtonFeed(fetchedList.length)
         combinationsFeed(fetchedList.length)
     }
@@ -108,7 +114,14 @@ export default function VisualList() {
                 }
             </div>
             <div className='w-full text-center my-2'>Total PV: {parsed.total}</div>
-            <Combinations target={parsed.units.length} ready={combinationsReady} units={fetchedList}/>
+            <div className={`w-full grid grid-cols-2 text-center ${ready ? '' : 'hidden'}`}>
+                <div className='bg-inherit'>
+                    <Combinations target={parsed.units.length} ready={combinationsReady} units={fetchedList}/>
+                </div>
+                <div>
+                    <PlayLink units={fetchedList} className='w-full h-full button-link block'>Play This!</PlayLink>
+                </div>
+            </div>
             <div className='grid grid-cols-2'>
                 {
                     parsed.units.map((u, idx) => (

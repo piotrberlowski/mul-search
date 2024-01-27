@@ -43,6 +43,7 @@ export type Save = {
 export interface ISelectedUnit extends IUnit {
     ordinal: number,
     skill: number,
+    extraState?: any,
 }
 
 export interface PvEntity {
