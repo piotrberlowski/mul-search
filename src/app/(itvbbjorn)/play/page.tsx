@@ -1,9 +1,6 @@
 'use client'
-import React, { Suspense } from 'react';
-import { initializeIcons } from '@fluentui/react/lib/Icons';
+import { Suspense } from 'react';
 import MyUnits from './MyUnits';
-
-initializeIcons();
 
 function CsrFallback() {
   return <>Preparing your army...</>

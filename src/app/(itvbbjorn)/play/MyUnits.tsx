@@ -1,18 +1,17 @@
 'use client'
-import React, { useState, useEffect } from 'react';
-import { DefaultButton} from '@fluentui/react';
-import MyUnitCard from './MyUnitCard';
 import { Card } from '@/api/card';
 import { LOCAL_STORAGE_PLAY_PREFIX, UNITS_KEY } from '@/api/playApi';
-import './Styles-UnitDetailsPanel.css';
+import { useEffect, useState } from 'react';
+import MyUnitCard from './MyUnitCard';
 import { UnitCardController } from './MyUnitCardController';
+import './Styles-UnitDetailsPanel.css';
 
 const USE_HEXES_KEY: string = LOCAL_STORAGE_PLAY_PREFIX + "use_hexes";
 const OP_KEY: string = LOCAL_STORAGE_PLAY_PREFIX + "op";
 const SP_KEY: string = LOCAL_STORAGE_PLAY_PREFIX + "sp";
 
 function loadIfAvailable<T>(key: string, defaultValue: T): T {
-    let data: T =  defaultValue
+    let data: T = defaultValue
     if (typeof window !== 'undefined') {
         const storedValue = localStorage.getItem(key);
         data = storedValue ? JSON.parse(storedValue) : defaultValue;
@@ -89,23 +88,21 @@ export default function MyUnits() {
                     {totalPoints}
                 </span>
             </h1>
-            
+
             <div className='flex justify-center items-center my-2'>
 
                 <div className='w-auto text-center items-center flex flex-col mr-5'>
                     <span className='font-bold'>Objective Points</span>
                     <div className='flex text-center items-center justify-center mt-1'>
-                        <DefaultButton
+                        <button
                             onClick={decrementOp}
-                            text="-"
-                            className='flex-0 min-w-max w-8 h-8 p-0'
-                        />
+                            className='flex-0 btn'
+                        >-</button>
                         <span className='text-3xl font-bold mx-2'>{op}</span>
-                        <DefaultButton
+                        <button
                             onClick={incrementOp}
-                            text="+"
-                            className='flex-0 min-w-max w-8 h-8 p-0'
-                        />
+                            className='flex-0 btn'
+                        >+</button>
                     </div>
                 </div>
 
@@ -113,17 +110,15 @@ export default function MyUnits() {
                 <div className='w-auto text-center items-center flex flex-col'>
                     <span className='font-bold'>Secondary Points</span>
                     <div className='flex text-center items-center justify-center mt-1'>
-                        <DefaultButton
+                        <button
                             onClick={decrementSp}
-                            text="-"
-                            className='flex-0 min-w-max w-8 h-8 p-0'
-                        />
+                            className='flex-0 btn'
+                        >-</button>
                         <span className='text-3xl font-bold mx-2'>{sp}</span>
-                        <DefaultButton
+                        <button
                             onClick={incrementSp}
-                            text="+"
-                            className='flex-0 min-w-max w-8 h-8 p-0'
-                        />
+                            className='flex-0 btn'
+                        >+</button>
                     </div>
                 </div>
             </div>
@@ -131,7 +126,7 @@ export default function MyUnits() {
             <div className="w-full h-8">
                 <div className='mx-auto w-24 text-center border border-black dark:border-white rounded-md align-bottom h-full'>
                     <label className="swap swap-flip h-full min-h-full">
-                        <input type="checkbox" checked={useHexes} onChange={toggleUseHexes}/>
+                        <input type="checkbox" checked={useHexes} onChange={toggleUseHexes} />
                         <div className="swap-on">HEXES</div>
                         <div className="swap-off">INCHES</div>
                     </label>
@@ -149,7 +144,17 @@ export default function MyUnits() {
                 ))}
 
             </div>
-            <div className='invisible text-yellow-500 bg-yellow-500 pattern-bg-yellow-500 text-orange-500 bg-orange-500 pattern-bg-orange-500 text-orange-700 bg-orange-700 pattern-bg-orange-700 text-red-800 bg-red-800 pattern-bg-red-800'> Invisible TailwindCSS pallette for dynamic heat colors</div>
+            <div className='invisible
+                bg-red-500 border-red-500 
+                bg-blue-500 border-blue-500
+                bg-green-500 border-green-500
+                bg-black border-black
+                bg-white border-white
+                text-yellow-500 bg-yellow-500 pattern-bg-yellow-500 border-yellow-500
+                text-orange-500 bg-orange-500 pattern-bg-orange-500 border-orange-500
+                text-orange-700 bg-orange-700 pattern-bg-orange-700 
+                text-red-800 bg-red-800 pattern-bg-red-800'
+            > Invisible TailwindCSS pallette for dynamic heat colors</div>
         </div>
     );
 };

@@ -1,15 +1,14 @@
-import { Panel, TextField, Label } from '@fluentui/react';
 import { PencilSquareIcon } from '@heroicons/react/20/solid';
-import React, { useState } from 'react';
-import HeatPanel from './HeatPanel';
-import DamagePanel from './DamagePanel';
-import CriticalHitsPanel from './CriticalHitsPanel';
-import AttackDamageTable from './AttackDamageTable';
-import { PrimaryButton, DefaultButton } from '@fluentui/react';
-import SpecialModal from './SpecialModal';
-import { UnitCardController } from './MyUnitCardController';
-import './Styles-UnitDetailsPanel.css'
 import Image from 'next/image';
+import { useRef, useState } from 'react';
+import AttackDamageTable from './AttackDamageTable';
+import CardEditModal from './CardEditPanel';
+import CriticalHitsPanel from './CriticalHitsPanel';
+import DamagePanel from './DamagePanel';
+import HeatPanel from './HeatPanel';
+import { UnitCardController } from './MyUnitCardController';
+import SpecialModal from './SpecialModal';
+import './Styles-UnitDetailsPanel.css';
 
 function fontSize(name: string) {
     if (name.length > 40) {
@@ -68,40 +67,44 @@ function UnitDetails({ className, controller, useHexes }: { className: string, c
 }
 
 export function MyUnitCard({ controller, useHexes }: { controller: UnitCardController, useHexes: boolean }) {
-    const [isEditPanelOpen, setIsEditPanelOpen] = useState(false);
     const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const [editedName, setEditedName] = useState(controller.getCard().Name);
-    const [editedBorderColor, setEditedBorderColor] = useState(controller.getCard().MyBorderColor || "#909090");
+    const [editableProps, setEditableProps] = useState({
+        name: controller.getCard().Name,
+        borderColor: controller.getCard().MyBorderColor || "slate-600"
+    });
+    const cardEditRef = useRef<HTMLDialogElement>(null)
+    const specialRef = useRef<HTMLDialogElement>(null)
 
-    const colorOptions = ["black", "darkred", "darkblue", "darkorange", "darkgreen", "gold", "#F0E68C", "#FF6347", "#8A2BE2", "#20B2AA"];
     const displayedSkill = controller.getCard().MySkill ?? 4;
     const displayedCost = controller.getCard().MyCalculatedPointValue ?? controller.getCard().BFPointValue;
 
-    const saveEdits = () => {
-        controller.update(editedName, editedBorderColor)
-        setIsEditPanelOpen(false);
+    const saveEdits = (newName: string, newBorderColor: string) => {
+        setEditableProps({
+            name: newName,
+            borderColor: newBorderColor,
+        })
+        controller.update(newName, newBorderColor)
     };
 
     return (
-        <div className={`p-1 bg-gray-400 border border-solid rounded-lg m-2 overflow-hidden w-[310px] h-[490px]`}>
+        <div className={`p-1 bg-gray-400 border border-solid rounded-lg m-2 overflow-hidden w-[310px] h-[490px] border-4 border-${editableProps.borderColor}`}>
             <div className="flex h-6 text-left justify-between items-center">
-                <span className={`font-bold ${fontSize(editedName)}`}>
-                    {editedName}
+                <span className={`font-bold ${fontSize(editableProps.name)}`}>
+                    {editableProps.name}
                 </span>
                 <div className="flex-none">
-                    <PencilSquareIcon className="h-5 w-5" title="edit" onClick={() => setIsEditPanelOpen(true)}/>
+                    <PencilSquareIcon className="h-5 w-5" title="edit" onClick={() => cardEditRef?.current && cardEditRef.current.showModal()} />
                 </div>
             </div>
 
             <div className="flex gap-1">
                 <UnitDetails className="w-2/3" controller={controller} useHexes={useHexes} />
                 <div className='flex w-1/3 grow-0 justify-center items-center bg-white align-middle relative'>
-                    <Image src={controller.getCard().ImageUrl} alt={`${controller.getCard().Name}`} className='align-middle' fill style={{objectFit: 'contain',}}/>
-                    <div className="absolute top-0 right-0 text-lg font-bold text-red-700 p-1 border border-gray-400 border-1 bg-white">
+                    <Image src={controller.getCard().ImageUrl} alt={`${controller.getCard().Name}`} className='align-middle' fill style={{ objectFit: 'contain', }} />
+                    <div className="absolute top-0 right-0 text-lg font-bold text-red-700 p-1 border border-gray-400 border-2 bg-white">
                         {displayedCost}
                     </div>
-                    <div className="absolute top-0 left-0 text-lg font-bold text-black p-1 border border-gray-400 border-1 bg-white" >
+                    <div className="absolute top-0 left-0 text-lg font-bold text-black p-1 border border-gray-400 border-2 bg-white" >
                         {displayedSkill}
                     </div>
                 </div>
@@ -117,7 +120,7 @@ export function MyUnitCard({ controller, useHexes }: { controller: UnitCardContr
                             className="cursor-pointer text-xs"
                             onClick={() => {
                                 setSelectedAbility(ability.trim());
-                                setIsModalOpen(true);
+                                specialRef?.current && specialRef.current.showModal()
                             }}
                         >
                             {ability.trim()}
@@ -128,41 +131,8 @@ export function MyUnitCard({ controller, useHexes }: { controller: UnitCardContr
                 <CriticalHitsPanel controller={controller} />
             </div>
 
-            <Panel isOpen={isEditPanelOpen} onDismiss={() => setIsEditPanelOpen(false)} headerText="Edit Unit">
-                <TextField
-                    label="Unit Name"
-                    value={editedName}
-                    onChange={(e, newValue) => setEditedName(newValue || "")}
-                />
-                <Label>Border color</Label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', maxWidth: '150px' }}>
-                    {colorOptions.map(color => (
-                        <div
-                            key={color}
-                            style={{
-                                width: '20px',
-                                height: '20px',
-                                backgroundColor: color,
-                                margin: '5px',
-                                cursor: 'pointer',
-                                border: editedBorderColor === color ? '2px solid black' : '2px solid transparent',
-                                boxSizing: 'border-box'
-                            }}
-                            onClick={() => setEditedBorderColor(color)}
-                        />
-                    ))}
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '15px' }}>
-                    <PrimaryButton onClick={saveEdits} style={{ marginRight: '10px' }} text="Save" />
-                    <DefaultButton onClick={() => setIsEditPanelOpen(false)} text="Cancel" />
-                </div>
-            </Panel>
-            <SpecialModal
-                ability={selectedAbility}
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-            />
+            <CardEditModal name={editableProps.name} borderColor={editableProps.borderColor} onSave={saveEdits} ref={cardEditRef} />
+            <SpecialModal ability={selectedAbility} ref={specialRef} />
         </div >
 
     )

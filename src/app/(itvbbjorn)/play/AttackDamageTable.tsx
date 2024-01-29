@@ -1,4 +1,3 @@
-import React from 'react';
 import { UnitCardController } from './MyUnitCardController';
 
 const ranges: string[] = ["S", "M", "L"]
@@ -14,8 +13,8 @@ export default function AttackDamageTable ({ controller }: {controller: UnitCard
             {ranges.map((r) => (
                 <div key={r} className='text-white bg-black text-xs p-1'>{`${r}(+${ranges.indexOf(r) * 2 + fcHits * 2 + heat})`}</div>
             ))}
-            {dmg.map((d) => (
-                <div key={d} className="bg-neutral-300 text-red-800 font-bold">{Math.max(0, d-weaponHits)}</div>
+            {dmg.map((d, idx) => (
+                <div key={`dmg-${idx}`} className="bg-neutral-300 text-red-800 font-bold">{Math.max(0, d-weaponHits)}</div>
             ))}
         </div>
     );
