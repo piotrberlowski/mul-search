@@ -1,7 +1,7 @@
 import { generateSubsets } from "@/api/subsets";
 import { ISelectedUnit, totalPV } from "@/api/unitListApi";
 import { PlayCircleIcon } from "@heroicons/react/20/solid";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PlayLink from "./playLink";
 
 function CombinationLine({ units }: { units: ISelectedUnit[] }) {
@@ -17,16 +17,30 @@ function CombinationLine({ units }: { units: ISelectedUnit[] }) {
 }
 
 type CombinationProps = {
+    open: boolean,
     units: ISelectedUnit[]
+    onClose: () => void
 }
 
-const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProps>(({ units }, ref) => {
+const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProps>(({ open, units, onClose }, ref) => {
     const [minPV, setMinPv] = useState(249)
     const [maxPV, setMaxPv] = useState(250)
+    const [combinations, setCombinations] = useState<ISelectedUnit[][]|null>(null)
+
+    useEffect(
+        () => {
+            console.log(`Firing: ${open}`)
+            if (open) {
+                console.log('Generating!')
+                setCombinations(generateSubsets(units, minPV, maxPV))
+            }
+        },
+        [ref, units, open]
+    )
 
     return (
         //items-center text-center overflow-scroll 
-        <dialog id="dlg_combinations" className="modal fixed z-10 text-xs" ref={ref}>
+        <dialog id="dlg_combinations" className="modal fixed z-10 text-xs" ref={ref} onClose={()=>onClose()}>
             <div className="modal-box w-full max-w-full lg:w-3/4 lg:max-w-3/4 h-full p-2">
                 <div className="modal-action my-0 flex text-center items-center">
                     <span className="flex-1 text-center items-center">From: <input type="number" className="flex-1 w-1/8" value={minPV} onChange={(e) => setMinPv(e.target.valueAsNumber)} /></span>
@@ -35,11 +49,9 @@ const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProp
                         <button className="border border-solid px-1 border-red-500 rounded-md h-5 w-5">X</button>
                     </form>
                 </div>
-
-                {
-                    generateSubsets(units, minPV, maxPV).map((line, idx) => (<CombinationLine key={idx} units={line} />))
+                {   
+                    combinations?.map((line, idx) => (<CombinationLine key={idx} units={line} />)) || <div className="w-full h-full items-center"><div>'Generating...'</div></div>
                 }
-
             </div>
         </dialog>
     )
@@ -47,12 +59,17 @@ const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProp
 )
 RefCombinationsPanel.displayName = "CombinationsPanel"
 
-export default function Combinations({ units }: CombinationProps) {
+export default function Combinations({ units }: {units: ISelectedUnit[]}) {
+    const [isOpen, setOpen] = useState(false)
     const panelRef = useRef<HTMLDialogElement>(null)
+    function onOpen() {
+        panelRef?.current && panelRef.current.showModal()
+        setOpen(true)
+    }
     return (
         <>
-            <button className="text-center" onClick={() => panelRef?.current && panelRef.current.showModal()}>Generate Possible Sublists</button>
-            <RefCombinationsPanel units={units} ref={panelRef} />
+            <button className="text-center" onClick={() => onOpen()}>Generate Possible Sublists</button>
+            <RefCombinationsPanel open={isOpen} units={units} ref={panelRef} onClose={() => setOpen(false)}/>
         </>
     )
 }

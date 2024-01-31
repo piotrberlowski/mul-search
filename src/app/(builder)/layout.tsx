@@ -37,7 +37,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className}`}>
         <div className='max-w-screen-lg mx-auto items-center bg-inherit translate-y-0'>
           <Header/>
           {children}

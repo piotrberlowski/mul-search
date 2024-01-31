@@ -29,6 +29,7 @@
 }
 
 body {
+  min-height: 100lvh;
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
       to bottom,
@@ -38,7 +39,7 @@ body {
     rgb(var(--background-start-rgb));
 }
 
-select, input {
+select, input[type="text"] {
   color: rgb(var(--input-foreground-rgb));
   background-color: rgb(var(--input-background-rgb));
   border: 1px solid var(--input-border-color);
