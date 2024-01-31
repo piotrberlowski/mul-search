@@ -39,7 +39,7 @@ body {
     rgb(var(--background-start-rgb));
 }
 
-select, input[type="text"] {
+select, input[type="text"], input[type="submit"] {
   color: rgb(var(--input-foreground-rgb));
   background-color: rgb(var(--input-background-rgb));
   border: 1px solid var(--input-border-color);
@@ -67,7 +67,6 @@ button {
   margin-right: auto;
   width: 100%;
 }
-
 
 a {
   color: var(--link-color);
