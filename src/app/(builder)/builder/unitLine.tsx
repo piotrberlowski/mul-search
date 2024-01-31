@@ -1,5 +1,8 @@
 import { IUnit } from "@/api/unitListApi"
 import { SearchResultsController, useSearchResultsContext } from "./searchResultsController"
+import { Sort } from "./listFilters"
+import { useState } from "react"
+import { BarsArrowDownIcon, BarsArrowUpIcon } from "@heroicons/react/16/solid"
 
 export const EMPTY_UNIT = {
     Id: 0,
@@ -36,30 +39,60 @@ function normalizeMove(move: string) {
     return normalizedSpeed + normalizedType
 }
 
+function compareDamage(a: IUnit, b: IUnit) {
+    const aDmg = a.BFDamageShort + a.BFDamageMedium + a.BFDamageLong
+    const bDmg = b.BFDamageShort + b.BFDamageMedium + b.BFDamageLong
+    let comparison = aDmg - bDmg
+    return (comparison == 0) ? a.BFDamageMedium - b.BFDamageMedium : comparison
+}
+
 export const UnitComparators: Record<string, comparator> = {
     Name: (a, b) => a.Name.localeCompare(b.Name),
     BFPointValue: (a, b) => a.BFPointValue - b.BFPointValue,
+    BFRole: (a:IUnit, b:IUnit) => a.Role.Name.localeCompare(b.Role.Name),
     BFMove: (a, b) => {
         const movA = a.BFMove
         const movB = b.BFMove
         const order = normalizeMove(movA).localeCompare(normalizeMove(movB))
         return (order != 0) ? order : movA.length - movB.length
     },
-    SyntHP: (a, b) => a.BFStructure + a.BFArmor - b.BFStructure - b.BFArmor
+    SynthDmg: (a:IUnit, b:IUnit) => compareDamage(a, b),
+    SynthHP: (a, b) => a.BFStructure + a.BFArmor - b.BFStructure - b.BFArmor,
 }
 
+function SortHeader({ sortId, currentSort, onSort, children, className }: { sortId: string, currentSort: Sort, onSort: (newSort: Sort) => void, children: React.ReactNode, className?: string }) {
+    const isSelected = currentSort.column == sortId
+    const strokeClass = isSelected ? 'stroke-red-600' : ''
+    const asc = !isSelected || currentSort.order > 0
+    return (
+        <div className={`flex ${className} mx-auto text-center` }>
+            <div className="flex-none max-w-fit">{children}</div>
+            <button className="bg-inherit border-none flex-none max-w-fit" onClick={() => onSort({ column: sortId, order: (isSelected) ? currentSort.order * -1 : 1 })}>
+                <BarsArrowUpIcon className={`h-4 w-4 max-w-4 max-h-4 noresize ${strokeClass} ${asc ? '' : 'hidden'}`} />
+                <BarsArrowDownIcon className={`h-4 w-4 noresize ${strokeClass} ${asc ? 'hidden' : ''}`} />
+            </button>
+        </div>
+    )
+}
 
-export function UnitHeader() {
+export function UnitHeader({ initial, onSort }: { initial: Sort, onSort: (newSort: Sort) => void }) {
+    const [sortState, setSortState] = useState(initial)
+
+    function handleSort(sort: Sort) {
+        setSortState(sort)
+        onSort(sort)
+    }
+
     return (
         <div className="font-bold grid grid-cols-8 md:grid-cols-12 my-0 text-xs md:text-sm text-center items-center w-full">
-            <div className="md:col-span-2 text-left">
+            <SortHeader sortId="Name" currentSort={sortState} onSort={handleSort} className="md:col-span-2 text-left">
                 Name
-            </div>
-            <div className="md:col-start-4">PV</div>
-            <div>Role</div>
-            <div>Move</div>
-            <div>Damage<br />(S/M/L)</div>
-            <div>HP<br />(A + S)</div>
+            </SortHeader>
+            <SortHeader sortId="BFPointValue" currentSort={sortState} onSort={handleSort} className="md:col-start-4">PV</SortHeader>
+            <SortHeader sortId="BFRole" currentSort={sortState} onSort={handleSort} >Role</SortHeader>
+            <SortHeader sortId="BFMove" currentSort={sortState} onSort={handleSort} >Move</SortHeader>
+            <SortHeader sortId="SynthDmg" currentSort={sortState} onSort={handleSort} >Damage<br />(S/M/L)</SortHeader>
+            <SortHeader sortId="SynthHP" currentSort={sortState} onSort={handleSort} >HP<br />(A + S)</SortHeader>
             <div className="md:col-span-3 text-left">Abilities...</div>
         </div>
     )

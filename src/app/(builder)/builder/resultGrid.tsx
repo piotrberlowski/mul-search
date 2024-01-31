@@ -1,74 +1,15 @@
 'use client'
 
+import { IUnit, UNIT_TYPES } from '@/api/unitListApi'
+import { XMarkIcon } from '@heroicons/react/24/outline'
 import { ReadonlyURLSearchParams } from 'next/navigation'
 import { useReducer, useState } from 'react'
 import useSWR from 'swr'
-import { Factions, eraMap, MASTER_UNIT_LIST } from '../data'
-import SearchInputPanel from '../searchInputPanel'
+import { Factions, MASTER_UNIT_LIST, eraMap } from '../data'
+import { SearchResultsController, useSearchResultsContext } from './searchResultsController'
 import './unitLine'
 import UnitLine, { UnitComparators, UnitHeader } from './unitLine'
-import { SearchResultsController, useSearchResultsContext } from './searchResultsController'
-import { IUnit } from '@/api/unitListApi'
-
-function matchesIfFilter<T>(filter: T | undefined, predicate: (filter: T) => boolean) {
-    if (filter) {
-        return predicate(filter)
-    }
-    return true
-}
-
-function includesIfFilter(filter: string | undefined, value: string) {
-    return matchesIfFilter(filter, (f) => (value) ? value.toLowerCase().includes(f.toLowerCase()) : false)
-}
-
-type Sort = {
-    column: string,
-    order: number,
-}
-
-type FilterFields = {
-    name?: string
-    abilities?: string
-    minPV?: number
-    maxPV?: number
-    dmg?: string
-    move?: string
-}
-
-class Filter {
-
-    fields: FilterFields
-
-    constructor(
-        overrides?: FilterFields
-    ) {
-        this.fields = {}
-        if (overrides) {
-            this.fields = { ...overrides }
-        }
-    }
-
-    public matches(unit: IUnit) {
-        return includesIfFilter(this.fields.name, unit.Name)
-            && includesIfFilter(this.fields.abilities, unit.BFAbilities)
-            && includesIfFilter(this.fields.move, unit.BFMove)
-            && matchesIfFilter(this.fields.minPV, (f) => unit.BFPointValue >= f)
-            && matchesIfFilter(this.fields.maxPV, (f) => unit.BFPointValue <= f)
-            && includesIfFilter(this.fields.dmg, `${unit.BFDamageShort}/${unit.BFDamageMedium}/${unit.BFDamageLong}`)
-    }
-
-    public withOverrides(overrides: FilterFields) {
-        return new Filter({
-            ...this.fields,
-            ...overrides
-        })
-    }
-}
-
-type FilterAction = {
-    type: string,
-    filter: string | undefined,
-}
+import { FilterAction, Sort, Filter } from './listFilters'
 
 export class MULSearchParams {
     public canSearch: boolean
@@ -90,7 +31,7 @@ export class MULSearchParams {
         this.general = general
     }
 
-    public toUrl(unitType?: string) {
+    public toUrl(unitType?: number) {
         const target = new URL("/Unit/QuickList", MASTER_UNIT_LIST)
 
         target.searchParams.append('minPV', '1')
@@ -99,7 +40,7 @@ export class MULSearchParams {
         target.searchParams.append('AvailableEras', this.era ?? '')
 
         if (unitType) {
-            target.searchParams.append('Types', unitType)
+            target.searchParams.append('Types', `${unitType}`)
         }
 
         if (this.general) {
@@ -140,7 +81,7 @@ function useSearch(url: string): IUnit[] | string {
     return data.Units
 }
 
-function QuickFilter({ label, action, className, filterCallback }: { label: string, action: string, className?:string, filterCallback: (act: FilterAction) => void }) {
+function QuickFilter({ label, action, className, filterCallback, tooltip }: { label: string, action: string, className?: string, filterCallback: (act: FilterAction) => void, tooltip?: string }) {
     const [value, setValue] = useState<string | undefined>('')
 
     function filter(v: string | undefined) {
@@ -153,53 +94,11 @@ function QuickFilter({ label, action, className, filterCallback }: { label: stri
 
     return (
         <>
-            <div className={`flex flex-1 ${className} text-xs md:text-base`}>
-                <div className="flex-none mr-1">{label}:</div>
-                <div className="flex-1 h-full">
-                    <input className="w-full h-full" type='text' value={value} onChange={e => filter(e.target.value)} />
-                </div>
-                <div className="border border-solid rounded-md flex-none w-5" onClick={e => filter(undefined)}>X</div>
+            <div className={`flex flex-1 ${className} text-xs md:text-base relative`}>
+                <input type="text" placeholder={label} value={value} className="input input-bordered w-full input-xs" onChange={e => filter(e.target.value)} title={tooltip} alt={tooltip} />
+                <button className="btn btn-square btn-outline absolute right-0 btn-xs" onClick={e => filter(undefined)}><XMarkIcon className='min-h-4 min-w-4 h-4 w-4 shrink-0 resize-none' /></button>
             </div>
         </>
-    )
-}
-
-function SortOrder({ initial, className, sortCallback }: { initial: Sort, className?: string, sortCallback: (sort: Sort) => void }) {
-    const [sortState, setSortState] = useState(initial)
-
-    const sortText = (sortState.order > 0) ? "\u21D1" : "\u21D3"
-
-    return (
-        <>
-            <div className={`flex flex-1 text-xs md:text-base ${className}`}>
-                Sort:
-                <select className="flex-1 border border-solid border-black dark:border-white ml-1 h-full" value={sortState.column} onChange={e => {
-                    const newState = {
-                        column: e.target.value,
-                        order: sortState.order,
-                    }
-                    setSortState(newState)
-                    sortCallback(newState)
-                }
-                }>
-                    <option value="Name">Name</option>
-                    <option value="BFPointValue">PV</option>
-                    <option value="BFMove">Move</option>
-                    <option value="SyntHP">A+S</option>
-                </select>
-                <div className="flex-none border border-solid border-black dark:border-white px-2 rounded-md" onClick={e => {
-                    const newState = {
-                        column: sortState.column,
-                        order: -sortState.order,
-                    }
-                    setSortState(newState)
-                    sortCallback(newState)
-                }
-                }>
-                    {sortText}
-                </div>
-            </div>
-        </> 
     )
 }
 
@@ -240,17 +139,16 @@ function FilteredTable({ data }: { data: IUnit[] }) {
     return (
         <div className="bg-inherit">
             <div className="sticky z-0 top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
-                <div className="w-full flex flex-wrap gap-x-2">
+                <div className="w-full flex flex-wrap gap-x-2 gap-y-1">
                     <QuickFilter label="Unit Name" className="basis-full md:basis-5/12" action="name" filterCallback={setFilter} />
-                    <QuickFilter label="Abilities" className="basis-2/5 md:basis-1/4" action="abilities" filterCallback={setFilter} />
-                    <QuickFilter label="Dmg" className="basis-1/5 md:basis-1/4" action="dmg" filterCallback={setFilter} />
+                    <QuickFilter label="Abilities" className="basis-2/5 md:basis-1/4" action="abilities" filterCallback={setFilter} tooltip='Use comma to search for multiple abilities: "AM, MEC"' />
+                    <QuickFilter label="Dmg" className="basis-1/5 md:basis-1/4" action="dmg" filterCallback={setFilter} tooltip='"//N" => N at long range, "/5" => 5 at medium, "5/" => 5 at short' />
                     <QuickFilter label="Move" className="basis-1/5 md:basis-1/4" action="move" filterCallback={setFilter} />
                     <QuickFilter label="MinPV" className="basis-1/5 md:basis-1/12" action="min-pv" filterCallback={setFilter} />
                     <QuickFilter label="MaxPV" className="basis-1/5 md:basis-1/12" action="max-pv" filterCallback={setFilter} />
-                    <SortOrder initial={sort} className="grow-0 basis-2/5 md:basis-1/4" sortCallback={setSort} />
                 </div>
                 <div className="mx-5 text-sm">
-                    <UnitHeader />
+                    <UnitHeader initial={sort} onSort={setSort}/>
                 </div>
             </div>
             <div className="mx-5 text-sm mb-2">
@@ -264,31 +162,38 @@ function FilteredTable({ data }: { data: IUnit[] }) {
     )
 }
 
-
-export default function ResultGrid({ search }: { search: MULSearchParams }) {
-    const controller: SearchResultsController = useSearchResultsContext()
-    const [unitType, setUnitType] = useState("18")
-    const data = useSearch(search.toUrl(unitType))
-
+function ResultTab({ search, typeId }: { search: MULSearchParams, typeId: number }) {
+    const data = useSearch(search.toUrl(typeId))
     if (typeof (data) === "string") {
         return data
     }
+    return (
+        <FilteredTable data={data} />
+    )
+}
+
+export default function ResultGrid({ search }: { search: MULSearchParams }) {
+    const controller: SearchResultsController = useSearchResultsContext()
 
     return (
         <>
             <div className="flex flex-wrap-reverse w-full">
-                <SearchInputPanel title="Unit Type" className="flex-1/4 w-1/4">
-                    <select name="unitType" className='w-full' value={unitType} onChange={e => setUnitType(e.target.value)}>
-                        <option value="18">Battle Mech</option>
-                        <option value="19">Vehicle</option>
-                        <option value="21">Infantry</option>
-                    </select>
-                </SearchInputPanel>
-                <div className="flex-3/4 flex justify-items-center items-center text-sm w-8/12 mx-auto my-2 min-h-max align-middle border border-solid border-red-500">
-                    <div className="mx-auto text-center">Building: {controller.getListConstraints()}</div>
+                <div className="flex-3/4 flex justify-items-center items-center text-xs md:text-sm w-full md:w-8/12 mx-auto my-2 min-h-max align-middle border border-solid border-red-500">
+                    <div className="mx-auto text-center">{controller.getListConstraints()}</div>
                 </div>
             </div>
-            <FilteredTable key={unitType} data={data} />
+            <div role="tablist" className="tabs tabs-lifted tabs-xs md:tabs-md p-1">
+                {
+                    UNIT_TYPES.map((t, idx) => (
+                        <>
+                            <input key={t.Id} type="radio" name="unit_types" role="tab" className="tab text-xs min-w-[65px] md:text-base md:min-w-max" aria-label={t.Name} defaultChecked={idx == 0} />
+                            <div key={t.Name} role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-md p-2">
+                                <ResultTab search={search} typeId={t.Id} />
+                            </div>
+                        </>
+                    ))
+                }
+            </div>
         </>
     )
 

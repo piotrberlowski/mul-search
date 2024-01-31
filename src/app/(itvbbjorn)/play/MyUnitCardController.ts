@@ -1,4 +1,4 @@
-import { Card, Counter } from "@/api/card";
+import { Card, Counter, processMoves } from "@/api/card";
 
 function moveToTMM(moveDistance: number): number {
     switch (true) {
@@ -62,23 +62,13 @@ export class UnitCardController {
     }
     
     private processMoves<T>(consumer: (v: number, t?: string) => T): T[] {
-        const originalParts = this.card.BFMove.split('/');
         const mpHits = this.value("cr_mp")
-
-        return originalParts.map(part => {
-            const endingCharMatch = part.match(/[a-zA-Z]$/);
-            const hasEndingChar = endingCharMatch && endingCharMatch.length > 0;
-            const endingChar = hasEndingChar ? endingCharMatch[0] : undefined;
-
-            const numberMatch = part.match(/\d+/g);
-            let numberValue = numberMatch ? parseInt(numberMatch[0]) : 0;
-
-            // half MV for critical hits
+        return processMoves(this.card.BFMove, consumer, (v:number)=>{
+            let numberValue = v
             for (let i = 0; i < mpHits; i++) {
                 numberValue = Math.round(numberValue / 2);
             }
-
-            return consumer(numberValue, endingChar)
+            return numberValue
         })
     };
 

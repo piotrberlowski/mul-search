@@ -9,6 +9,7 @@ export interface IRole {
 }
 
 export interface IType {
+    Id: number,
     Name: string,
 }
 
@@ -198,3 +199,25 @@ export function exportTTSString(name: string, units: ISelectedUnit[]) {
     const ttsUnits = units.map(u => `{${u.Id},${u.skill}}`).join(',')
     storeTTSString(`{${ttsUnits}}`)
 }
+export const UNIT_TYPES: IType[] = [
+    {
+        Id: 18,
+        Name: "Battle Mech",
+    },
+    {
+        Id: 19,
+        Name: "Combat Vehicle",
+    },
+    {
+        Id: 21,
+        Name: "Infantry"
+    },
+    {
+        Id: 20,
+        Name: "Industrial Mech"
+    },
+    {
+        Id: 24,
+        Name: "Support",
+    }
+]

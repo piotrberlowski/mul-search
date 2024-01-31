@@ -18,3 +18,22 @@ export interface Card extends IUnit {
     MyBorderColor?: string;
     counters?: Counters;
 }
+
+export function processMoves<T>(move: string, consumer: (num: number, typ?: string) => T, modifier?: (v:number) => number): T[] {
+    const originalParts = move.split('/');
+
+    return originalParts.map(part => {
+        const endingCharMatch = part.match(/[a-zA-Z]$/);
+        const hasEndingChar = endingCharMatch && endingCharMatch.length > 0;
+        const endingChar = hasEndingChar ? endingCharMatch[0] : undefined;
+
+        const numberMatch = part.match(/\d+/g);
+        let numberValue = numberMatch ? parseInt(numberMatch[0]) : 0;
+
+        if (modifier) {
+            numberValue = modifier(numberValue)
+        }
+
+        return consumer(numberValue, endingChar)
+    })
+}
