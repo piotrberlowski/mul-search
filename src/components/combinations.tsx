@@ -35,7 +35,7 @@ const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProp
                 setCombinations(generateSubsets(units, minPV, maxPV))
             }
         },
-        [ref, units, open]
+        [ref, units, open, minPV, maxPV]
     )
 
     return (
@@ -50,7 +50,7 @@ const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProp
                     </form>
                 </div>
                 {   
-                    combinations?.map((line, idx) => (<CombinationLine key={idx} units={line} />)) || <div className="w-full h-full items-center"><div>'Generating...'</div></div>
+                    combinations?.map((line, idx) => (<CombinationLine key={idx} units={line} />)) || <div className="w-full h-full items-center"><div>Generating...</div></div>
                 }
             </div>
         </dialog>
