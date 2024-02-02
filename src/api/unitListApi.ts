@@ -32,6 +32,7 @@ export interface IUnit {
     BFSize: number,
     BFThreshold: number,
     BFType: string,
+    Tonnage: number,
 }
 
 export type AddUnitCallback = (unit: IUnit) => void

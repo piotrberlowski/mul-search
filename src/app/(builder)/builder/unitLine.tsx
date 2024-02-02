@@ -28,7 +28,8 @@ export const EMPTY_UNIT = {
     BFOverheat: 0,
     BFSize: 0,
     BFThreshold: 0,
-    BFType: "Empty"
+    BFType: "Empty",
+    Tonnage: 0,
 }
 
 type comparator = (a: IUnit, b: IUnit) => number

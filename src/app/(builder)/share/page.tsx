@@ -1,5 +1,5 @@
 import {Suspense} from "react"
-import VisualList from "./list"
+import VisualList from "./visualList"
 import Link from "next/link"
 
 function ListFallback() {
