@@ -4,6 +4,8 @@ export type MulUnit = {
     name: string,
     id: number,
     skill: number,
+    lance: string,
+    ordinal: number,
 }
 
 type ParsedMulList = {
@@ -12,8 +14,17 @@ type ParsedMulList = {
     units: MulUnit[]
 }
 
+function safeLocaleCompare(a?: string, b?:string) {
+    const safeA = a||''
+    const safeB = b||''
+    return safeA.localeCompare(safeB)
+}
+
 export function compareSelectedUnits(a: ISelectedUnit, b:ISelectedUnit):number {
-    let val = currentPV(b) - currentPV(a)
+    let val = safeLocaleCompare(a.lance, b.lance)
+    if (0 == val) {
+        val = currentPV(b) - currentPV(a)
+    }
     if (0 == val) {
         val = b.BFSize - a.BFSize
     }
@@ -24,7 +35,7 @@ export function compareSelectedUnits(a: ISelectedUnit, b:ISelectedUnit):number {
 }
 
 export function exportShare(name:string, total:number, units: ISelectedUnit[]) {
-    const unitsString = [...units].sort(compareSelectedUnits).map(u => `${u.Id}:${u.skill}:${u.Name.trim()}`).join(',')
+    const unitsString = [...units].sort(compareSelectedUnits).map(u => [u.Id, u.skill, u.Name, u.lance || ''].join(':')).join(',')
     return `${name};${total};${unitsString}`
 }
 
@@ -39,12 +50,14 @@ export function parseShare(importString: string): ParsedMulList {
     const [name, total, unitsString] = importString.split(';')
     const units = unitsString.split(',')
         .filter(s=>s.indexOf(':')>0)
-        .map(s=> {
-            const [id, skill, name] = s.split(':')
+        .map((s, idx) => {
+            const [id, skill, name, lance] = s.split(':')
             return {
                 id: parseInt(id),
                 skill: parseInt(skill) || 4,
-                name: name
+                name: name,
+                lance: lance || '',
+                ordinal: idx,
             }
         })
     return {

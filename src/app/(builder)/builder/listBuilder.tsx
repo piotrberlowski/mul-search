@@ -1,119 +1,103 @@
 'use client'
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, currentPV, loadByName, loadLists, totalPV } from '../../../api/unitListApi';
+import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, groupByLance, loadByName, loadLists, totalPV } from '../../../api/unitListApi';
 import ShareLink from '../share/shareLink';
 import { IUnit } from '../../../api/unitListApi';
 import { ChangeListener, ListBuilderController } from './listBuilderController';
 import { SearchResultsController, useSearchResultsContext } from './searchResultsController';
-import Combinations from '../../../components/combinations';
 import PlayLink from '../../../components/playLink';
-import { Ubuntu } from 'next/font/google';
-
-function ListLine({ unit, controller }: { unit: ISelectedUnit, controller: ListBuilderController }) {
-    const [skill, setSkill] = useState(unit.skill)
-    const [checked, setChecked] = useState(false)
-
-    function skillOnSelect(newSkill: string) {
-        const nSkill = parseInt(newSkill)
-        unit.skill = (nSkill)
-        setSkill(nSkill)
-        controller.updateTotal()
-    }
-
-    return (
-        <div className="grid grid-cols-8 md:grid-cols-12 my-0 border border-solid border-gray-400 dark:border-gray-800 text-xs lg:text-sm text-center items-center">
-            <input type="checkbox" className="toggle toggle-xs toggle-warning max-md:hidden" checked={checked} onChange={() => {
-                controller.setSelected(unit, !checked)
-                setChecked(!checked)
-            }}/>
-            <div id={"line-" + unit.ordinal} className="col-span-1 md:col-span-2 text-left">
-                <a href={"http://www.masterunitlist.info/Unit/Details/" + unit.Id} target="_blank">{unit.Name}</a>
-            </div>
-            <div>
-                <select value={unit.skill} onChange={e => skillOnSelect(e.target.value)}>
-                    {
-                        [...Array(8).keys()].map(
-                            num => {
-                                return (
-                                    <option key={num} value={num}>{num}</option>
-                                )
-                            }
-                        )
-                    }
-                </select>
-            </div>
-            <div>{currentPV(unit)}</div>
-            <div>{unit.Role.Name}</div>
-            <div>{unit.BFMove}</div>
-            <div>{unit.BFDamageShort}/{unit.BFDamageMedium}/{unit.BFDamageLong}</div>
-            <div>{unit.BFArmor} + {unit.BFStructure}</div>
-            <div className="hidden md:block text-xs truncate col-span-2 text-left">{unit.BFAbilities}</div>
-            <button className="block text-center font-bold text-xs" onClick={e => { controller.removeUnit(unit.ordinal) }}>
-                -
-            </button>
-        </div>
-    )
-}
+import { ListLine } from './ListLine';
+import Combinations from '@/components/combinations';
+import LoadDialog from './loadDialog';
 
 function BuilderHeader({ controller, onClose }: { controller: ListBuilderController, onClose: () => void }) {
-    const [selected, setSelected] = useState<ISelectedUnit[]>([])
     const units = controller.getUnits()
     const constraints = controller.getConstraints()
-    controller.setSelectionHandler(setSelected)
     return (
-        <div className="w-full flex-none">
-            <div className="text-center">{constraints}</div>
-            <div className="flex">
-                <div className="text-center flex-1">Units: {units.length}</div>
-                <div className="text-center flex-1">PV: {totalPV(units)} (Selected: {totalPV(selected)})</div>
+        <>
+            <div className="w-full text-center font-bold max-md:text-xs mx-auto">{constraints}</div>
+            <div className="w-full flex">
+                <div className="w-full flex">
+                    <div className="text-center flex-1">Units: {units.length}</div>
+                    <div className="text-center flex-1">PV: {totalPV(units)}</div>
+                </div>
+                <button className="absolute right-0 top-0 border border-solid px-1 border-red-500 w-5" onClick={e => onClose()}>X</button>
             </div>
-            <button className="absolute right-0 top-0 border border-solid px-1 border-red-500 w-5" onClick={e => onClose()}>X</button>
-        </div>
+        </>
     )
 }
 
 function BuilderFooter({
+    units,
+    total,
+    constraints,
     listName,
     controller,
-    setName,
 }: {
+    units: ISelectedUnit[],
+    total: number,
+    constraints: string,
     listName: string,
     controller: ListBuilderController,
-    setName: ChangeListener<string>
 }) {
-    const [selectedList, setSelectedList] = useState<string>(listName)
     return (
-        <div className="bg-inherit grid grid-cols-4 items-center text-center w-full text-xs md:text-sm lg:text-base">
-            <button className="h-full" onClick={e => controller.clear()}>Clear</button>
-            <button className="h-full" onClick={e => controller.store(listName)
-            }>Save</button>
-            <div className="h-full">
-                <div className="flex h-1/2">
-                    <span className="flex-none mx-1 h-1/2">Pick:</span>
-                    <select className="inline flex-1 overflow-hidden h-full" value={selectedList} onChange={
-                        e => {
-                            setSelectedList(e.target.value)
-                            setName(e.target.value)
-                        }
-                    }>
-                        <option key="" value=""></option>
-                        {
-                            controller.getStoredLists().map(name => (<option key={name} value={name}>{name}</option>))
-                        }
-                    </select>
-                </div>
-                <button className="h-1/2 w-full" onClick={e => controller.load(listName)}>Load</button>
+        <div className="bg-inherit grid grid-cols-3 items-center text-center w-full text-xs md:text-sm lg:text-base">
+            <div className="dropdown dropdown-top dropdown-start h-full text-center items-center">
+                <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Play</div></div>
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                    <li><Combinations units={units} className='btn text-center w-full btn-sm'>Sub-lists</Combinations></li>
+                    <li><PlayLink units={units} className='btn text-center w-full btn-sm'>Play View</PlayLink></li>
+                    <li><ShareLink constraints={constraints} name={listName} total={total} units={units} className='btn text-center w-full btn-sm' /></li>
+                </ul>
             </div>
-            <div className="h-full">
-                <button className="w-full" onClick={e => controller.exportExternal(listName, "jeff")}>Export to Jeff&apos;s Tools</button>
-                <Link href="/tts/" target="_blank" className="button-link w-full block" onClick={e => controller.exportExternal(listName, "tts")}>Export to TTS</Link>
+            <div className="dropdown dropdown-top dropdown-end h-full text-center items-center">
+                <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Edit</div></div>
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                    <li><button className="btn text-center w-full btn-sm" onClick={e => controller.clear()}>Clear</button></li>
+                    <li><button className="btn text-center w-full btn-sm" onClick={e => controller.store(listName)}>Save</button></li>
+                    <li><LoadDialog controller={controller} name={listName}>Load</LoadDialog></li>
+                </ul>
+            </div>
+            <div className="dropdown dropdown-top dropdown-end h-full text-center items-center">
+                <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Export</div></div>
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                    <li><button className="w-full btn text-center btn-sm" onClick={e => controller.exportExternal(listName, "jeff")}>Jeff&apos;s Tools</button></li>
+                    <li><Link href="/tts/" target="_blank" className="btn text-center w-full btn-sm" onClick={e => controller.exportExternal(listName, "tts")}>TTS</Link></li>
+                </ul>
             </div>
         </div>
     )
 
 }
+
+function UnitsHeader({ lid, units }: { lid: string, units: ISelectedUnit[] }) {
+    return (
+        <div className="flex text-sm lg:text-base">
+            <div className="text-center flex-1">Units: {units.length}</div>
+            <div className="text-center flex-1 font-bold">{lid}</div>
+            <div className="text-center flex-1">PV: {totalPV(units)}</div>
+        </div>
+    )
+}
+
+function Lines({ save, controller }: { save: Save, controller: ListBuilderController }) {
+    const lances = groupByLance(save.units)
+
+    return (
+        <div className="w-full flex-1 overflow-auto overscroll-none">
+            {
+                Array.from(lances).flatMap(([lid, units]) => [
+                    <UnitsHeader key={`lance-header-${lid}`} lid={`Lance: ${lid || 'default'}`} units={units} />,
+                    ...units.map(u => <ListLine key={u.ordinal} unit={u} controller={controller} />)
+                ])
+            }
+        </div>
+    )
+}
+
+
 
 export default function ListBuilder({ defaultVisible }: { defaultVisible: boolean }) {
     const searchResultsController: SearchResultsController = useSearchResultsContext()
@@ -122,14 +106,13 @@ export default function ListBuilder({ defaultVisible }: { defaultVisible: boolea
     const [save, setSave] = useState<Save>(loadByName(name))
     const [total, setTotal] = useState(totalPV(save.units))
     const [storedLists, setStoredLists] = useState(loadLists())
-    const [selected, setSelected] = useState<ISelectedUnit[]>([])
 
     const controller = new ListBuilderController(
         save,
         searchResultsController.getListConstraints(),
         storedLists,
-        selected,
         setSave,
+        setName,
         setTotal,
         setStoredLists,
     )
@@ -159,27 +142,22 @@ export default function ListBuilder({ defaultVisible }: { defaultVisible: boolea
         if (visible) {
             return (
                 <>
-                    <div className="fixed bg-inherit inset-y-20 max-xl:inset-x-[1%] xl:inset-x-[10%] 2xl:inset-x-[20%] z-10 border border-red-500 items-center text-center flex flex-col">
+                    <div className="fixed bg-inherit inset-y-[1%] lg:inset-y-20 max-xl:inset-x-[1%] xl:inset-x-[10%] 2xl:inset-x-[20%] z-10 border border-red-500 items-center text-center flex flex-col">
                         <BuilderHeader controller={controller} onClose={() => setVisible(false)} />
                         <div className="flex-none w-full flex">
                             <span className="mr-1 flex-none">Name: </span>
                             <input className="inline flex-1 h-5 p-0 overflow-hidden" type='text' onChange={e => setName(e.target.value)} value={name} />
                         </div>
 
-                        <div className="w-full flex-1 overflow-auto overscroll-none">
-                            {save.units.map(u => <ListLine key={u.ordinal} unit={u} controller={controller} />)}
-                        </div>
+                        <Lines save={save} controller={controller} />
 
                         <div className="flex-none w-full bg-inherit grid grid-cols-1">
-                            <div className="bg-inherit grid grid-cols-1 md:grid-cols-3">
-                                <Combinations units={save.units}/>
-                                <PlayLink units={save.units} className='button-link w-full block'>Play This</PlayLink>
-                                <ShareLink constraints={searchResultsController.getListConstraints()} name={name} total={total} units={save.units} className='button-link w-full block'/>
-                            </div>
                             <BuilderFooter
+                                units={save.units}
+                                total={total}
+                                constraints={searchResultsController.getListConstraints()}
                                 listName={name}
-                                controller={controller}
-                                setName={setName} />
+                                controller={controller}/>
                         </div>
                     </div>
                 </>

@@ -1,7 +1,7 @@
 import { generateSubsets } from "@/api/subsets";
 import { ISelectedUnit, totalPV } from "@/api/unitListApi";
 import { PlayCircleIcon } from "@heroicons/react/20/solid";
-import React, { useEffect, useRef, useState } from "react";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 import PlayLink from "./playLink";
 
 function CombinationLine({ units }: { units: ISelectedUnit[] }) {
@@ -59,7 +59,7 @@ const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProp
 )
 RefCombinationsPanel.displayName = "CombinationsPanel"
 
-export default function Combinations({ units }: {units: ISelectedUnit[]}) {
+export default function Combinations({ units, children, className }: {units: ISelectedUnit[], children: ReactNode, className?: string}) {
     const [isOpen, setOpen] = useState(false)
     const panelRef = useRef<HTMLDialogElement>(null)
     function onOpen() {
@@ -68,7 +68,7 @@ export default function Combinations({ units }: {units: ISelectedUnit[]}) {
     }
     return (
         <>
-            <button className="text-center" onClick={() => onOpen()}>Generate Possible Sublists</button>
+            <button className={`text-center ${className}`} onClick={() => onOpen()}>{children}</button>
             <RefCombinationsPanel open={isOpen} units={units} ref={panelRef} onClose={() => setOpen(false)}/>
         </>
     )

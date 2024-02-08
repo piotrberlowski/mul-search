@@ -8,7 +8,7 @@ export default function ShareLink({constraints, name, total, units, className}:{
     params.set('constraints', constraints)
     return (
         <div className={className || "w-full text-center items-center border border-solid dark:border-white border-black"}>
-            <Link href={`/share/?${params.toString()}`} target="_blank">Show List</Link>
+            <Link href={`/share/?${params.toString()}`} target="_blank">Share/Print</Link>
         </div>
     )
 }

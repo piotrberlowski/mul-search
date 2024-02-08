@@ -4,6 +4,10 @@ const LOCAL_STORAGE_LIST_KEY_PREFIX = 'alphaStrikeList_'
 const LOCAL_STORAGE_CONSTRAINT_KEY_PREFIX = 'alphaStrikeList_constraint_'
 const LOCAL_STORAGE_TTS = 'alphaStrikeTTS'
 
+export interface ILanced {
+    lance?: string
+}
+
 export interface IRole {
     Name: string,
 }
@@ -42,10 +46,9 @@ export type Save = {
     constraints: string
 }
 
-export interface ISelectedUnit extends IUnit {
+export interface ISelectedUnit extends IUnit, ILanced {
     ordinal: number,
     skill: number,
-    extraState?: any,
 }
 
 export interface PvEntity {
@@ -154,12 +157,23 @@ export function compactOrdinals(units: ISelectedUnit[]) {
     units.forEach((u, idx) => u.ordinal = idx)
 }
 
+export function groupByLance<T extends ILanced>(units: T[]) {
+    return units.reduce((acc, value) => {
+        acc.get(value.lance || '')?.push(value) || acc.set(value.lance, [value]);
+        return acc;
+    }, new Map<string | undefined, T[]>());
+}
+
+function updateDefaultLance(units: ISelectedUnit[]) {
+    units.forEach(u => u.lance ||= '')
+}
+
 export function loadByName(name: string): Save {
     const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
     const result = localStorage.getItem(listKey)
     const units = JSON.parse(result || "[]")
     compactOrdinals(units)
-    
+    updateDefaultLance(units)
     const constraintKey = LOCAL_STORAGE_CONSTRAINT_KEY_PREFIX + name
     const constraints = localStorage.getItem(constraintKey) ?? "legacy"
 
