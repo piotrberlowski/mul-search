@@ -1,16 +1,15 @@
 'use client'
+import { useCombinations } from '@/components/combinations';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, groupByLance, loadByName, loadLists, totalPV } from '../../../api/unitListApi';
-import ShareLink from '../share/shareLink';
-import { IUnit } from '../../../api/unitListApi';
-import { ChangeListener, ListBuilderController } from './listBuilderController';
-import { SearchResultsController, useSearchResultsContext } from './searchResultsController';
+import { ISelectedUnit, IUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, groupByLance, loadByName, loadLists, totalPV } from '../../../api/unitListApi';
 import PlayLink from '../../../components/playLink';
+import ShareLink from '../share/shareLink';
 import { ListLine } from './ListLine';
-import Combinations from '@/components/combinations';
-import LoadDialog from './loadDialog';
+import { ListBuilderController } from './listBuilderController';
+import useLoadDialog from './loadDialog';
+import { SearchResultsController, useSearchResultsContext } from './searchResultsController';
 
 function BuilderHeader({ controller, onClose }: { controller: ListBuilderController, onClose: () => void }) {
     const units = controller.getUnits()
@@ -42,12 +41,16 @@ function BuilderFooter({
     listName: string,
     controller: ListBuilderController,
 }) {
+
+    const [cmbBtn, cmbDlg] = useCombinations(units, <>Sub-lists</>, 'btn text-center w-full btn-sm')
+    const [loadBtn, loadDlg] = useLoadDialog(listName, controller, (<>Load</>))
+
     return (
         <div className="bg-inherit grid grid-cols-3 items-center text-center w-full text-xs md:text-sm lg:text-base">
             <div className="dropdown dropdown-top dropdown-start h-full text-center items-center">
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Play</div></div>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                    <li><Combinations units={units} className='btn text-center w-full btn-sm'>Sub-lists</Combinations></li>
+                    <li>{cmbBtn}</li>
                     <li><PlayLink units={units} className='btn text-center w-full btn-sm'>Play View</PlayLink></li>
                     <li><ShareLink constraints={constraints} name={listName} total={total} units={units} className='btn text-center w-full btn-sm' /></li>
                 </ul>
@@ -57,7 +60,7 @@ function BuilderFooter({
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
                     <li><button className="btn text-center w-full btn-sm" onClick={e => controller.clear()}>Clear</button></li>
                     <li><button className="btn text-center w-full btn-sm" onClick={e => controller.store(listName)}>Save</button></li>
-                    <li><LoadDialog controller={controller} name={listName}>Load</LoadDialog></li>
+                    <li>{loadBtn}</li>
                 </ul>
             </div>
             <div className="dropdown dropdown-top dropdown-end h-full text-center items-center">
@@ -67,6 +70,8 @@ function BuilderFooter({
                     <li><Link href="/tts/" target="_blank" className="btn text-center w-full btn-sm" onClick={e => controller.exportExternal(listName, "tts")}>TTS</Link></li>
                 </ul>
             </div>
+            {loadDlg}
+            {cmbDlg}
         </div>
     )
 
@@ -157,7 +162,7 @@ export default function ListBuilder({ defaultVisible }: { defaultVisible: boolea
                                 total={total}
                                 constraints={searchResultsController.getListConstraints()}
                                 listName={name}
-                                controller={controller}/>
+                                controller={controller} />
                         </div>
                     </div>
                 </>

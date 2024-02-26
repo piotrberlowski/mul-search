@@ -1,66 +1,16 @@
 'use client'
 
 import { IUnit, UNIT_TYPES } from '@/api/unitListApi'
-import { ReadonlyURLSearchParams } from 'next/navigation'
 import React from 'react'
-import useSWR from 'swr'
-import { Factions, MASTER_UNIT_LIST, eraMap } from '../data'
+import { MULSearchParams } from '../data'
+import FilteredTable from './filteredTable'
 import { SearchResultsController, useSearchResultsContext } from './searchResultsController'
 import './unitLine'
-import FilteredTable from './filteredTable'
-
-export class MULSearchParams {
-    public canSearch: boolean
-    specific: string | null
-    era: string | null
-    general: string | null
-
-    constructor(
-        searchParams: ReadonlyURLSearchParams
-    ) {
-        const era = searchParams.get('era')
-        const specific = searchParams.get('specific')
-        const general = searchParams.get('general')
-
-        this.canSearch = !(!era || !specific)
-
-        this.specific = specific
-        this.era = era
-        this.general = general
-    }
-
-    public toUrl(unitType?: number) {
-        const target = new URL("/Unit/QuickList", MASTER_UNIT_LIST)
-
-        target.searchParams.append('minPV', '1')
-        target.searchParams.append('maxPV', '999')
-        target.searchParams.append('Factions', this.specific ?? '')
-        target.searchParams.append('AvailableEras', this.era ?? '')
-
-        if (unitType) {
-            target.searchParams.append('Types', `${unitType}`)
-        }
-
-        if (this.general) {
-            target.searchParams.append('Factions', this.general)
-        }
-
-        return target.href
-    }
-
-    public describe(factions: Factions) {
-        if (!this.specific || !this.era) {
-            return "[Unknown]"
-        }
-        return `[${factions.getFactionName(this.specific)} including ${factions.getGeneralName(this.general)} during ${eraMap.get(this.era)}]`
-    }
-}
-
-
+import useSWR from 'swr'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-function useSearch(url: string): IUnit[] | string {
+export function useSearch(url: string): IUnit[] | string {
 
     console.log(`Trying to fetch ${url}`)
 

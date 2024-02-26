@@ -2,10 +2,9 @@
 import dynamic from "next/dynamic";
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { Faction, Factions } from '../data';
-import { SearchResultsContext, SearchResultsController } from './searchResultsController';
+import { Faction, Factions, MULSearchParams } from '../data';
 import SearchResults from './searchResults';
-import { MULSearchParams } from './resultGrid';
+import { SearchResultsContext, SearchResultsController } from './searchResultsController';
 
 function Loading({ name }: { name: string }) {
     return (<div>{name} loading...</div>)

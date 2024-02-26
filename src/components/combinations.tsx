@@ -59,17 +59,26 @@ const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProp
 )
 RefCombinationsPanel.displayName = "CombinationsPanel"
 
-export default function Combinations({ units, children, className }: {units: ISelectedUnit[], children: ReactNode, className?: string}) {
+export function useCombinations(units: ISelectedUnit[], children?: ReactNode, className?: string) {
     const [isOpen, setOpen] = useState(false)
     const panelRef = useRef<HTMLDialogElement>(null)
     function onOpen() {
         panelRef?.current && panelRef.current.showModal()
         setOpen(true)
     }
+    return [
+            <button className={`text-center ${className}`} onClick={() => onOpen()} key="cmbBtn">{children}</button>,
+            <RefCombinationsPanel open={isOpen} units={units} ref={panelRef} onClose={() => setOpen(false)} key="cmbDlg"/>,
+    ]
+}
+
+
+export default function Combinations({ units, children, className }: {units: ISelectedUnit[], children: ReactNode, className?: string}) {
+    const [cmbBtn, cmbDlg] = useCombinations(units, children, className)
     return (
         <>
-            <button className={`text-center ${className}`} onClick={() => onOpen()}>{children}</button>
-            <RefCombinationsPanel open={isOpen} units={units} ref={panelRef} onClose={() => setOpen(false)}/>
+            {cmbBtn}
+            {cmbDlg}
         </>
     )
 }

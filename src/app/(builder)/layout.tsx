@@ -5,6 +5,10 @@ import { Inter } from 'next/font/google'
 import Link from 'next/link'
 import ScrollToTop from '@/components/scrollToTop'
 
+import getConfig from 'next/config';
+
+const { publicRuntimeConfig } = getConfig();
+
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -16,7 +20,7 @@ function Header() {
   return (
     <div className='flex flex-row h-12 min-h-full border border-black border-black dark:border-white border-solid rounded-md items-center align-bottom print:hidden'>
       <span className='basis-full inline-block sm:text-xl md:text-2xl text-center'>
-        <Link href="/">List Builder for AS</Link> powered by <Link href="http://masterunitlist.info" target="_blank">Master Unit List API</Link>
+        <Link href="/">List Builder for AS ({publicRuntimeConfig?.version})</Link> powered by <Link href="http://masterunitlist.info" target="_blank">Master Unit List API</Link>
       </span>
     </div>
   )

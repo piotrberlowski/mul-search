@@ -1,5 +1,5 @@
-import { Factions, fetchFactions } from './data'
 import { Suspense } from "react"
+import { fetchFactions } from './data'
 import SearchForm from './searchForm'
 
 function CsrFallback() {

@@ -1,5 +1,9 @@
+import { ReadonlyURLSearchParams } from "next/navigation"
+
+
 export const MASTER_UNIT_LIST = "https://masterunitlist.azurewebsites.net/"
 const BLANK = "Blank General List"
+const CONSTRAINTS_RE = /\[(.+) including (.+) during (.+)\]/
 
 export type Faction = {
     label: string,
@@ -65,6 +69,15 @@ export class Factions {
         return this.generals
     }
 
+    public getGeneralId(general: string) {
+        return this.generals.find(f => f.label == general)?.value
+    }
+
+    public getFactionId(specific: string) {
+        return this.factions.find(f => f.label == specific)?.value
+    }
+
+
     public getFactionName(id:string) {
         return this.factionNames.get(id)
     }
@@ -73,3 +86,75 @@ export class Factions {
         return this.generalNames.get(id ?? "")
     }
 }
+
+export class MULSearchParams {
+    public canSearch: boolean
+    specific: string | null
+    era: string | null
+    general: string | null
+
+    constructor(
+        searchParams: ReadonlyURLSearchParams
+    ) {
+        const era = searchParams.get('era')
+        const specific = searchParams.get('specific')
+        const general = searchParams.get('general')
+
+        this.canSearch = !(!era || !specific)
+
+        this.specific = specific
+        this.era = era
+        this.general = general
+    }
+
+    public toUrl(unitType?: number) {
+        const target = new URL("/Unit/QuickList", MASTER_UNIT_LIST)
+
+        target.searchParams.append('minPV', '1')
+        target.searchParams.append('maxPV', '999')
+        target.searchParams.append('Factions', this.specific ?? '')
+        target.searchParams.append('AvailableEras', this.era ?? '')
+
+        if (unitType) {
+            target.searchParams.append('Types', `${unitType}`)
+        }
+
+        if (this.general) {
+            target.searchParams.append('Factions', this.general)
+        }
+
+        return target.href
+    }
+
+    public describe(factions: Factions) {
+        if (!this.specific || !this.era) {
+            return "[Unknown]"
+        }
+        return `[${factions.getFactionName(this.specific)} including ${factions.getGeneralName(this.general)} during ${eraMap.get(this.era)}]`
+    }
+
+}
+
+export function parseConstraints(constraints: string, factions: Factions): ReadonlyURLSearchParams{
+    
+    const parsed = CONSTRAINTS_RE.exec(constraints)
+    if (parsed == null) {
+        console.log(`Couldn't parse constraints... ${constraints}`)
+        return new ReadonlyURLSearchParams(new URLSearchParams())
+    } 
+    const [_, specific, general, era] = parsed
+
+    const [eraId, _1] = eras.find(([_, name]) => name == era) || [null, null]
+    const specificId = factions.getFactionId(specific)
+    const generalId = factions.getGeneralId(general)
+
+    return new ReadonlyURLSearchParams(new URLSearchParams(
+        {
+            era: `${eraId || ""}`,
+            specific: `${specificId || ""}`,
+            general: `${generalId || ""}`,
+        }
+    ))
+}
+
+

@@ -1,4 +1,5 @@
 'use client'
+import Combinations from '@/components/combinations'
 import PlayLink from '@/components/playLink'
 import Head from 'next/head'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -6,10 +7,9 @@ import { useEffect, useState } from "react"
 import { MulUnit, parseShare } from '../../../api/shareApi'
 import { ISelectedUnit, IUnit, LOCAL_STORAGE_NAME_AUTOSAVE, loadLists, saveByName, saveLists } from '../../../api/unitListApi'
 import { EMPTY_UNIT } from '../builder/unitLine'
-import { MASTER_UNIT_LIST } from '../data'
-import SummaryTable from './summaryTable'
+import { Faction, Factions, MASTER_UNIT_LIST, parseConstraints } from '../data'
 import CardGallery from './cardGallery'
-import Combinations from '@/components/combinations'
+import SummaryTable from './summaryTable'
 
 
 function selectUnit(mulUnit: MulUnit, { Units }: { Units: IUnit[] }): ISelectedUnit {
@@ -37,7 +37,7 @@ async function fetchFromMul(queries: MulUnit[]) {
 
 }
 
-function ReadyList({ units, constraints, name, total }: { units: ISelectedUnit[], constraints: string, name: string, total: number }) {
+function ReadyList({ units, constraints, factions, name, total }: { units: ISelectedUnit[], constraints: string, name: string, total: number, factions: Faction[] }) {
     const router = useRouter()
 
     function saveList(tweak: boolean) {
@@ -47,7 +47,8 @@ function ReadyList({ units, constraints, name, total }: { units: ISelectedUnit[]
         }
         if (tweak) {
             saveByName(save, LOCAL_STORAGE_NAME_AUTOSAVE)
-            router.push("/?builder=_")
+            const params = parseConstraints(constraints, new Factions(factions))
+            router.push("/builder?"+params.toString())
         } else {
             const lists = loadLists()
             saveByName(save, name)
@@ -58,6 +59,7 @@ function ReadyList({ units, constraints, name, total }: { units: ISelectedUnit[]
         }
     }
 
+    
     return (
         <>
             <div className="w-full mx-auto flex print:hidden">
@@ -85,7 +87,7 @@ function ReadyList({ units, constraints, name, total }: { units: ISelectedUnit[]
 
 }
 
-export default function VisualList() {
+export default function VisualList({factions}:{factions: Faction[]}) {
     const [units, setUnits] = useState<ISelectedUnit[]>(new Array<ISelectedUnit>())
     const params = useSearchParams()
 
@@ -100,7 +102,7 @@ export default function VisualList() {
     let visualisation = <div className="w-full h-full text-center items-center justify-items-center"><span className="loading loading-dots loading-lg"></span></div>
 
     if (units.length == parsed.units.length) {
-        visualisation = <ReadyList units={units} constraints={constraints} name={parsed.name} total={parsed.total} />
+        visualisation = <ReadyList units={units} constraints={constraints} name={parsed.name} total={parsed.total} factions={factions} />
     }
 
     return (

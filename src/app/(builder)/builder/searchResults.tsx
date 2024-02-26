@@ -1,8 +1,9 @@
 'use client'
 
-import ResultGrid, { MULSearchParams } from './resultGrid'
+import ResultGrid from './resultGrid'
 import React from 'react'
 import Link from 'next/link'
+import { MULSearchParams } from '../data'
 
 export default function SearchResults({ search }: { search: MULSearchParams }) {
 
