@@ -18,15 +18,13 @@ function includesIfFilter(filter: string | undefined, value: string) {
 
 function matchAbilities(filter: string, abilities: string) {
     const queries = filter.split(new RegExp("[, ]+"));
-    const matches = queries.map((query) => {
+    const matches = queries.reduce((res, query) => {
         query = query.toLowerCase().trim();
-        const neg = query.startsWith("!");
-        const contains = abilities
-          ?.toLowerCase()
-          .includes(neg ? query.slice(1) : query);
-        return neg ? !contains : contains;
-    }).every((match) => match === true);
-    console.log(matches);
+        const cleanQ = query.replace(/^!/, '');
+        const neg = query != cleanQ;
+        const contains = abilities?.toLowerCase().includes(cleanQ);
+        return res && (neg !== contains);
+    }, true);
     return matches;
 }
 
