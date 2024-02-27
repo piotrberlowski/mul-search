@@ -16,11 +16,18 @@ function includesIfFilter(filter: string | undefined, value: string) {
     return matchesIfFilter(filter, (f) => (value) ? value.toLowerCase().includes(f.toLowerCase()) : false);
 }
 
-function matchAbilities(filter: string, value: string) {
+function matchAbilities(filter: string, abilities: string) {
     const queries = filter.split(new RegExp("[, ]+"));
-    return queries.reduce((res, q) => {
-        return value?.toLowerCase().includes(q.toLowerCase().trim());
-    }, true);
+    const matches = queries.map((query) => {
+        query = query.toLowerCase().trim();
+        const neg = query.startsWith("!");
+        const contains = abilities
+          ?.toLowerCase()
+          .includes(neg ? query.slice(1) : query);
+        return neg ? !contains : contains;
+    }).every((match) => match === true);
+    console.log(matches);
+    return matches;
 }
 
 function matchDmg(filter: string, unit: IUnit) {
