@@ -58,8 +58,14 @@ function BuilderFooter({
             <div className="dropdown dropdown-top dropdown-end h-full text-center items-center">
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Edit</div></div>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                    <li><button className="btn text-center w-full btn-sm" onClick={e => controller.clear()}>Clear</button></li>
-                    <li><button className="btn text-center w-full btn-sm" onClick={e => controller.store(listName)}>Save</button></li>
+                    <li><button className="btn text-center w-full btn-sm" onClick={e => {
+                        controller.clear()
+                        e?.currentTarget.blur()
+                    }}>Clear</button></li>
+                    <li><button className="btn text-center w-full btn-sm" onClick={e => {
+                        controller.store(listName)
+                        e?.currentTarget.blur()
+                    }}>Save</button></li>
                     <li>{loadBtn}</li>
                 </ul>
             </div>
