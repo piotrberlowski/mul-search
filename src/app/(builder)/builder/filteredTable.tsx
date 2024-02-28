@@ -22,7 +22,7 @@ function matchAbilities(filter: string, abilities: string) {
         query = query.toLowerCase().trim();
         const cleanQ = query.replace(/^!/, '');
         const neg = query != cleanQ;
-        const contains = abilities?.toLowerCase().includes(cleanQ);
+        const contains = abilities.toLowerCase().includes(cleanQ);
         return res && (neg !== contains);
     }, true);
     return matches;
