@@ -18,11 +18,11 @@ function includesIfFilter(filter: string | undefined, value: string) {
 
 function matchAbilities(filter: string, abilities: string) {
     const queries = filter.split(new RegExp("[, ]+"));
-    const matches = queries.reduce((res, query) => {
+        const matches = queries.reduce((res, query) => {
         query = query.toLowerCase().trim();
         const cleanQ = query.replace(/^!/, '');
         const neg = query != cleanQ;
-        const contains = abilities.toLowerCase().includes(cleanQ);
+        const contains = (abilities ?? "").toLowerCase().includes(cleanQ);
         return res && (neg !== contains);
     }, true);
     return matches;
