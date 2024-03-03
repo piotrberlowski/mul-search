@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --input-background-rgb: 200, 200, 200;
+  --input-foreground-rgb: 10, 30, 50;
+  --link-color: #7f1d1d;
+  --link-visited-color: #f97316;
+  --link-hover-color: #ef4444;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 214, 219, 220;
+  --input-border-color: #0a1e32;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --input-background-rgb: 10, 30, 50;
+    --input-foreground-rgb: 200, 200, 200;
+    --link-color: #fecaca;
+    --link-visited-color: #f97316;
+    --link-hover-color: #ef4444;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+    --input-border-color: #b8b8b8;
+  }
+}
+
+body {
+  position: relative;
+  height: 100lvh;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+select, input[type="text"], input[type="submit"] {
+  color: rgb(var(--input-foreground-rgb));
+  background-color: rgb(var(--input-background-rgb));
+  border: 1px solid var(--input-border-color);
+  padding-left: 5pt;
+}
+
+button {
+  color: rgb(var(--input-foreground-rgb));
+  background-color: rgb(var(--input-background-rgb));
+  border: 1px solid var(--input-border-color);
+  padding-left: 2pt;
+  padding-right: 2pt;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+.button-link {
+  color: rgb(var(--input-foreground-rgb));
+  background-color: rgb(var(--input-background-rgb));
+  border: 1px solid var(--input-border-color);
+  padding-left: 2pt;
+  padding-right: 2pt;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+a {
+  color: var(--link-color);
+}
+
+a:visited {
+  color: var(--link-visited-color);
+}
+
+a:hover {
+  color: var(--link-hover-color);
+}
+
+.button-link:visited {
+  color: rgb(var(--input-foreground-rgb));  
+}
