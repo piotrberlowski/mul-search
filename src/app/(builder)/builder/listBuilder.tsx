@@ -47,7 +47,7 @@ function BuilderFooter({
 
     return (
         <div className="bg-inherit grid grid-cols-3 items-center text-center w-full text-xs md:text-sm lg:text-base">
-            <div className="dropdown dropdown-top dropdown-start h-full text-center items-center">
+            <div className="dropdown dropdown-top dropdown-start h-full text-center items-center h-10 sm:h-6">
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Play</div></div>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
                     <li>{cmbBtn}</li>
@@ -153,7 +153,7 @@ export default function ListBuilder({ defaultVisible }: { defaultVisible: boolea
         if (visible) {
             return (
                 <>
-                    <div className="fixed bg-inherit inset-y-[1%] lg:inset-y-20 max-xl:inset-x-[1%] xl:inset-x-[10%] 2xl:inset-x-[20%] z-10 border border-red-500 items-center text-center flex flex-col">
+                    <div className="fixed bg-inherit top-[1%] bottom-[5%] lg:inset-y-20 max-xl:inset-x-[1%] xl:inset-x-[10%] 2xl:inset-x-[20%] z-10 border border-red-500 items-center text-center flex flex-col">
                         <BuilderHeader controller={controller} onClose={() => setVisible(false)} />
                         <div className="flex-none w-full flex">
                             <span className="mr-1 flex-none">Name: </span>
