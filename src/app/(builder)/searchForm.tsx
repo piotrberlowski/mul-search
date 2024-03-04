@@ -1,9 +1,10 @@
 'use client'
 import { useSearchParams } from "next/navigation"
-import { Faction, Factions as Factions, eraMap, eras } from "./data"
+import { Faction, Factions as Factions, eraMap, eras, parseConstraints } from "./data"
 import SearchInputPanel from "./searchInputPanel"
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from "next/link";
+import { LOCAL_STORAGE_NAME_AUTOSAVE, loadByName } from "@/api/unitListApi";
 
 function renderOptions(factions: Faction[]) {
     return factions
@@ -32,16 +33,21 @@ export default function SearchForm({ factions }: { factions: Faction[] }) {
     const [spec, setSpec] = useState(params.get('specific')?.toString())
     const [gen, setGen] = useState(params.get('general')?.toString())
     const [era, setEra] = useState(params.get('era')?.toString())
+    const [searchLink, setSearchLink] = useState(<></>)
 
+    useEffect(() => {
+            const load = loadByName(LOCAL_STORAGE_NAME_AUTOSAVE)
+            if (load?.units) {
+                setSearchLink(<>Last build: <Link href={`/builder/?${parseConstraints(load.constraints, fData)}`}>{load.constraints}</Link></>)
+            }
+        }, 
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    )
 
-    var mulGenLink
-    if (era && spec) {
-        mulGenLink = (
+    const mulGenLink = (era && spec) ? (
             <Link href={`http://masterunitlist.info/Era/FactionEraDetails?FactionId=${spec}&EraId=${era}`} target="_blank">-&gt; Use this link to find the General List for {fData.getFactionName(spec)} in {eraMap.get(era)} era &lt;-</Link>
-        )
-    } else {
-        mulGenLink = (<></>)
-    }
+        ) : (<></>)
 
     return (
         <form className="my-1 border border-solid border-gray-800 dark:border-gray-300 p-1 items-center" method='GET' action="/builder">
@@ -67,6 +73,9 @@ export default function SearchForm({ factions }: { factions: Faction[] }) {
             </SearchInputPanel>
             <div className="flex-1 text-center">
                 <input className="w-3/4" type="submit" value="Search" />
+            </div>
+            <div className="w-100 text-center items-ceter">
+                {searchLink}
             </div>
         </form>
     )
