@@ -1,3 +1,4 @@
+// TODO: Check/edit DB configuration
 import { PrismaClient } from "@prisma/client";
 
 declare global {
