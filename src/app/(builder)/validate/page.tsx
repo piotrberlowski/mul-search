@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { fetchFactions } from "@/app/(builder)/data"
 import ValidateForm from "./validateForm"
+import Image from "next/image"
 
 function CsrFallback() {
   return <>Executing your search...</>
@@ -23,9 +24,17 @@ function Intro() {
         </ul>
         <p className="my-1">
           Copy-Paste the contents of army table from the MUL PDF and press Validate to see your results.
+          <Image 
+            src="/mul-screenshot.png"
+            alt="Screenshot of the unit table in MUL PDF"             
+            width={864}
+            height={238}
+            style={{
+                objectFit: 'contain'
+            }}/>
         </p>
         <p className="my-1">
-          Please manually verify if the general list is applicable based on the provided link.
+          Manually verify if the general list is applicable based on the provided link.
         </p>
       </div>
     </>
