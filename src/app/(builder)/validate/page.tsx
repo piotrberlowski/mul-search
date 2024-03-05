@@ -23,6 +23,9 @@ function Intro() {
           <li>&quot;general list&quot;</li>
         </ul>
         <p className="my-1">
+          Manually verify if the general list is applicable based on the provided link.
+        </p>
+        <p className="my-1">
           Copy-Paste the contents of army table from the MUL PDF and press Validate to see your results.
           <Image 
             src="/mul-screenshot.png"
@@ -32,9 +35,6 @@ function Intro() {
             style={{
                 objectFit: 'contain'
             }}/>
-        </p>
-        <p className="my-1">
-          Manually verify if the general list is applicable based on the provided link.
         </p>
       </div>
     </>
