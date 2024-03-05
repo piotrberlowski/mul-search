@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { fetchFactions } from './data'
 import SearchForm from './searchForm'
+import Link from "next/link"
 
 function CsrFallback() {
   return <>Executing your search...</>
@@ -12,6 +13,9 @@ function Intro() {
       <div className="mb-5">
         <p className="my-1">
           This tool supports the list building flow of the <a href="https://wolfsdragoons.com/alpha-strike-core-tournament-rules-2/">Wolf Net Alpha Strike 350 format</a>.
+        </p>
+        <p>
+          <Link href="/validate">Navigate here to validate lists from MasterUnitList</Link>
         </p>
         <p>
           To start working on your list, please:
