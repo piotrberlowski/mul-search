@@ -90,7 +90,7 @@ export default function ValidateForm({ factions }: { factions: Faction[] }) {
                     </select>
             </SearchInputPanel>
             <div className="items-center bg-inherit w-3/4 mx-auto ">
-                <textarea className="textarea textarea-bordered w-full" placeholder="List" onChange={e => parseList(e.target.value)}></textarea>
+                <textarea className="textarea textarea-bordered w-full h-64" placeholder="List" onChange={e => parseList(e.target.value)}></textarea>
             </div>
             <div className="flex-1 text-center mt-1">
                 <button className="btn w-3/4" onClick={e => validate()} disabled={!(era && spec && listText)}>Validate</button>
