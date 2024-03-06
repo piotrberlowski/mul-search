@@ -8,6 +8,11 @@ This app is a simple [Master Unit List](http://www.masterunitlist.info) search w
 
 The author found the above two behaviors to be difficult in the upstream MasterUnitList UI and necessary for the list-building in the [WNRP 350 format](https://wolfsdragoons.com/alpha-strike-core-tournament-rules-2/).
 
+# Credits
+
+ * Tony Roberts for his [pdf2array functionality (published under MIT License)](https://github.com/tonyroberts/pdf2array)
+ * ITVBBjorn for their [AS Play UI](https://github.com/itvbbjorn/itvbbjorn.github.io)
+
 ## Developing
 
 This app is a basic [Next.js](https://nextjs.org/) project using the new React App router.
@@ -40,4 +45,3 @@ To learn more about Next.js, take a look at the following resources:
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-

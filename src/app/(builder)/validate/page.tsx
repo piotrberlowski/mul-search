@@ -1,7 +1,6 @@
 import { Suspense } from "react"
 import { fetchFactions } from "@/app/(builder)/data"
 import ValidateForm from "./validateForm"
-import Image from "next/image"
 
 function CsrFallback() {
   return <>Executing your search...</>
@@ -26,15 +25,7 @@ function Intro() {
           Manually verify if the general list is applicable based on the provided link.
         </p>
         <p className="my-1">
-          Copy-Paste the contents of army table from the MUL PDF and press Validate to see your results.
-          <Image 
-            src="/mul-screenshot.png"
-            alt="Screenshot of the unit table in MUL PDF"             
-            width={864}
-            height={238}
-            style={{
-                objectFit: 'contain'
-            }}/>
+           Upload the Master Unit List PDF.
         </p>
       </div>
     </>

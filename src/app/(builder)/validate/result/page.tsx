@@ -1,5 +1,6 @@
 import {Suspense} from "react"
 import Validation from "./validation"
+import { fetchFactions } from "../../data"
 
 function ListFallback() {
     return (
@@ -9,10 +10,12 @@ function ListFallback() {
 
 export default async function SharedList() {
 
+    const factions = await fetchFactions()
+
     return (
         <main className="relative items-center align-top bg-inherit">
             <Suspense fallback={<ListFallback/>}>
-                <Validation/>
+                <Validation factions={factions}/>
             </Suspense>
         </main>
     )
