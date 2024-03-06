@@ -1,6 +1,6 @@
 'use client'
 import { ReadonlyURLSearchParams, useSearchParams } from "next/navigation";
-import { MASTER_UNIT_LIST } from "../../data";
+import { Faction, Factions, MASTER_UNIT_LIST, MULSearchParams } from "../../data";
 import React, { useEffect, useState } from "react";
 import { IUnit } from "@/api/unitListApi";
 import { IResult, LIST_CHECKS, ValidateUnit, testUnit } from "./results";
@@ -68,7 +68,7 @@ function Results({ results }: { results: IResult[] }) {
                     <React.Fragment key={idx}>
                         <div className="text-center align-middle"><span>{r.skill}</span></div>
                         <div className="col-span-3">{r.name}</div>
-                        <div role="alert" className={`alert col-span-2 ${(r.found) ? "alert-success" : "alert-error"}`}><span>{(r.found) ? "Valid" : r.error}</span></div>
+                        <div role="alert" className={`alert alert-sm col-span-2 ${(r.found) ? "alert-success" : "alert-error"}`}><span>{(r.found) ? "Valid" : `${r.error}`}</span></div>
                     </React.Fragment>
                 ))}
             </div>
@@ -95,10 +95,12 @@ function Results({ results }: { results: IResult[] }) {
 }
 
 
-export default function Validation() {
+export default function Validation({factions}:{factions: Faction[]}) {
     const [results, setResults] = useState<IResult[]>(new Array<IResult>())
 
     const params = useSearchParams()
+    const mulParams = new MULSearchParams(params)
+    const fData = new Factions(factions)
 
     useEffect(
         () => { fetchFromMul(params).then(setResults).catch(err => console.log(err)) }
@@ -114,6 +116,9 @@ export default function Validation() {
 
     return (
         <div>
+            <div className="w-full text-center items-center">
+                Validating: {mulParams.describe(fData)}
+            </div>
             {visualisation}
         </div>
     )

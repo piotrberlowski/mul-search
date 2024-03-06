@@ -122,10 +122,12 @@ function chassisCheck(list: IResult[]) {
     }, new Map<String, number>()))
     const tripleChassis = chassisCount.filter(([_,c]) => c>2)
     if (tripleChassis.length > 0) {
-        return invalid(`Chassis repeated more than twice: ${tripleChassis.map(([n,_])=>n)}`)
+        const tripleChassisText = tripleChassis.map(([n,c]) => `${n}: ${c}`).join(",")
+        return invalid(`Chassis repeated more than twice: ${tripleChassisText}}`)
     }
     const doubleChassis = chassisCount.filter(([_,c]) => c==2)
-    return (doubleChassis.length <= 2) ? VALID : invalid(`More than 2 chassis repeated twice: ${doubleChassis.map(([n,_]) => n)}`)
+    const doubleChassisText = tripleChassis.map(([n,c]) => `${n}: ${c}`).join(",")
+    return (doubleChassis.length <= 2) ? VALID : invalid(`More than 2 chassis repeated twice: ${doubleChassisText}`)
 }
 
 export const LIST_CHECKS: Check[] = [
@@ -167,7 +169,7 @@ export function testUnit(v:ValidateUnit, u: IUnit) {
     if (!u) {
         return judge(v, false, "Not Found")
     }
-    if (u.BFAbilities.includes("DRO")) {
+    if (u.BFAbilities?.includes("DRO")) {
         return judge(v, false, "Unit with DRO ability", u)
     }
     if (u.Type.Name in ["Advanced Aerospace", "Aerospace", "Support Vehicle", "Advanced Support"] ) {
