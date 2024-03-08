@@ -50,8 +50,8 @@ function BuilderFooter({
     const [loadBtn, loadDlg] = useLoadDialog(listName, controller, (<>Load</>))
 
     return (
-        <div className="bg-inherit grid grid-cols-3 items-center text-center w-full text-xs md:text-sm lg:text-base">
-            <div className="dropdown dropdown-top dropdown-start h-full text-center items-center h-10 sm:h-6">
+        <div className="bg-inherit grid grid-cols-3 items-center text-center w-full text-xs md:text-sm lg:text-base h-12 md:h-8">
+            <div className="dropdown dropdown-top dropdown-start h-full text-center items-center">
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Play</div></div>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
                     <li>{cmbBtn}</li>
