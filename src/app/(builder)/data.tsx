@@ -135,12 +135,12 @@ export class MULSearchParams {
 
 }
 
-export function parseConstraints(constraints: string, factions: Factions): ReadonlyURLSearchParams{
+export function parseConstraints(constraints: string, factions: Factions): URLSearchParams{
     
     const parsed = CONSTRAINTS_RE.exec(constraints)
     if (parsed == null) {
         console.log(`Couldn't parse constraints... ${constraints}`)
-        return new ReadonlyURLSearchParams(new URLSearchParams())
+        return new URLSearchParams(new URLSearchParams())
     } 
     const [_, specific, general, era] = parsed
 
@@ -148,13 +148,13 @@ export function parseConstraints(constraints: string, factions: Factions): Reado
     const specificId = factions.getFactionId(specific)
     const generalId = factions.getGeneralId(general)
 
-    return new ReadonlyURLSearchParams(new URLSearchParams(
+    return new URLSearchParams(
         {
             era: `${eraId || ""}`,
             specific: `${specificId || ""}`,
             general: `${generalId || ""}`,
         }
-    ))
+    )
 }
 
 

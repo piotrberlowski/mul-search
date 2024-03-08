@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { IUnit } from "@/api/unitListApi";
 import { IResult, LIST_CHECKS, ValidateUnit, testUnit } from "./results";
 
-
+export const LIST_PARAMETER = "list";
 
 async function fetchUnit(mu: ValidateUnit, era: string, specific: string, general?: string) {
     const url = new URL("/Unit/QuickList", MASTER_UNIT_LIST)
@@ -30,7 +30,7 @@ async function fetchUnit(mu: ValidateUnit, era: string, specific: string, genera
 }
 
 async function fetchFromMul(params: ReadonlyURLSearchParams) {
-    const list = params.get("list")
+    const list = params.get(LIST_PARAMETER)
     const items = (list ?? "").split(';').map(p => {
         const [skill, unit] = p.split(":")
         return {

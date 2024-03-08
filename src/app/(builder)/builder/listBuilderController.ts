@@ -1,6 +1,8 @@
 import { compareSelectedUnits } from "@/api/shareApi";
 import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, currentPV, exportTTSString, loadByName, removeByName, saveByName, saveLists, toJeffsUnits, totalPV } from "@/api/unitListApi"
 import { IUnit } from "@/api/unitListApi";
+import { Faction, Factions, parseConstraints } from "../data";
+import { LIST_PARAMETER } from "../validate/result/validation";
 
 export type ChangeListener<T> = (newState: T) => void
 
@@ -148,5 +150,13 @@ export class ListBuilderController {
     public getStoredLists() {
         return this.storedLists
     }
+
+    public toValidateParams(factions: Factions): URLSearchParams {
+        const params = parseConstraints(this.constraints, factions)
+        const unitString = this.save.units.map(su => `${su.skill}:${su.Name}`).join(";")
+        params.append(LIST_PARAMETER, unitString)
+        return params
+    }
+    
 
 }

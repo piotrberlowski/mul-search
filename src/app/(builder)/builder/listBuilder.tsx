@@ -10,6 +10,8 @@ import { ListLine } from './ListLine';
 import { ListBuilderController } from './listBuilderController';
 import useLoadDialog from './loadDialog';
 import { SearchResultsController, useSearchResultsContext } from './searchResultsController';
+import { useRouter } from 'next/navigation';
+import { Factions, fetchFactions } from '../data';
 
 function BuilderHeader({ controller, onClose }: { controller: ListBuilderController, onClose: () => void }) {
     const units = controller.getUnits()
@@ -42,6 +44,8 @@ function BuilderFooter({
     controller: ListBuilderController,
 }) {
 
+    const router = useRouter()
+
     const [cmbBtn, cmbDlg] = useCombinations(units, <>Sub-lists</>, 'btn text-center w-full btn-sm')
     const [loadBtn, loadDlg] = useLoadDialog(listName, controller, (<>Load</>))
 
@@ -52,7 +56,6 @@ function BuilderFooter({
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
                     <li>{cmbBtn}</li>
                     <li><PlayLink units={units} className='btn text-center w-full btn-sm'>Play View</PlayLink></li>
-                    <li><ShareLink constraints={constraints} name={listName} total={total} units={units} className='btn text-center w-full btn-sm' /></li>
                 </ul>
             </div>
             <div className="dropdown dropdown-top dropdown-end h-full text-center items-center">
@@ -67,11 +70,22 @@ function BuilderFooter({
                         e?.currentTarget.blur()
                     }}>Save</button></li>
                     <li>{loadBtn}</li>
+                    <li><button className="btn text-center w-full btn-sm" onClick={e => {
+                        fetchFactions()
+                            .then(f => new Factions(f))
+                            .then(f => controller.toValidateParams(f))
+                            .then(p => router.push("/validate?"+p.toString()))
+                            .catch(err => {
+                                console.log(err)
+                                e?.currentTarget.blur()
+                            })
+                    }}>Validate</button></li>
                 </ul>
             </div>
             <div className="dropdown dropdown-top dropdown-end h-full text-center items-center">
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Export</div></div>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                    <li><ShareLink constraints={constraints} name={listName} total={total} units={units} className='btn text-center w-full btn-sm' /></li>
                     <li><button className="w-full btn text-center btn-sm" onClick={e => controller.exportExternal(listName, "jeff")}>Jeff&apos;s Tools</button></li>
                     <li><Link href="/tts/" target="_blank" className="btn text-center w-full btn-sm" onClick={e => controller.exportExternal(listName, "tts")}>TTS</Link></li>
                 </ul>
