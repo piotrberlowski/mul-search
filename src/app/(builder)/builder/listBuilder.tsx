@@ -74,7 +74,7 @@ function BuilderFooter({
                         fetchFactions()
                             .then(f => new Factions(f))
                             .then(f => controller.toValidateParams(f))
-                            .then(p => router.push("/validate?"+p.toString()))
+                            .then(p => router.push("/validate/result?"+p.toString()))
                             .catch(err => {
                                 console.log(err)
                                 e?.currentTarget.blur()

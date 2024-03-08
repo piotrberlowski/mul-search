@@ -172,7 +172,7 @@ export function testUnit(v:ValidateUnit, u: IUnit) {
     if (u.BFAbilities?.includes("DRO")) {
         return judge(v, false, "Unit with DRO ability", u)
     }
-    if (u.Type.Name in ["Advanced Aerospace", "Aerospace", "Support Vehicle", "Advanced Support"] ) {
+    if (["Advanced Aerospace", "Aerospace", "Support Vehicle", "Advanced Support"].includes(u.Type.Name)) {
         return judge(v, false, `Forbidden Unit Type: ${u.Type.Name}`, u)
     }
     if (u.Rules == "Experimental") {
