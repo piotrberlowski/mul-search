@@ -5,6 +5,58 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import React, { useReducer, useState } from "react";
 import UnitLine, { UnitComparators, UnitHeader } from './unitLine';
 
+const moveRex = /^(\d+)?(:)?(\d+)?([fwhvjt])?$/
+const rangeRex = /^(\d+)?(:)?(\d+)?$/
+const noFilter = [undefined, undefined]
+
+type MoveFilter = {
+    min?: number,
+    max?: number,
+    type?: string,
+}
+
+function parseMoveRange(filter: string | undefined): MoveFilter | undefined {
+    if (filter) {
+        const match = moveRex.exec(filter)
+        if (!match) {
+            return undefined
+        }
+        const [_, min, colon, max, type] = match
+        const nMin = min ? parseInt(min) : undefined, nMax=max ? parseInt(max) : undefined
+        if (colon) {
+            return {
+                min: nMin,
+                max: nMax,
+                type: type,
+            }
+        } else {
+            return {
+                min: nMin,
+                max: nMin,
+                type: type,
+            }
+        }
+    }
+    return undefined
+}
+
+function parseRange(filter: string | undefined): (number | undefined)[] {
+    if (filter) {
+        const match = rangeRex.exec(filter)
+        if (!match) {
+            return noFilter
+        }
+        const [_, min, colon, max] = match
+        const nMin = min ? parseInt(min) : undefined, nMax=max ? parseInt(max) : undefined
+        if (colon) {
+            return [nMin, nMax]
+        } else {
+            return [nMin, nMin]
+        }
+    }
+    return noFilter
+}
+
 function matchesIfFilter<T>(filter: T | undefined, predicate: (filter: T) => boolean) {
     if (filter) {
         return predicate(filter);
@@ -41,15 +93,29 @@ function matchDmg(filter: string, unit: IUnit) {
 
 }
 
-function matchMove(filter: string, move: string) {
-    const f = filter.trim();
-    let consumer = (v: number, t?: string) => `${v}${t}`.includes(filter);
-    if (f.startsWith('>')) {
-        consumer = (v, _) => v > (parseInt(filter.substring(1)) || 0);
-    } else if (f.startsWith('<')) {
-        consumer = (v, _) => v < (parseInt(filter.substring(1)) || 100);
+function matchMove(filter: MoveFilter, move: string) {
+    function moveMatcher(v: number, t?: string) {
+        if (!(filter.min || filter.max || filter.type)) {
+            // No filters set, any move matches
+            return true
+        }
+        if (!(filter.min || filter.max) && filter.type) {
+            // Only type set, do exact match
+            return `${v}${t}`.includes(filter.type)
+        }
+        let matches = true
+        if (filter.min) {
+            matches = matches && (filter.min <= v)
+        }
+        if (filter.max) {
+            matches = matches && (filter.max >= v)
+        }
+        if (filter.type) {
+            matches = matches && (t != undefined) && (t.includes(filter.type))
+        }
+        return matches
     }
-    return processMoves(move, consumer).find(x => x) ?? false;
+    return processMoves(move, moveMatcher).find(x => x) ?? false;
 }
 
 export type Sort = {
@@ -63,8 +129,12 @@ type FilterFields = {
     minPV?: number;
     maxPV?: number;
     dmg?: string;
-    move?: string;
+    moveFilter?: MoveFilter;
+    minSz?: number;
+    maxSz?: number;
 };
+
+
 
 class Filter {
 
@@ -82,10 +152,13 @@ class Filter {
     public matches(unit: IUnit) {
         return includesIfFilter(this.fields.name, unit.Name)
             && matchesIfFilter(this.fields.abilities, (f) => matchAbilities(f, unit.BFAbilities))
-            && matchesIfFilter(this.fields.move, (f) => matchMove(f, unit.BFMove))
+            && matchesIfFilter(this.fields.moveFilter, (f) => matchMove(f, unit.BFMove))
             && matchesIfFilter(this.fields.minPV, (f) => unit.BFPointValue >= f)
             && matchesIfFilter(this.fields.maxPV, (f) => unit.BFPointValue <= f)
+            && matchesIfFilter(this.fields.minSz, (f) => unit.BFSize >= f)
+            && matchesIfFilter(this.fields.maxSz, (f) => unit.BFSize <= f)
             && matchesIfFilter(this.fields.dmg, (f) => matchDmg(f, unit));
+
     }
 
     public withOverrides(overrides: FilterFields) {
@@ -114,27 +187,31 @@ function QuickFilter({ label, action, className, filterCallback, tooltip }: { la
 
     return (
         <>
-            <div className={`flex flex-1 ${className} text-xs md:text-base relative`}>
-                <div className="tooltip" data-tip={tooltip}>
+            <div className={`flex flex-1 ${className} text-xs relative`}>
+                <div className="tooltip w-full h-full text-xs" data-tip={tooltip}>
                     <input type="text" placeholder={label} value={value} className="input input-bordered w-full input-xs" onChange={e => filter(e.target.value)} title={tooltip} alt={tooltip} />
+                    <button className="btn btn-square btn-outline absolute right-0 btn-xs" onClick={e => filter(undefined)}><XMarkIcon className='min-h-4 min-w-4 h-4 w-4 shrink-0 resize-none' /></button>
                 </div>
-                <button className="btn btn-square btn-outline absolute right-0 btn-xs" onClick={e => filter(undefined)}><XMarkIcon className='min-h-4 min-w-4 h-4 w-4 shrink-0 resize-none' /></button>
             </div>
         </>
     )
 }
+
 function reduceFilter(filter: Filter, action: FilterAction) {
     switch (action.type) {
         case 'name':
             return filter.withOverrides({ name: action.filter })
         case 'abilities':
             return filter.withOverrides({ abilities: action.filter })
-        case 'min-pv':
-            return filter.withOverrides({ minPV: (action.filter) ? parseInt(action.filter) : undefined })
-        case 'max-pv':
-            return filter.withOverrides({ maxPV: (action.filter) ? parseInt(action.filter) : undefined })
+        case 'pv-range':
+            const [minPV,maxPV] = parseRange(action.filter)
+            return filter.withOverrides({ minPV: minPV, maxPV: maxPV })
+        case 'sz-range':
+            const [minS, maxS] = parseRange(action.filter)
+            return filter.withOverrides({ minSz: minS, maxSz: maxS})
         case 'move':
-            return filter.withOverrides({ move: action.filter })
+            const move = parseMoveRange(action.filter)
+            return filter.withOverrides({ moveFilter: move })
         case 'dmg':
             return filter.withOverrides({ dmg: action.filter })
         default:
@@ -164,9 +241,9 @@ export default function FilteredTable({ data }: { data: IUnit[]} ) {
                     <QuickFilter label="Unit Name" className="basis-full md:basis-5/12" action="name" filterCallback={setFilter} />
                     <QuickFilter label="Abilities" className="basis-full md:basis-5/12" action="abilities" filterCallback={setFilter} tooltip='Use comma to search for multiple abilities: "AM, MEC"' />
                     <QuickFilter label="Dmg" className="basis-1/5 md:basis-2/12" action="dmg" filterCallback={setFilter} tooltip='"//N" => N at long range, "/5" => 5 at medium, "5/" => 5 at short' />
-                    <QuickFilter label="Move" className="basis-1/5 md:basis-2/12" action="move" filterCallback={setFilter} />
-                    <QuickFilter label="MinPV" className="basis-1/5 md:basis-2/12" action="min-pv" filterCallback={setFilter} />
-                    <QuickFilter label="MaxPV" className="basis-1/5 md:basis-2/12" action="max-pv" filterCallback={setFilter} />
+                    <QuickFilter label="Move (min:max)" className="basis-1/5 md:basis-2/12" action="move" filterCallback={setFilter} tooltip='"8:14j" for 8<=move<=14 jumping or 12 for exactly 12 any mode'/>
+                    <QuickFilter label="PV (min:max)" className="basis-1/5 md:basis-2/12" action="pv-range" filterCallback={setFilter} tooltip='":42" for less than 42 or "10:22" for 10 to 22 PV' />
+                    <QuickFilter label="Size (min:max)" className="basis-1/5 md:basis-2/12" action="sz-range" filterCallback={setFilter} tooltip='"4" for exactly 4, "3:" for 3 or larger'/>
                 </div>
                 <div className="mx-0.5 md:mx-5 text-sm">
                     <UnitHeader initial={sort} onSort={setSort} />
@@ -182,3 +259,5 @@ export default function FilteredTable({ data }: { data: IUnit[]} ) {
         </div>
     )
 }
+
+
