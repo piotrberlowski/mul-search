@@ -115,7 +115,9 @@ function QuickFilter({ label, action, className, filterCallback, tooltip }: { la
     return (
         <>
             <div className={`flex flex-1 ${className} text-xs md:text-base relative`}>
-                <input type="text" placeholder={label} value={value} className="input input-bordered w-full input-xs" onChange={e => filter(e.target.value)} title={tooltip} alt={tooltip} />
+                <div className="tooltip" data-tip={tooltip}>
+                    <input type="text" placeholder={label} value={value} className="input input-bordered w-full input-xs" onChange={e => filter(e.target.value)} title={tooltip} alt={tooltip} />
+                </div>
                 <button className="btn btn-square btn-outline absolute right-0 btn-xs" onClick={e => filter(undefined)}><XMarkIcon className='min-h-4 min-w-4 h-4 w-4 shrink-0 resize-none' /></button>
             </div>
         </>
