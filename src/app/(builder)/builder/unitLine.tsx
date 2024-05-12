@@ -107,7 +107,7 @@ export function UnitHeader({ initial, onSort }: { initial: Sort, onSort: (newSor
     )
 }
 
-export default function UnitLine({ unit }: { unit: IUnit }) {
+export default function UnitLine({ unit, idx }: { unit: IUnit, idx: number }) {
 
     const controller: SearchResultsController = useSearchResultsContext()
 
@@ -118,11 +118,14 @@ export default function UnitLine({ unit }: { unit: IUnit }) {
 
     return (
         <>
-            <div className="grid grid-cols-9 md:grid-cols-11 my-0 border border-solid border-gray-400 dark:border-gray-800 text-xs md:text-sm text-center items-center w-full">
+            <div className="grid grid-cols-10 md:grid-cols-12 my-0 border border-solid border-gray-400 dark:border-gray-800 text-xs md:text-sm text-center items-center w-full bg-inherit">
+                <button className="btn btn-square btn-xs" onClick={onAddClick}>
+                    <PlusIcon className="h-3 w-3"/>
+                </button>
                 <div className="col-span-2 md:col-span-3 text-left">
                     <a href={"http://www.masterunitlist.info/Unit/Details/" + unit.Id} target="_blank">{unit.Name}</a>
                 </div>
-                <div className="col-start-3 md:col-start-4">{unit.BFPointValue}</div>
+                <div className="col-start-4 md:col-start-5">{unit.BFPointValue}</div>
                 <div className="truncate hidden md:block">{unit.Role.Name}</div>
                 <div className="col-span-2 md:col-span-1">{unit.BFMove}</div>
                 <div>{unit.BFDamageShort}/{unit.BFDamageMedium}/{unit.BFDamageLong}</div>

@@ -28,6 +28,24 @@
   }
 }
 
+@layer utilities {
+  .striped > div:nth-child(even) {
+    @apply bg-gray-200
+  }
+  .striped > div:nth-child(odd) {
+    @apply bg-gray-300
+  }
+  @media (prefers-color-scheme: dark) {
+    .striped > div:nth-child(even) {
+      @apply bg-neutral-950
+    }
+    .striped > div:nth-child(odd) {
+      @apply bg-neutral-900
+    }
+
+  }
+}
+
 body {
   min-height: 100lvh;
   color: rgb(var(--foreground-rgb));
