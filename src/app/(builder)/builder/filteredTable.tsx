@@ -249,10 +249,10 @@ export default function FilteredTable({ data }: { data: IUnit[]} ) {
                     <UnitHeader initial={sort} onSort={setSort} />
                 </div>
             </div>
-            <div className="mx-0.5 md:mx-5 text-sm mb-2">
+            <div className="mx-0.5 md:mx-5 text-sm mb-2 striped">
                 {
                     sortAndFilter(units).map(
-                        entry => <UnitLine key={entry.Id} unit={entry} />
+                        (entry,idx) => <UnitLine key={entry.Id} unit={entry} idx={idx}/>
                     )
                 }
             </div>
