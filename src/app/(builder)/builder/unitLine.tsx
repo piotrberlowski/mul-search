@@ -123,7 +123,7 @@ export default function UnitLine({ unit, idx }: { unit: IUnit, idx: number }) {
                     <PlusIcon className="h-3 w-3"/>
                 </button>
                 <div className="col-span-2 md:col-span-3 text-left">
-                    <a href={"http://www.masterunitlist.info/Unit/Details/" + unit.Id} target="_blank">{unit.Name}</a>
+                    <a href={"http://www.masterunitlist.info/Unit/Details/" + unit.Id} target="_blank">{unit.Name}:{unit.Rules}</a>
                 </div>
                 <div className="col-start-4 md:col-start-5">{unit.BFPointValue}</div>
                 <div className="truncate hidden md:block">{unit.Role.Name}</div>
