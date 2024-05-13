@@ -1,9 +1,11 @@
 'use client';
 import { processMoves } from '@/api/card';
+import { ChangeListener } from '@/api/commons';
 import { IUnit } from '@/api/unitListApi';
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import React, { useReducer, useState } from "react";
+import React, { useState } from "react";
 import UnitLine, { UnitComparators, UnitHeader } from './unitLine';
+import RulesReferences from '@/app/(itvbbjorn)/play/RulesReferences';
 
 const moveRex = /^(\d+)?(:)?(\d+)?([fwhvjt])?$/
 const rangeRex = /^(\d+)?(:)?(\d+)?$/
@@ -22,7 +24,7 @@ function parseMoveRange(filter: string | undefined): MoveFilter | undefined {
             return undefined
         }
         const [_, min, colon, max, type] = match
-        const nMin = min ? parseInt(min) : undefined, nMax=max ? parseInt(max) : undefined
+        const nMin = min ? parseInt(min) : undefined, nMax = max ? parseInt(max) : undefined
         if (colon) {
             return {
                 min: nMin,
@@ -47,7 +49,7 @@ function parseRange(filter: string | undefined): (number | undefined)[] {
             return noFilter
         }
         const [_, min, colon, max] = match
-        const nMin = min ? parseInt(min) : undefined, nMax=max ? parseInt(max) : undefined
+        const nMin = min ? parseInt(min) : undefined, nMax = max ? parseInt(max) : undefined
         if (colon) {
             return [nMin, nMax]
         } else {
@@ -58,7 +60,7 @@ function parseRange(filter: string | undefined): (number | undefined)[] {
 }
 
 function matchesIfFilter<T>(filter: T | undefined, predicate: (filter: T) => boolean) {
-    if (filter) {
+    if (filter != undefined && filter != null) {
         return predicate(filter);
     }
     return true;
@@ -70,7 +72,7 @@ function includesIfFilter(filter: string | undefined, value: string) {
 
 function matchAbilities(filter: string, abilities: string) {
     const queries = filter.split(new RegExp("[, ]+"));
-        const matches = queries.reduce((res, query) => {
+    const matches = queries.reduce((res, query) => {
         query = query.toLowerCase().trim();
         const cleanQ = query.replace(/^!/, '');
         const neg = query != cleanQ;
@@ -132,6 +134,7 @@ type FilterFields = {
     moveFilter?: MoveFilter;
     minSz?: number;
     maxSz?: number;
+    experimental?: boolean;
 };
 
 
@@ -149,7 +152,15 @@ class Filter {
         }
     }
 
+    private matchesExperimental(unit: IUnit) {
+        const rules = unit.Rules?.toLocaleLowerCase().trim()
+        const f = this.fields.experimental
+        const include = f || (rules != "unknown" && rules != "experimental")
+        return include
+    }
+
     public matches(unit: IUnit) {
+
         return includesIfFilter(this.fields.name, unit.Name)
             && matchesIfFilter(this.fields.abilities, (f) => matchAbilities(f, unit.BFAbilities))
             && matchesIfFilter(this.fields.moveFilter, (f) => matchMove(f, unit.BFMove))
@@ -157,8 +168,8 @@ class Filter {
             && matchesIfFilter(this.fields.maxPV, (f) => unit.BFPointValue <= f)
             && matchesIfFilter(this.fields.minSz, (f) => unit.BFSize >= f)
             && matchesIfFilter(this.fields.maxSz, (f) => unit.BFSize <= f)
-            && matchesIfFilter(this.fields.dmg, (f) => matchDmg(f, unit));
-
+            && matchesIfFilter(this.fields.dmg, (f) => matchDmg(f, unit))
+            && this.matchesExperimental(unit)
     }
 
     public withOverrides(overrides: FilterFields) {
@@ -169,60 +180,58 @@ class Filter {
     }
 }
 
-type FilterAction = {
-    type: string;
-    filter: string | undefined;
-};
+function FilterBox({ tooltip, children, className }: { tooltip?: string, children: React.ReactNode, className?: string }) {
+    return (
+        <div className={`flex flex-1 ${className} text-xs relative`}>
+            <div className="tooltip w-full h-full text-xs" data-tip={tooltip}>
+                {children}
+            </div>
+        </div>
+    )
+}
 
-function QuickFilter({ label, action, className, filterCallback, tooltip }: { label: string; action: string; className?: string; filterCallback: (act: FilterAction) => void; tooltip?: string} ) {
+interface FilterParams<T> { label: string; className?: string; filterCallback: ChangeListener<T>; tooltip?: string }
+
+function QuickFilter({ label, className, filterCallback, tooltip }: FilterParams<string | undefined>) {
     const [value, setValue] = useState<string | undefined>('')
 
     function filter(v: string | undefined) {
         setValue((v == undefined) ? '' : v)
-        filterCallback({
-            type: action,
-            filter: v,
-        })
+        filterCallback(v)
     }
 
     return (
-        <>
-            <div className={`flex flex-1 ${className} text-xs relative`}>
-                <div className="tooltip w-full h-full text-xs" data-tip={tooltip}>
-                    <input type="text" placeholder={label} value={value} className="input input-bordered w-full input-xs" onChange={e => filter(e.target.value)} title={tooltip} alt={tooltip} />
-                    <button className="btn btn-square btn-outline absolute right-0 btn-xs" onClick={e => filter(undefined)}><XMarkIcon className='min-h-4 min-w-4 h-4 w-4 shrink-0 resize-none' /></button>
-                </div>
-            </div>
-        </>
+        <FilterBox tooltip={tooltip} className={className} >
+            <input type="text" placeholder={label} value={value} className="input input-bordered w-full input-xs" onChange={e => filter(e.target.value)} title={tooltip} alt={tooltip} />
+            <button className="btn btn-square btn-outline absolute right-0 btn-xs" onClick={e => filter(undefined)}><XMarkIcon className='min-h-4 min-w-4 h-4 w-4 shrink-0 resize-none' /></button>
+        </FilterBox>
     )
 }
 
-function reduceFilter(filter: Filter, action: FilterAction) {
-    switch (action.type) {
-        case 'name':
-            return filter.withOverrides({ name: action.filter })
-        case 'abilities':
-            return filter.withOverrides({ abilities: action.filter })
-        case 'pv-range':
-            const [minPV,maxPV] = parseRange(action.filter)
-            return filter.withOverrides({ minPV: minPV, maxPV: maxPV })
-        case 'sz-range':
-            const [minS, maxS] = parseRange(action.filter)
-            return filter.withOverrides({ minSz: minS, maxSz: maxS})
-        case 'move':
-            const move = parseMoveRange(action.filter)
-            return filter.withOverrides({ moveFilter: move })
-        case 'dmg':
-            return filter.withOverrides({ dmg: action.filter })
-        default:
-            return filter
+function QuickCheck({ label, className, filterCallback, tooltip }: FilterParams<boolean>) {
+
+    const [value, setValue] = useState(false)
+
+    function filter(v: boolean) {
+        setValue(v)
+        filterCallback(v)
     }
+
+    return (
+        <FilterBox tooltip={tooltip} className={className} >
+            <label className="label cursor-pointer p-0 justify-start">
+                <input type="checkbox" checked={value} className="checkbox checkbox-md" onChange={e => filter(e.target.checked)} />
+                <div className="label-text text-xs ml-1 text-nowrap whitespace-nowrap text-clip overflow-hidden">{label}</div>
+            </label>
+        </FilterBox>
+    )
+
 }
 
-export default function FilteredTable({ data }: { data: IUnit[]} ) {
+export default function FilteredTable({ data }: { data: IUnit[] }) {
 
     const [units, setUnits] = useState(data)
-    const [filter, setFilter] = useReducer(reduceFilter, new Filter())
+    const [filter, setFilter] = useState(new Filter())
     const [sort, setSort] = useState({
         column: 'Name',
         order: 1
@@ -234,16 +243,40 @@ export default function FilteredTable({ data }: { data: IUnit[]} ) {
             .sort((a, b) => UnitComparators[sort.column](a, b) * sort.order)
     }
 
+    function updateFilter(fields: FilterFields) {
+        setFilter(filter.withOverrides(fields))
+    }
+
     return (
         <div className="bg-inherit">
             <div className="sticky z-0 top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
                 <div className="w-full flex flex-wrap gap-x-2 gap-y-1">
-                    <QuickFilter label="Unit Name" className="basis-full md:basis-5/12" action="name" filterCallback={setFilter} />
-                    <QuickFilter label="Abilities" className="basis-full md:basis-5/12" action="abilities" filterCallback={setFilter} tooltip='Use comma to search for multiple abilities: "AM, MEC"' />
-                    <QuickFilter label="Dmg" className="basis-1/5 md:basis-2/12" action="dmg" filterCallback={setFilter} tooltip='"//N" => N at long range, "/5" => 5 at medium, "5/" => 5 at short' />
-                    <QuickFilter label="Move (min:max)" className="basis-1/5 md:basis-2/12" action="move" filterCallback={setFilter} tooltip='"8:14j" for 8<=move<=14 jumping or 12 for exactly 12 any mode'/>
-                    <QuickFilter label="PV (min:max)" className="basis-1/5 md:basis-2/12" action="pv-range" filterCallback={setFilter} tooltip='":42" for less than 42 or "10:22" for 10 to 22 PV' />
-                    <QuickFilter label="Size (min:max)" className="basis-1/5 md:basis-2/12" action="sz-range" filterCallback={setFilter} tooltip='"4" for exactly 4, "3:" for 3 or larger'/>
+                    <QuickFilter label="Unit Name" className="basis-full md:basis-5/12" filterCallback={flt => updateFilter({ name: flt })} />
+                    <QuickFilter label="Abilities" className="basis-1/4 md:basis-3/12" filterCallback={flt => updateFilter({ abilities: flt })} tooltip='Use comma to search for multiple abilities: "AM, MEC"' />
+                    <QuickFilter label="Dmg" className="basis-1/4 md:basis-3/12" filterCallback={flt => updateFilter({ dmg: flt })} tooltip='"//N" => N at long range, "/5" => 5 at medium, "5/" => 5 at short' />
+                    <QuickFilter label="Move (min:max)" className="basis-1/4 md:basis-2/12" filterCallback={flt => updateFilter({ moveFilter: parseMoveRange(flt) })} tooltip='"8:14j" for 8<=move<=14 jumping or 12 for exactly 12 any mode' />
+                    <QuickFilter
+                        label="PV (min:max)"
+                        className="basis-1/4 md:basis-2/12"
+                        filterCallback={
+                            flt => {
+                                const [minPV, maxPV] = parseRange(flt)
+                                updateFilter({ minPV: minPV, maxPV: maxPV })
+                            }
+                        }
+                        tooltip='":42" for less than 42 or "10:22" for 10 to 22 PV'
+                    />
+                    <QuickFilter
+                        label="Size (min:max)"
+                        className="basis-1/4 md:basis-2/12"
+                        filterCallback={
+                            flt => {
+                                const [minSz, maxSz] = parseRange(flt)
+                                updateFilter({ minSz: minSz, maxSz: maxSz })
+                            }
+                        }
+                        tooltip='"4" for exactly 4, "3:" for 3 or larger' />
+                    <QuickCheck label="Experimental Rules" className="basis-1/4 md:basis-2/12  flex-none" filterCallback={flt => updateFilter({experimental: flt})} />
                 </div>
                 <div className="mx-0.5 md:mx-5 text-sm">
                     <UnitHeader initial={sort} onSort={setSort} />
@@ -252,7 +285,7 @@ export default function FilteredTable({ data }: { data: IUnit[]} ) {
             <div className="mx-0.5 md:mx-5 text-sm mb-2 striped">
                 {
                     sortAndFilter(units).map(
-                        (entry,idx) => <UnitLine key={entry.Id} unit={entry} idx={idx}/>
+                        (entry, idx) => <UnitLine key={entry.Id} unit={entry} idx={idx} />
                     )
                 }
             </div>

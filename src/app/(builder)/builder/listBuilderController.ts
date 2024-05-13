@@ -1,10 +1,9 @@
 import { compareSelectedUnits } from "@/api/shareApi";
 import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, currentPV, exportTTSString, loadByName, removeByName, saveByName, saveLists, toJeffsUnits, totalPV } from "@/api/unitListApi"
 import { IUnit } from "@/api/unitListApi";
-import { Faction, Factions, parseConstraints } from "../data";
+import { Factions, parseConstraints } from "../data";
 import { LIST_PARAMETER } from "../validate/result/validation";
-
-export type ChangeListener<T> = (newState: T) => void
+import { ChangeListener } from "@/api/commons";
 
 export class ListBuilderController {
     
