@@ -1,6 +1,6 @@
 import { fetchFactions } from '../data'
 import { Suspense } from "react"
-import CsrPage from './csrPage'
+import BuilderApp from './builderApp'
 
 function CsrFallback() {
   return <>Executing your search...</>
@@ -13,7 +13,7 @@ export default async function Home() {
   return (
     <main className="relative items-center align-top bg-inherit">
       <Suspense fallback={<CsrFallback/>}>
-        <CsrPage factions={factions} />
+        <BuilderApp factions={factions} />
       </Suspense> 
     </main>
   )

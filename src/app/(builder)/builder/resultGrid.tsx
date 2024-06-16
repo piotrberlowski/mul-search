@@ -1,12 +1,13 @@
 'use client'
 
 import { IUnit, UNIT_TYPES } from '@/api/unitListApi'
-import React from 'react'
-import { MULSearchParams } from '../data'
-import FilteredTable from './filteredTable'
-import { SearchResultsController, useSearchResultsContext } from './searchResultsController'
-import './unitLine'
+import React, { useState } from 'react'
 import useSWR from 'swr'
+import { MULSearchParams } from '../data'
+import { LIST_DRAWER_ID } from './constants'
+import FilteredTable from './filteredTable'
+import { ListBuilderController, useBuilderContext } from './listBuilderController'
+import './unitLine'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
@@ -41,14 +42,17 @@ function ResultTab({ search, typeId }: { search: MULSearchParams, typeId: number
 
 
 export default function ResultGrid({ search }: { search: MULSearchParams }) {
-    const controller: SearchResultsController = useSearchResultsContext()
+    const controller: ListBuilderController = useBuilderContext()
+    const [listSummary, setListSummary] = useState(controller.getCurrentListSummary())
+    controller.registerSummaryObserver(setListSummary)
 
     return (
         <>
-            <div className="flex flex-wrap-reverse w-full">
+            <div className="flex w-full">
                 <div className="flex-3/4 flex justify-items-center items-center text-xs md:text-sm w-full md:w-8/12 mx-auto my-2 min-h-max align-middle border border-solid border-red-500">
-                    <div className="mx-auto text-center">{controller.getListConstraints()}</div>
+                    <div className="mx-auto text-center">{controller.getConstraints()}</div>
                 </div>
+                <label htmlFor={LIST_DRAWER_ID} className="btn btn-sm btn-error ml-2 xl:hidden">Open Builder<br />{listSummary}</label>
             </div>
             <div role="tablist" className="tabs tabs-lifted tabs-xs md:tabs-md p-1">
                 {

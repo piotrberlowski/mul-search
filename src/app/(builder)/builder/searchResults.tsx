@@ -9,9 +9,9 @@ export default function SearchResults({ search }: { search: MULSearchParams }) {
 
     if (!search.canSearch) {
         return (
-        <div className="w-full text-center items-center my-2">
-            <Link href="/">Please select the search parameters here!</Link>
-        </div>
+            <div className="w-full text-center items-center my-2">
+                <Link href="/">Please select the search parameters here!</Link>
+            </div>
         )
     }
 

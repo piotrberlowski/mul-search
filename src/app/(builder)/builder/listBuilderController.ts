@@ -1,84 +1,134 @@
 import { compareSelectedUnits } from "@/api/shareApi";
-import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, currentPV, exportTTSString, loadByName, removeByName, saveByName, saveLists, toJeffsUnits, totalPV } from "@/api/unitListApi"
+import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, currentPV, exportTTSString, loadByName, loadLists, removeByName, saveByName, saveLists, toJeffsUnits, totalPV } from "@/api/unitListApi"
 import { IUnit } from "@/api/unitListApi";
 import { Factions, parseConstraints } from "../data";
 import { LIST_PARAMETER } from "../validate/result/validation";
 import { ChangeListener } from "@/api/commons";
+import { createContext, useContext } from "react";
+import internal from "stream";
 
 export class ListBuilderController {
-    
     private save: Save;
     private constraints: string;
     private storedLists: string[]
-    private setSave: ChangeListener<Save>;
-    private setName: ChangeListener<string>;
-    private setTotal: ChangeListener<number>;
-    private setStoredLists: ChangeListener<string[]>;
-    
+    private setSave?: ChangeListener<Save>;
+    private setName?: ChangeListener<string>;
+    private setTotal?: ChangeListener<number>;
+    private setStoredLists?: ChangeListener<string[]>;
+    private summaryObserver?: ChangeListener<string>;
+
     constructor(
-        initialSave: Save,
         searchConstraints: string,
-        storedLists: string[],
-        setSave: ChangeListener<Save>, 
+        autosaveName: string,
+    ) {
+        this.constraints = searchConstraints
+        if (typeof window !== 'undefined') {
+            this.save = loadByName(autosaveName)
+            this.storedLists = loadLists()
+        } else {
+            this.save = {
+                units: [],
+                constraints: ""
+            }
+            this.storedLists = []
+        }
+    }
+
+    public registerBuilder(
+        setSave: ChangeListener<Save>,
         setName: ChangeListener<string>,
         setTotal: ChangeListener<number>,
         setStoredLists: ChangeListener<string[]>,
-        ) {
-            this.save = initialSave
-            this.constraints = searchConstraints
-            this.storedLists = storedLists
-            this.setSave = setSave
-            this.setName = setName
-            this.setTotal = setTotal
-            this.setStoredLists = setStoredLists
-        }
-        
-        public getConstraints() {
-            return this.constraints
-        }
-        
-        public getUnits() {
-            return this.save.units
-        }
-        
-        public addUnit(unit: IUnit) {
-            const isEmpty = this.save.units.length == 0
-            const ord = (isEmpty) ? 0 : Math.max(...this.save.units.map(u => u.ordinal)) + 1
-            const selected = {
-                ordinal: ord,
-                skill: 4,
-                lance: '',
-                ...unit
-            }
-            this.save  = {
-                units: [...this.save.units, selected].sort(compareSelectedUnits),
-                constraints: this.constraints,
-            }
-            this.setSave(this.save)
-            this.updateTotal()
-        }
 
-        public removeUnit(ord: number) {
-            this.save = {
-                units: this.save.units.filter(u => u.ordinal != ord),
-                constraints: this.save.constraints,
+    ) {
+        this.setSave = setSave
+        this.setName = setName
+        this.setTotal = setTotal
+        this.setStoredLists = setStoredLists
+    }
+
+    public registerSummaryObserver(
+        observer: ChangeListener<string>
+    ) {
+        this.summaryObserver = observer
+    }
+
+    public getConstraints() {
+        return this.constraints
+    }
+
+    public getUnits() {
+        return this.save.units
+    }
+
+    public guardedAddUnit(unit: IUnit) {
+        if (!this.setSave) 
+            return
+        if (this.save.constraints != this.constraints) {
+            if (this.save.units.length == 0) {
+                this.setSave(
+                    {
+                        ...this.save,
+                        constraints: this.constraints,
+                    }
+                )
+            } else {
+                alert(`Cannot add unit. Please clear the list or set your search to: \n ${this.constraints} `)
+                return
             }
-            this.setSave(this.save)
-            this.updateTotal()
+        }
+        this.addUnit(unit)
+    }
+
+    private addUnit(unit: IUnit) {
+        if (!this.setSave) 
+            return 
+        const isEmpty = this.save.units.length == 0
+        const ord = (isEmpty) ? 0 : Math.max(...this.save.units.map(u => u.ordinal)) + 1
+        const selected = {
+            ordinal: ord,
+            skill: 4,
+            lance: '',
+            ...unit
+        }
+        this.save = {
+            units: [...this.save.units, selected].sort(compareSelectedUnits),
+            constraints: this.constraints,
+        }
+        this.setSave(this.save)
+        this.updateTotal()
+    }
+
+    public removeUnit(ord: number) {
+        if (!this.setSave) 
+            return 
+        this.save = {
+            units: this.save.units.filter(u => u.ordinal != ord),
+            constraints: this.save.constraints,
+        }
+        this.setSave(this.save)
+        this.updateTotal()
     }
 
 
     public updateTotal() {
-        this.save  = {
+        if (!this.setSave || !this.setTotal) 
+            return 
+        this.save = {
             units: this.save.units.sort(compareSelectedUnits),
             constraints: this.constraints,
         }
         this.setSave(this.save)
-        this.setTotal(totalPV(this.save.units))
+        const total = totalPV(this.save.units)
+        this.setTotal(total)
         saveByName(this.save, LOCAL_STORAGE_NAME_AUTOSAVE)
+        if (this.summaryObserver)
+            this.summaryObserver(formatListSummary(this.save.units.length, total))
     }
-    
+
     public clear() {
+        if (!this.setSave) 
+            return 
         this.save = {
             units: [],
             constraints: this.constraints,
@@ -86,8 +136,10 @@ export class ListBuilderController {
         this.setSave(this.save)
         this.updateTotal()
     }
-    
+
     public store(name: string) {
+        if (!this.setStoredLists) 
+            return
         const listPosition = this.storedLists.indexOf(name)
         if (this.save.units.length > 0) {
             saveByName(this.save, name)
@@ -105,6 +157,8 @@ export class ListBuilderController {
     }
 
     public load(loadName: string) {
+        if (!this.setName || !this.setSave)
+            return
         const load = loadByName(loadName)
         if (load.units.length > 0) {
             this.save = load
@@ -135,14 +189,14 @@ export class ListBuilderController {
             formationBonus: "None",
             groupLabel: "Star"
         }
-    
+
         const jsonString = `data:text/json;chatset=utf-8,${encodeURIComponent(
             JSON.stringify(data)
         )}`;
         const link = document.createElement("a");
         link.href = jsonString;
         link.download = "list.json";
-    
+
         link.click();
     };
 
@@ -156,6 +210,25 @@ export class ListBuilderController {
         params.append(LIST_PARAMETER, unitString)
         return params
     }
-    
 
+    public getSave() {
+        return this.save
+    }
+
+    public getCurrentListSummary(): string {
+        return formatListSummary(this.save.units.length, totalPV(this.save.units))
+    }
+
+}
+
+function formatListSummary(count: number, totalPV: number) {
+    return `Units: ${count} | PV: ${totalPV}`
+}
+
+export const ListBuilderContext = createContext<ListBuilderController>(
+    new ListBuilderController('none', LOCAL_STORAGE_NAME_AUTOSAVE)
+)
+
+export function useBuilderContext() {
+    return useContext(ListBuilderContext)
 }

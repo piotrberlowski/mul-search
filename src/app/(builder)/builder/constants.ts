@@ -1,0 +1,1 @@
+export const LIST_DRAWER_ID="list-drawer"
