@@ -1,9 +1,9 @@
 import { IUnit } from "@/api/unitListApi"
-import { SearchResultsController, useSearchResultsContext } from "./searchResultsController"
 import { Sort } from "./filteredTable"
 import { useState } from "react"
 import { BarsArrowDownIcon, BarsArrowUpIcon } from "@heroicons/react/16/solid"
 import { PlusIcon } from "@heroicons/react/24/outline"
+import { ListBuilderController, useBuilderContext } from "./listBuilderController"
 
 export const EMPTY_UNIT = {
     Id: 0,
@@ -109,11 +109,11 @@ export function UnitHeader({ initial, onSort }: { initial: Sort, onSort: (newSor
 
 export default function UnitLine({ unit, idx }: { unit: IUnit, idx: number }) {
 
-    const controller: SearchResultsController = useSearchResultsContext()
+    const controller: ListBuilderController = useBuilderContext()
 
     const onAddClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault()
-        controller.notify(unit)
+        controller.guardedAddUnit(unit)
     }
 
     return (

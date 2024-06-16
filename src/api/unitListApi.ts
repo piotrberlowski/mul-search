@@ -98,7 +98,7 @@ function toMoveArray(move: string): JeffsMove[] {
         }
     })
 
-} 
+}
 
 export interface PvEntity {
     skill: number,
@@ -205,8 +205,8 @@ function storeTTSString(tts: string) {
     localStorage.setItem(LOCAL_STORAGE_TTS, tts)
 }
 
-export function loadTTSString():string {
-    const data =  localStorage.getItem(LOCAL_STORAGE_TTS)
+export function loadTTSString(): string {
+    const data = localStorage.getItem(LOCAL_STORAGE_TTS)
     if (!data) {
         return ''
     }
