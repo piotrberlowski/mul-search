@@ -20,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body id={scrollableId} className={`${inter.className} h-screen w-full flex flex-col px-2`}>
+      <body id={scrollableId} className={`${inter.className} h-dvh w-full flex flex-col px-2 relative`}>
         <div className='flex-0 flex'>
           <Header className='flex-1'/>
         </div>

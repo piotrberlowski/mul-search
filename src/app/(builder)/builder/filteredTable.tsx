@@ -248,9 +248,9 @@ export default function FilteredTable({ data }: { data: IUnit[] }) {
     }
 
     return (
-        <div className="bg-inherit">
-            <div className="sticky z-0 top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
-                <div className="w-full flex flex-wrap gap-x-2 gap-y-1">
+        <>
+            <div className="sticky z-20 top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
+                <div className="w-full flex flex-wrap gap-x-2 gap-y-1 overflow-x-hidden">
                     <QuickFilter label="Unit Name" className="basis-full md:basis-5/12" filterCallback={flt => updateFilter({ name: flt })} />
                     <QuickFilter label="Abilities" className="basis-1/4 md:basis-3/12" filterCallback={flt => updateFilter({ abilities: flt })} tooltip='Use comma to search for multiple abilities: "AM, MEC"' />
                     <QuickFilter label="Dmg" className="basis-1/4 md:basis-3/12" filterCallback={flt => updateFilter({ dmg: flt })} tooltip='"//N" => N at long range, "/5" => 5 at medium, "5/" => 5 at short' />
@@ -278,18 +278,18 @@ export default function FilteredTable({ data }: { data: IUnit[] }) {
                         tooltip='"4" for exactly 4, "3:" for 3 or larger' />
                     <QuickCheck label="Experimental Rules" className="basis-1/4 md:basis-2/12  flex-none" filterCallback={flt => updateFilter({experimental: flt})} />
                 </div>
-                <div className="mx-0.5 md:mx-5 text-sm">
+                <div className="text-sm">
                     <UnitHeader initial={sort} onSort={setSort} />
                 </div>
             </div>
-            <div className="mx-0.5 md:mx-5 text-sm mb-2 striped">
+            <div className="text-sm mb-2 striped">
                 {
                     sortAndFilter(units).map(
                         (entry, idx) => <UnitLine key={entry.Id} unit={entry} idx={idx} />
                     )
                 }
             </div>
-        </div>
+        </>
     )
 }
 

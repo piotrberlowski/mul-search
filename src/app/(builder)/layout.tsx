@@ -22,15 +22,17 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body id={scrollableId} className={`${inter.className} h-screen`}>
-        <div className='flex-1 h-full mx-[1%] items-center bg-inherit translate-y-0 max-xl:px-2'>
-          <Header className='fixed max-xl:inset-x-2 xl:w-1/2'/>
-          {children}
-        </div>
-        <FloatingFooter>
-          <label htmlFor={LIST_DRAWER_ID} className='btn btn-circle btn-outline bg-base-200 btn-xs flex-0 xl:hidden pointer-events-auto'><ListBulletIcon className='h-4 w-4' /></label>
-        </FloatingFooter>
+    <html lang="en" className="w-dvw h-dvh">
+      <body id={scrollableId} className={`${inter.className} h-dvh w-full bg-inherit`}>
+          <div className='h-full bg-inherit translate-y-0'>
+            <Header className='fixed max-xl:inset-x-2 xl:w-1/2 z-10'/>
+            <main className="relative bg-inherit align-top items-center w-full">
+              {children}
+            </main>
+          </div>
+          <FloatingFooter>
+            <label htmlFor={LIST_DRAWER_ID} className='btn btn-circle btn-outline bg-base-200 btn-xs flex-0 xl:hidden pointer-events-auto'><ListBulletIcon className='h-4 w-4' /></label>
+          </FloatingFooter>
       </body>
     </html>
   )

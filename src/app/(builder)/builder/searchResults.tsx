@@ -16,9 +16,7 @@ export default function SearchResults({ search }: { search: MULSearchParams }) {
     }
 
     return (
-        <div id="resultContainer" className='bg-inherit'>
-            <ResultGrid search={search} />
-        </div>
+        <ResultGrid search={search} />
     )
 
 }
