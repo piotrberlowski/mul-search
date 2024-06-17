@@ -111,7 +111,7 @@ function Lines({ save, controller }: { save: Save, controller: ListBuilderContro
     const lances = groupByLance(save.units)
 
     return (
-        <div className="w-full flex-1 h-full overflow-auto overscroll-none striped px-1">
+        <div className="w-full flex-1 h-full overflow-auto overscroll-none striped px-2">
             {
                 Array.from(lances).flatMap(([lid, units]) => [
                     <UnitsHeader key={`lance-header-${lid}`} lid={`Lance: ${lid || 'default'}`} units={units} />,
@@ -140,22 +140,24 @@ export default function ListBuilder({ children }: { children: React.ReactNode })
 
     return (
         <>
-            <div className="flex-1 border border-red-500 flex flex-col bg-white dark:bg-base-200 flex flex-col">
-                <BuilderHeader controller={controller} >
-                    {children}
-                </BuilderHeader>
-                <div className="flex-none w-full flex">
-                    <span className="mr-1 flex-none">Name: </span>
-                    <input className="inline flex-1 h-5 p-0 overflow-hidden" type='text' onChange={e => setName(e.target.value)} value={name} />
-                </div>
-                <Lines save={save} controller={controller} />
-                <div className="flex-none w-full bg-inherit grid grid-cols-1">
-                    <BuilderFooter
-                        units={save.units}
-                        total={total}
-                        constraints={controller.getConstraints()}
-                        listName={name}
-                        controller={controller} />
+            <div className="flex-1 flex flex-col h-full pb-5 px-1">
+                <div className="flex-1 border border-red-500 flex flex-col bg-white dark:bg-base-200 flex flex-col h-full">
+                    <BuilderHeader controller={controller} >
+                        {children}
+                    </BuilderHeader>
+                    <div className="flex-none w-full flex px-2">
+                        <span className="mr-1 flex-none">Name: </span>
+                        <input className="inline flex-1 h-5 p-0 overflow-hidden" type='text' onChange={e => setName(e.target.value)} value={name} />
+                    </div>
+                    <Lines save={save} controller={controller} />
+                    <div className="flex-none w-full bg-inherit grid grid-cols-1">
+                        <BuilderFooter
+                            units={save.units}
+                            total={total}
+                            constraints={controller.getConstraints()}
+                            listName={name}
+                            controller={controller} />
+                    </div>
                 </div>
             </div>
         </>
