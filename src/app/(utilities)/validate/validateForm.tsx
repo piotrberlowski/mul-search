@@ -1,5 +1,5 @@
 'use client'
-import { Faction, Factions, eraMap, eras } from "@/app/(builder)/data";
+import { Faction, Factions, eraMap, eras } from "@/app/data";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from 'react';
