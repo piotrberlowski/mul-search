@@ -1,6 +1,6 @@
 'use client'
 import { ReadonlyURLSearchParams, useSearchParams } from "next/navigation";
-import { Faction, Factions, MASTER_UNIT_LIST, MULSearchParams } from "../../data";
+import { Faction, Factions, MASTER_UNIT_LIST, MULSearchParams } from '@/app/data'
 import React, { useEffect, useState } from "react";
 import { IUnit } from "@/api/unitListApi";
 import { IResult, LIST_CHECKS, ValidateUnit, testUnit } from "./results";

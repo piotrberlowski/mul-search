@@ -1,8 +1,8 @@
 import { compareSelectedUnits } from "@/api/shareApi";
 import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, currentPV, exportTTSString, loadByName, loadLists, removeByName, saveByName, saveLists, toJeffsUnits, totalPV } from "@/api/unitListApi"
 import { IUnit } from "@/api/unitListApi";
-import { Factions, parseConstraints } from "../data";
-import { LIST_PARAMETER } from "../validate/result/validation";
+import { Factions, parseConstraints } from "@/app/data";
+import { LIST_PARAMETER } from "@/app/(utilities)/validate/result/validation";
 import { ChangeListener } from "@/api/commons";
 import { createContext, useContext } from "react";
 import internal from "stream";

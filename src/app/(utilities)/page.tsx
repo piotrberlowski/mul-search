@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { fetchFactions } from './data'
+import { fetchFactions } from '@/app/data'
 import SearchForm from './searchForm'
 import Link from "next/link"
 

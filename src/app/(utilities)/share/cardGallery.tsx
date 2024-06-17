@@ -1,7 +1,7 @@
 import { ISelectedUnit, currentPV, groupByLance } from "@/api/unitListApi"
 import Image from "next/image"
 import React, { useMemo } from "react"
-import { MASTER_UNIT_LIST } from "../data"
+import { MASTER_UNIT_LIST } from "@/app/data"
 
 const CARD_WIDTH = 1050
 const CARD_HEIGHT = 750

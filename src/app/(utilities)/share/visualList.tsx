@@ -6,8 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from "react"
 import { MulUnit, parseShare } from '../../../api/shareApi'
 import { ISelectedUnit, IUnit, LOCAL_STORAGE_NAME_AUTOSAVE, loadLists, saveByName, saveLists } from '../../../api/unitListApi'
-import { EMPTY_UNIT } from '../builder/unitLine'
-import { Faction, Factions, MASTER_UNIT_LIST, parseConstraints } from '../data'
+import { EMPTY_UNIT } from '@/app/(builder)/builder/unitLine'
+import { Faction, Factions, MASTER_UNIT_LIST, parseConstraints } from '@/app/data'
 import CardGallery from './cardGallery'
 import SummaryTable from './summaryTable'
 

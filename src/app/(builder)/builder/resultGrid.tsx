@@ -3,11 +3,12 @@
 import { IUnit, UNIT_TYPES } from '@/api/unitListApi'
 import React, { useState } from 'react'
 import useSWR from 'swr'
-import { MULSearchParams } from '../data'
+import { MULSearchParams } from '@/app/data'
 import { LIST_DRAWER_ID } from './constants'
 import FilteredTable from './filteredTable'
 import { ListBuilderController, useBuilderContext } from './listBuilderController'
 import './unitLine'
+import dynamic from 'next/dynamic'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
@@ -40,19 +41,18 @@ function ResultTab({ search, typeId }: { search: MULSearchParams, typeId: number
     )
 }
 
+ 
+const BuilderLabelDynamic = dynamic(() => import('@/app/(builder)/builder/builderLabel'), { ssr: false })
 
 export default function ResultGrid({ search }: { search: MULSearchParams }) {
     const controller: ListBuilderController = useBuilderContext()
-    const [listSummary, setListSummary] = useState(controller.getCurrentListSummary())
-    controller.registerSummaryObserver(setListSummary)
-
     return (
         <>
             <div className="flex w-full">
                 <div className="flex-3/4 flex justify-items-center items-center text-xs md:text-sm w-full md:w-8/12 mx-auto my-2 min-h-max align-middle border border-solid border-red-500">
                     <div className="mx-auto text-center">{controller.getConstraints()}</div>
+                    <BuilderLabelDynamic/>
                 </div>
-                <label htmlFor={LIST_DRAWER_ID} className="btn btn-sm btn-error ml-2 xl:hidden">Open Builder<br />{listSummary}</label>
             </div>
             <div role="tablist" className="tabs tabs-lifted tabs-xs md:tabs-md p-1">
                 {
