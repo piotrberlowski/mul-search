@@ -1,4 +1,4 @@
-import { fetchFactions } from '../data'
+import { fetchFactions } from '@/app/data'
 import { Suspense } from "react"
 import BuilderApp from './builderApp'
 

@@ -1,6 +1,6 @@
 'use client'
 import { useSearchParams } from "next/navigation"
-import { Faction, Factions as Factions, eraMap, eras, parseConstraints } from "./data"
+import { Faction, Factions as Factions, eraMap, eras, parseConstraints } from "@/app/data"
 import SearchInputPanel from "./searchInputPanel"
 import { useEffect, useState } from 'react';
 import Link from "next/link";

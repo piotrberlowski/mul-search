@@ -2,7 +2,7 @@
 import dynamic from "next/dynamic";
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { Faction, Factions, MULSearchParams } from '../data';
+import { Faction, Factions, MULSearchParams } from '@/app/data';
 import SearchResults from './searchResults';
 import { XCircleIcon } from "@heroicons/react/16/solid";
 import { LIST_DRAWER_ID } from "./constants";

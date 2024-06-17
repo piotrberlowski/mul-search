@@ -3,7 +3,7 @@
 import ResultGrid from './resultGrid'
 import React from 'react'
 import Link from 'next/link'
-import { MULSearchParams } from '../data'
+import { MULSearchParams } from '@/app/data'
 
 export default function SearchResults({ search }: { search: MULSearchParams }) {
 

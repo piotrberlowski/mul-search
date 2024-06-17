@@ -4,12 +4,12 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ISelectedUnit, IUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, groupByLance, loadByName, loadLists, totalPV } from '../../../api/unitListApi';
 import PlayLink from '../../../components/playLink';
-import ShareLink from '../share/shareLink';
+import ShareLink from '@/app/(utilities)/share/shareLink';
 import { ListLine } from './ListLine';
 import { ListBuilderController, useBuilderContext } from './listBuilderController';
 import useLoadDialog from './loadDialog';
 import { useRouter } from 'next/navigation';
-import { Factions, fetchFactions } from '../data';
+import { Factions, fetchFactions } from '@/app/data';
 
 function BuilderHeader({ controller, children }: { controller: ListBuilderController, children: React.ReactNode }) {
     const units = controller.getUnits()

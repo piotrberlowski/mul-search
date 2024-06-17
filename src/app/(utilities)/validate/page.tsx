@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { fetchFactions } from "@/app/(builder)/data"
+import { fetchFactions } from "@/app/data"
 import ValidateForm from "./validateForm"
 
 function CsrFallback() {
