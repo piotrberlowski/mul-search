@@ -39,10 +39,10 @@ export default function BuilderApp({ factions }: { factions: Faction[] }) {
                             <SearchResults search={mulSP} />
                         </Suspense>
                     </div>
-                    <div className="drawer-side z-20 col-start-2 w-full">
+                    <div className="drawer-side z-20 col-start-2 w-full bottom-0 block">
                         <div className="h-full pb-4 flex flex-col">
                             <ListBuilder>
-                                <label htmlFor={LIST_DRAWER_ID} className="drawer-overlay xl:hidden btn btn-xs btn-error btn-square"><XCircleIcon className="h-5 w-5" /></label>
+                                <label htmlFor={LIST_DRAWER_ID} className="drawer-overlay xl:hidden btn btn-sm btn-error"><XCircleIcon className="h-5 w-5" /></label>
                             </ListBuilder>
                         </div>
                     </div>

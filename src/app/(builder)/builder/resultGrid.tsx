@@ -51,8 +51,8 @@ export default function ResultGrid({ search }: { search: MULSearchParams }) {
             <div className="flex w-full">
                 <div className="flex-3/4 flex justify-items-center items-center text-xs md:text-sm w-full md:w-8/12 mx-auto my-2 min-h-max align-middle border border-solid border-red-500">
                     <div className="mx-auto text-center">{controller.getConstraints()}</div>
-                    <BuilderLabelDynamic/>
                 </div>
+                <BuilderLabelDynamic/>
             </div>
             <div role="tablist" className="tabs tabs-lifted tabs-xs md:tabs-md p-1">
                 {
