@@ -4,13 +4,17 @@ import React from "react";
 
 const isBrowser = () => typeof window !== 'undefined';
 
-function scrollToTop(target: string) {
+function scrollToTop(target?: string) {
   if (!isBrowser()) return;
-  document.getElementById(target)?.scrollTo({ top: 0, behavior: 'smooth' });
+  const scrollOptions: ScrollToOptions = { top: 0, behavior: 'smooth' }
+  if (target)
+    document.getElementById(target)?.scrollTo(scrollOptions);
+  else
+    window.scrollTo(scrollOptions)
 }
 
 
-export default function ScrollToTop({target, className, children}:{target: string, className: string, children?: React.ReactNode}) {
+export default function ScrollToTop({target, className, children}:{target?: string, className: string, children?: React.ReactNode}) {
     return (
         <div className={`items-center w-full ${className}`}>
           <button className={`btn btn-circle btn-outline bg-base-200 btn-xs pointer-events-auto`} onClick={() => scrollToTop(target)}><ArrowUpIcon className='w-4 h-4' /></button>

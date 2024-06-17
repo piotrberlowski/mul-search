@@ -23,13 +23,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} h-screen`}>
-        <div id={scrollableId} className='flex-1 h-full mx-[1%] items-center bg-inherit translate-y-0 overflow-scroll max-xl:px-2'>
+      <body id={scrollableId} className={`${inter.className} h-screen`}>
+        <div className='flex-1 h-full mx-[1%] items-center bg-inherit translate-y-0 max-xl:px-2'>
           <Header className='fixed max-xl:inset-x-2 xl:w-1/2'/>
           {children}
         </div>
-        <FloatingFooter scrollTarget={scrollableId}>
-          <label htmlFor={LIST_DRAWER_ID} className='btn btn-circle btn-outline bg-base-200 btn-xs flex-0 xl:hidden'><ListBulletIcon className='h-4 w-4' /></label>
+        <FloatingFooter>
+          <label htmlFor={LIST_DRAWER_ID} className='btn btn-circle btn-outline bg-base-200 btn-xs flex-0 xl:hidden pointer-events-auto'><ListBulletIcon className='h-4 w-4' /></label>
         </FloatingFooter>
       </body>
     </html>
