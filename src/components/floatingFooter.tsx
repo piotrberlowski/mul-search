@@ -1,6 +1,6 @@
 import ScrollToTop from "./scrollToTop";
 
-export default function FloatingFooter({scrollTarget, children}:{scrollTarget:string, children?: React.ReactNode}) {
+export default function FloatingFooter({scrollTarget, children}:{scrollTarget?:string, children?: React.ReactNode}) {
     return (
       <div className='fixed bottom-0 mt-2 items-justified text-center bg-inherit border-t border-t-solid border-t-1 border-t-black dark:border-t-white text-xs print:hidden w-full'>
         <div className='w-full items-right relative'>
