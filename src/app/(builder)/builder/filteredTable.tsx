@@ -182,10 +182,10 @@ class Filter {
 
 function FilterBox({ tooltip, children, className }: { tooltip?: string, children: React.ReactNode, className?: string }) {
     return (
-        <div className={`flex flex-1 ${className} text-xs relative`}>
-            <div className="tooltip w-full h-full text-xs" data-tip={tooltip}>
-                {children}
-            </div>
+        <div className={`flex ${className} text-xs relative box-border`}>
+            {children}
+            {/* <div className="tooltip w-full h-full text-xs" data-tip={tooltip}>
+            </div> */}
         </div>
     )
 }
@@ -202,7 +202,7 @@ function QuickFilter({ label, className, filterCallback, tooltip }: FilterParams
 
     return (
         <FilterBox tooltip={tooltip} className={className} >
-            <input type="text" placeholder={label} value={value} className="input input-bordered w-full input-xs" onChange={e => filter(e.target.value)} title={tooltip} alt={tooltip} />
+            <input type="text" placeholder={label} value={value} className="input input-bordered w-full input-xs box-border" onChange={e => filter(e.target.value)} title={tooltip} alt={tooltip} />
             <button className="btn btn-square btn-outline absolute right-0 btn-xs" onClick={e => filter(undefined)}><XMarkIcon className='min-h-4 min-w-4 h-4 w-4 shrink-0 resize-none' /></button>
         </FilterBox>
     )
@@ -250,14 +250,14 @@ export default function FilteredTable({ data }: { data: IUnit[] }) {
     return (
         <>
             <div className="sticky z-20 top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
-                <div className="w-full flex flex-wrap gap-x-2 gap-y-1 overflow-x-hidden">
-                    <QuickFilter label="Unit Name" className="basis-full md:basis-5/12" filterCallback={flt => updateFilter({ name: flt })} />
-                    <QuickFilter label="Abilities" className="basis-1/4 md:basis-3/12" filterCallback={flt => updateFilter({ abilities: flt })} tooltip='Use comma to search for multiple abilities: "AM, MEC"' />
-                    <QuickFilter label="Dmg" className="basis-1/4 md:basis-3/12" filterCallback={flt => updateFilter({ dmg: flt })} tooltip='"//N" => N at long range, "/5" => 5 at medium, "5/" => 5 at short' />
-                    <QuickFilter label="Move (min:max)" className="basis-1/4 md:basis-2/12" filterCallback={flt => updateFilter({ moveFilter: parseMoveRange(flt) })} tooltip='"8:14j" for 8<=move<=14 jumping or 12 for exactly 12 any mode' />
+                <div className="w-full grid grid-cols-6 md:grid-cols-8 gap-x-2 gap-y-1">
+                    <QuickFilter label="Unit Name" className="col-span-6 md:col-span-3" filterCallback={flt => updateFilter({ name: flt })} />
+                    <QuickFilter label="Abilities" className="col-span-2 md:col-span-3" filterCallback={flt => updateFilter({ abilities: flt })} tooltip='Use comma to search for multiple abilities: "AM, MEC"' />
+                    <QuickFilter label="Dmg" className="col-span-2 md:col-span-2" filterCallback={flt => updateFilter({ dmg: flt })} tooltip='"//N" => N at long range, "/5" => 5 at medium, "5/" => 5 at short' />
+                    <QuickFilter label="Move (min:max)" className="col-span-2 md:col-span-2" filterCallback={flt => updateFilter({ moveFilter: parseMoveRange(flt) })} tooltip='"8:14j" for 8<=move<=14 jumping or 12 for exactly 12 any mode' />
                     <QuickFilter
                         label="PV (min:max)"
-                        className="basis-1/4 md:basis-2/12"
+                        className="col-span-2"
                         filterCallback={
                             flt => {
                                 const [minPV, maxPV] = parseRange(flt)
@@ -268,7 +268,7 @@ export default function FilteredTable({ data }: { data: IUnit[] }) {
                     />
                     <QuickFilter
                         label="Size (min:max)"
-                        className="basis-1/4 md:basis-2/12"
+                        className="col-span-2"
                         filterCallback={
                             flt => {
                                 const [minSz, maxSz] = parseRange(flt)
@@ -276,7 +276,7 @@ export default function FilteredTable({ data }: { data: IUnit[] }) {
                             }
                         }
                         tooltip='"4" for exactly 4, "3:" for 3 or larger' />
-                    <QuickCheck label="Experimental Rules" className="basis-1/4 md:basis-2/12  flex-none" filterCallback={flt => updateFilter({experimental: flt})} />
+                    <QuickCheck label="Experimental Rules" className="col-span-2 overflow-hidden text-ellipsis" filterCallback={flt => updateFilter({experimental: flt})} />
                 </div>
                 <div className="text-sm">
                     <UnitHeader initial={sort} onSort={setSort} />
