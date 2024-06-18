@@ -23,8 +23,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="w-dvw h-dvh">
-      <body id={scrollableId} className={`${inter.className} h-dvh w-full bg-inherit`}>
-          <div className='h-full bg-inherit translate-y-0'>
+      <body id={scrollableId} className={`${inter.className} h-dvh w-full`}>
+          <div className='bg-inherit translate-y-0'>
             <Header className='fixed max-xl:inset-x-2 xl:w-1/2 z-10'/>
             <main className="relative bg-inherit align-top items-center w-full">
               {children}
