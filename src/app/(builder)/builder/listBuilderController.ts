@@ -4,18 +4,18 @@ import { IUnit } from "@/api/unitListApi";
 import { Factions, parseConstraints } from "@/app/data";
 import { LIST_PARAMETER } from "@/app/(utilities)/validate/result/validation";
 import { ChangeListener } from "@/api/commons";
-import { createContext, useContext } from "react";
-import internal from "stream";
+import { Dispatch, SetStateAction, createContext, useContext } from "react";
 
 export class ListBuilderController {
     private save: Save;
     private constraints: string;
-    private storedLists: string[]
+    private storedLists: string[];
     private setSave?: ChangeListener<Save>;
     private setName?: ChangeListener<string>;
     private setTotal?: ChangeListener<number>;
     private setStoredLists?: ChangeListener<string[]>;
     private summaryObserver?: ChangeListener<string>;
+    private constraintsObserver?: ChangeListener<string>;
 
     constructor(
         searchConstraints: string,
@@ -52,6 +52,11 @@ export class ListBuilderController {
     ) {
         this.summaryObserver = observer
     }
+
+    public registerConstraintsObserver(setConstraints: ChangeListener<string>) {
+        this.constraintsObserver = setConstraints
+    }
+
 
     public getConstraints() {
         return this.constraints
@@ -165,6 +170,9 @@ export class ListBuilderController {
             this.setSave(load)
             this.setName(loadName)
             this.updateTotal()
+            if (this.constraintsObserver) {
+                this.constraintsObserver(load.constraints)
+            }
         } else {
             console.log("Loaded empty list... " + loadName)
         }

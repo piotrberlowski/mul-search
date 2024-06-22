@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { fetchFactions } from "@/app/data"
 import ValidateForm from "./validateForm"
+import {  ChevronDoubleRightIcon, ChevronDownIcon  } from "@heroicons/react/24/outline"
 
 function CsrFallback() {
   return <>Executing your search...</>
@@ -8,31 +9,33 @@ function CsrFallback() {
 
 function Intro() {
   return (
-    <>
-      <div className="mb-5">
+    <div className="w-full flex items-center justify-center">
+      <div className="mb-5 mx-auto flex-0">
         <p className="my-1">
           This is a validator for lists in <a href="https://wolfsdragoons.com/alpha-strike-core-tournament-rules-2/">Wolf Net Alpha Strike 350 format</a>.
         </p>
-        <p>
-          Please select the following list attributes:
-        </p>
-        <ul className="list-disc ml-5">
+        <div className="flex items-center">
+          <ChevronDoubleRightIcon className="h-5 w-5 my-2 flex-none"/> Please select the following list attributes:
+        </div>
+        <ul className="list-disc ml-10">
           <li>faction</li>
           <li>availability era</li>
           <li>&quot;general list&quot;</li>
         </ul>
-        <p className="my-1">
+        <ChevronDownIcon className="h-5 w-5 my-1"/>
+        <p className="ml-5">
           Manually verify if the general list is applicable based on the provided link.
         </p>
-        <p className="my-1">
-           Upload the Master Unit List PDF.
+        <ChevronDownIcon className="h-5 w-5 my-1"/>
+        <p className="ml-5">
+          Upload the Master Unit List PDF.
         </p>
       </div>
-    </>
+    </div>
   )
 }
 
-function Footnote() { 
+function Footnote() {
   return (
     <div className="text-xs w-100 mt-5">
       <p className="my-1">

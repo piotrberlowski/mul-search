@@ -2,18 +2,18 @@
 import Combinations from '@/components/combinations'
 import PlayLink from '@/components/playLink'
 import Head from 'next/head'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react"
-import { MulUnit, parseShare } from '../../../api/shareApi'
+import { ConstrainedList, MulUnit } from '@/api/shareApi'
 import { ISelectedUnit, IUnit, LOCAL_STORAGE_NAME_AUTOSAVE, loadLists, saveByName, saveLists } from '../../../api/unitListApi'
 import { EMPTY_UNIT } from '@/app/(builder)/builder/unitLine'
 import { Faction, Factions, MASTER_UNIT_LIST, parseConstraints } from '@/app/data'
 import CardGallery from './cardGallery'
 import SummaryTable from './summaryTable'
+import { list } from 'postcss'
 
 
 function selectUnit(mulUnit: MulUnit, { Units }: { Units: IUnit[] }): ISelectedUnit {
-    console.log(Units)
     const data = Units.find(u => u.Id == mulUnit.id) || EMPTY_UNIT
     return {
         ordinal: mulUnit.ordinal,
@@ -48,7 +48,7 @@ function ReadyList({ units, constraints, factions, name, total }: { units: ISele
         if (tweak) {
             saveByName(save, LOCAL_STORAGE_NAME_AUTOSAVE)
             const params = parseConstraints(constraints, new Factions(factions))
-            router.push("/builder?"+params.toString())
+            router.push("/builder?" + params.toString())
         } else {
             const lists = loadLists()
             saveByName(save, name)
@@ -59,7 +59,7 @@ function ReadyList({ units, constraints, factions, name, total }: { units: ISele
         }
     }
 
-    
+
     return (
         <>
             <div className="w-full mx-auto flex print:hidden">
@@ -87,33 +87,32 @@ function ReadyList({ units, constraints, factions, name, total }: { units: ISele
 
 }
 
-export default function VisualList({factions}:{factions: Faction[]}) {
+export default function VisualList({ factions, list }: { factions: Faction[], list: ConstrainedList }) {
     const [units, setUnits] = useState<ISelectedUnit[]>(new Array<ISelectedUnit>())
-    const params = useSearchParams()
-
-    const listString = params.get('list')
-    const constraints = params.get('constraints') ?? "legacy"
-    const parsed = parseShare(listString || 'empty;')
 
     useEffect(
-        () => { fetchFromMul(parsed.units).then(setUnits).catch(err => console.log(err)) }
-        , [parsed.units])
+        () => {
+            fetchFromMul(list.units).then(setUnits).then(() => console.log(JSON.stringify({
+                ...list,
+            }))).catch(err => console.log(err))
+        }
+        , [list.units])
 
     let visualisation = <div className="w-full h-full text-center items-center justify-items-center"><span className="loading loading-dots loading-lg"></span></div>
 
-    if (units.length == parsed.units.length) {
-        visualisation = <ReadyList units={units} constraints={constraints} name={parsed.name} total={parsed.total} factions={factions} />
+    if (units.length == list.units.length) {
+        visualisation = <ReadyList units={units} constraints={list.constraints} name={list.name} total={list.total} factions={factions} />
     }
 
     return (
         <>
             <Head>
-                <title>{`AS: ${parsed.name}`}</title>
-                <meta property="og:title" content={`AS: ${parsed.name}`} key="title" />
+                <title>{`AS: ${list.name}`}</title>
+                <meta property="og:title" content={`AS: ${list.name}`} key="title" />
                 <meta property="og:description" content={`Alpha Strike list shared via AS Builder`} key="description" />
             </Head>
             <div className='text-center w-full'>
-                <div>{constraints} : {parsed.name}</div>
+                <div>{list.constraints} : {list.name}</div>
             </div>
             {visualisation}
         </>
