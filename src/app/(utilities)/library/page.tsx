@@ -10,7 +10,7 @@ function ListCard({ list }: { list: List }) {
             <ShortLink className="ml-5 mt-1" listKey={list.key}>
                 <div className="flex">
                     <ArrowRightCircleIcon className="h-5 w-5 mr-2 flex-none" />
-                    <div className="flex-1">"{list.name}": {list.description}</div>
+                    <div className="flex-1">&quot;{list.name}&quot;: {list.description}</div>
                 </div>
             </ShortLink>
         </div>

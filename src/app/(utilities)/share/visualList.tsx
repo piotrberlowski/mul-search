@@ -96,7 +96,7 @@ export default function VisualList({ factions, list }: { factions: Faction[], li
                 ...list,
             }))).catch(err => console.log(err))
         }
-        , [list.units])
+        , [list])
 
     let visualisation = <div className="w-full h-full text-center items-center justify-items-center"><span className="loading loading-dots loading-lg"></span></div>
 
