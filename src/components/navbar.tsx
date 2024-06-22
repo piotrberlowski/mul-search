@@ -12,7 +12,7 @@ export default function Navigation({className}:{className?: string}) {
                         <Bars3CenterLeftIcon className="h-4 w-4" />
                     </div>
                     <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                        <li><Link href="/">Unit Search</Link></li>
+                        <li><Link href="/">Search/Builder</Link></li>
                         <li><Link href="/validate">AS350 Validator</Link></li>
                         <li><Link href="/library">List Library</Link></li>
                     </ul>
@@ -21,7 +21,7 @@ export default function Navigation({className}:{className?: string}) {
             </div>
             <div className="flex-1 hidden lg:flex">
                 <ul className="menu menu-horizontal px-1">
-                    <li><Link href="/">Unit Search</Link></li>
+                    <li><Link href="/">Search/Builder</Link></li>
                     <li><Link href="/validate">AS350 Validator</Link></li>
                     <li><Link href="/library">List Library</Link></li>
                 </ul>
