@@ -29,9 +29,7 @@ const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProp
 
     useEffect(
         () => {
-            console.log(`Firing: ${open}`)
             if (open) {
-                console.log('Generating!')
                 setCombinations(generateSubsets(units, minPV, maxPV))
             }
         },

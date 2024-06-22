@@ -8,19 +8,24 @@ export type MulUnit = {
     ordinal: number,
 }
 
-type ParsedMulList = {
+export interface MulList {
     name: string,
     total: number,
     units: MulUnit[]
 }
 
-function safeLocaleCompare(a?: string, b?:string) {
-    const safeA = a||''
-    const safeB = b||''
+export interface ConstrainedList extends MulList {
+    constraints: string,
+}
+
+
+function safeLocaleCompare(a?: string, b?: string) {
+    const safeA = a || ''
+    const safeB = b || ''
     return safeA.localeCompare(safeB)
 }
 
-export function compareSelectedUnits(a: ISelectedUnit, b:ISelectedUnit):number {
+export function compareSelectedUnits(a: ISelectedUnit, b: ISelectedUnit): number {
     let val = safeLocaleCompare(a.lance, b.lance)
     if (0 == val) {
         val = currentPV(b) - currentPV(a)
@@ -34,12 +39,12 @@ export function compareSelectedUnits(a: ISelectedUnit, b:ISelectedUnit):number {
     return val
 }
 
-export function exportShare(name:string, total:number, units: ISelectedUnit[]) {
+export function exportShare(name: string, total: number, units: ISelectedUnit[]) {
     const unitsString = [...units].sort(compareSelectedUnits).map(u => [u.Id, u.skill, u.Name, u.lance || ''].join(':')).join(',')
     return `${name};${total};${unitsString}`
 }
 
-export function parseShare(importString: string): ParsedMulList {
+export function parseShare(importString: string): MulList {
     if (importString.indexOf(';') < 0 || importString.indexOf(';') == importString.lastIndexOf(';')) {
         return {
             name: "Empty",
@@ -49,7 +54,7 @@ export function parseShare(importString: string): ParsedMulList {
     }
     const [name, total, unitsString] = importString.split(';')
     const units = unitsString.split(',')
-        .filter(s=>s.indexOf(':')>0)
+        .filter(s => s.indexOf(':') > 0)
         .map((s, idx) => {
             const [id, skill, name, lance] = s.split(':')
             return {

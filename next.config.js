@@ -2,7 +2,6 @@
 const { version } = require('./package.json');
 
 const nextConfig = {
-    output: 'export',
     trailingSlash: true,
     images: { unoptimized: true },
     publicRuntimeConfig: {

@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DB_PRISMA_URL") // uses connection pooling
+  directUrl = env("DB_URL_NON_POOLING")
+}
+
+model Format {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String  @unique
+  lists       List[]
+  description String
+}
+
+model List {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String  @unique
+  key         String  @unique
+  description String?
+  format      Format @relation(fields: [formatId], references: [id] )
+  formatId    String @db.Uuid
+  content     Json
+  constraints String
+  total       Int
+  createdAt   DateTime @default(now())
+}
+

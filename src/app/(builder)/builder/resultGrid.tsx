@@ -44,14 +44,22 @@ function ResultTab({ search, typeId }: { search: MULSearchParams, typeId: number
  
 const BuilderLabelDynamic = dynamic(() => import('@/app/(builder)/builder/builderLabel'), { ssr: false })
 
-export default function ResultGrid({ search }: { search: MULSearchParams }) {
+function ConstraintsLabel() {
     const controller: ListBuilderController = useBuilderContext()
+    const [constraints, setConstraints] = useState(controller.getConstraints())
+    controller.registerConstraintsObserver(setConstraints)
+    return (
+    <div className="flex-3/4 flex justify-items-center items-center text-xs md:text-sm w-full md:w-8/12 mx-auto my-2 min-h-max align-middle border border-solid border-red-500">
+        <div className="mx-auto text-center">{constraints}</div>
+    </div>
+    )
+}
+
+export default function ResultGrid({ search }: { search: MULSearchParams }) {
     return (
         <>
             <div className="flex w-full">
-                <div className="flex-3/4 flex justify-items-center items-center text-xs md:text-sm w-full md:w-8/12 mx-auto my-2 min-h-max align-middle border border-solid border-red-500">
-                    <div className="mx-auto text-center">{controller.getConstraints()}</div>
-                </div>
+                <ConstraintsLabel/>
                 <BuilderLabelDynamic/>
             </div>
             <div role="tablist" className="tabs tabs-lifted tabs-xs md:tabs-md p-1">

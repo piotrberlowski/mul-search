@@ -9,8 +9,8 @@ function CsrFallback() {
 
 function Intro() {
   return (
-    <>
-      <div className="mb-5">
+    <div className="w-full flex items-center justify-center">
+      <div className="mb-5 mx-auto flex-0">
         <p className="my-1">
           This tool supports the list building flow of the <a href="https://wolfsdragoons.com/alpha-strike-core-tournament-rules-2/">Wolf Net Alpha Strike 350 format</a>.
         </p>
@@ -29,11 +29,11 @@ function Intro() {
           Once you have the faction and era selected, the tool <b>will</b> give you a link which you can follow to see which general list is relevant.
         </p>
       </div>
-    </>
+    </div>
   )
 }
 
-function Footnote() { 
+function Footnote() {
   return (
     <div className="text-xs w-100 mt-5">
       <p className="my-1">
