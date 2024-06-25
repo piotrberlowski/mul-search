@@ -2,9 +2,9 @@ import '../globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 
-import Header from '@/components/header'
 import FloatingFooter from '@/components/floatingFooter'
 import Navigation from '@/components/navbar'
+import {SessionProvider} from "next-auth/react"
 
 const inter = Inter({ subsets: ['latin'] })
 const scrollableId = "main-body"
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode,
 }) {
   return (
     <html lang="en">
@@ -25,7 +25,7 @@ export default function RootLayout({
         <div className='flex-0 flex'>
           <Navigation className="flex-1"/>
         </div>
-        {children}
+          {children}
         <FloatingFooter scrollTarget={scrollableId} />
       </body>
     </html>
