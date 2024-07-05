@@ -16,7 +16,7 @@ export default function SearchResults({ search }: { search: MULSearchParams }) {
     }
 
     return (
-        <ResultGrid search={search} />
+        <ResultGrid />
     )
 
 }

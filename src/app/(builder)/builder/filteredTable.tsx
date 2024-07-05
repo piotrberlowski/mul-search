@@ -6,6 +6,8 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import React, { useState } from "react";
 import UnitLine, { UnitComparators, UnitHeader } from './unitLine';
 import RulesReferences from '@/app/(itvbbjorn)/play/RulesReferences';
+import { MULSearchParams } from '@/app/data';
+import { useSearchParams } from 'next/navigation';
 
 const moveRex = /^(\d+)?(:)?(\d+)?([fwhvjt])?$/
 const rangeRex = /^(\d+)?(:)?(\d+)?$/
@@ -229,7 +231,7 @@ function QuickCheck({ label, className, filterCallback, tooltip }: FilterParams<
 }
 
 export default function FilteredTable({ data }: { data: IUnit[] }) {
-
+    const params = useSearchParams()
     const [units, setUnits] = useState(data)
     const [filter, setFilter] = useState(new Filter())
     const [sort, setSort] = useState({
@@ -285,7 +287,11 @@ export default function FilteredTable({ data }: { data: IUnit[] }) {
             <div className="text-sm mb-2 striped">
                 {
                     sortAndFilter(units).map(
-                        (entry, idx) => <UnitLine key={entry.Id} unit={entry} idx={idx} />
+                        (entry, idx) => {
+                            return (
+                                <UnitLine key={(params.get('era')||"") +entry.Id} unit={entry} idx={idx} />
+                            )
+                        }
                     )
                 }
             </div>

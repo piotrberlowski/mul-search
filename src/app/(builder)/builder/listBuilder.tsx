@@ -1,15 +1,17 @@
 'use client'
+import ShareLink from '@/app/(utilities)/share/shareLink';
+import { Factions, fetchFactions } from '@/app/data';
 import { useCombinations } from '@/components/combinations';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { ISelectedUnit, IUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, groupByLance, loadByName, loadLists, totalPV } from '../../../api/unitListApi';
+import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, groupByLance, totalPV } from '../../../api/unitListApi';
 import PlayLink from '../../../components/playLink';
-import ShareLink from '@/app/(utilities)/share/shareLink';
 import { ListLine } from './ListLine';
 import { ListBuilderController, useBuilderContext } from './listBuilderController';
 import useLoadDialog from './loadDialog';
-import { useRouter } from 'next/navigation';
-import { Factions, fetchFactions } from '@/app/data';
+import useSaveDialog from './saveDialog';
+import { SessionProvider, useSession } from 'next-auth/react';
 
 function BuilderHeader({ controller, children }: { controller: ListBuilderController, children: React.ReactNode }) {
     const units = controller.getUnits()
@@ -43,11 +45,16 @@ function BuilderFooter({
     listName: string,
     controller: ListBuilderController,
 }) {
-
+    const session = useSession()
     const router = useRouter()
 
     const [cmbBtn, cmbDlg] = useCombinations(units, <>Sub-lists</>, 'btn text-center w-full btn-sm')
     const [loadBtn, loadDlg] = useLoadDialog(listName, controller, (<>Load</>))
+    const [saveBtn, saveDlg] = useSaveDialog({
+        name: listName,
+        controller: controller,
+        loggedIn: session?.data?.externalAccount != undefined,
+    }, (<>Save</>))
 
     return (
         <div className="bg-inherit grid grid-cols-3 items-center text-center w-full text-xs md:text-sm lg:text-base h-12 md:h-8">
@@ -65,10 +72,7 @@ function BuilderFooter({
                         controller.clear()
                         e?.currentTarget.blur()
                     }}>Clear</button></li>
-                    <li><button className="btn text-center w-full btn-sm" onClick={e => {
-                        controller.store(listName)
-                        e?.currentTarget.blur()
-                    }}>Save</button></li>
+                    <li>{saveBtn}</li>
                     <li>{loadBtn}</li>
                     <li><button className="btn text-center w-full btn-sm" onClick={e => {
                         fetchFactions()
@@ -91,10 +95,10 @@ function BuilderFooter({
                 </ul>
             </div>
             {loadDlg}
+            {saveDlg}
             {cmbDlg}
         </div>
     )
-
 }
 
 function UnitsHeader({ lid, units }: { lid: string, units: ISelectedUnit[] }) {
@@ -151,12 +155,14 @@ export default function ListBuilder({ children }: { children: React.ReactNode })
                     </div>
                     <Lines save={save} controller={controller} />
                     <div className="flex-none w-full bg-inherit grid grid-cols-1">
-                        <BuilderFooter
-                            units={save.units}
-                            total={total}
-                            constraints={controller.getConstraints()}
-                            listName={name}
-                            controller={controller} />
+                        <SessionProvider>
+                            <BuilderFooter
+                                units={save.units}
+                                total={total}
+                                constraints={controller.getConstraints()}
+                                listName={name}
+                                controller={controller} />
+                        </SessionProvider>
                     </div>
                 </div>
             </div>

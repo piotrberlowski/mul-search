@@ -15,4 +15,9 @@ if (process.env.NODE_ENV === 'production') {
   prisma = global.prisma;
 }
 
+export function prismaOrError() {
+    if (!prisma) throw new Error("500: No DB!")
+    return prisma
+}
+
 export default prisma;

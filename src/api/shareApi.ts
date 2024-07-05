@@ -18,6 +18,15 @@ export interface ConstrainedList extends MulList {
     constraints: string,
 }
 
+export function toMulUnits(units: ISelectedUnit[]): MulUnit[] {
+    return units.map((u)=> { return {
+        name: u.Name,
+        id: u.Id,
+        skill: u.skill,
+        ordinal: u.ordinal,
+        lance: u.lance || ""
+    }})
+}
 
 function safeLocaleCompare(a?: string, b?: string) {
     const safeA = a || ''

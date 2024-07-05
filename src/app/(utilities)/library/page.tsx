@@ -1,7 +1,7 @@
-import prisma from "@/../lib/prisma"
-import ShortLink from "../share/shortLink"
-import { Format, List } from "@prisma/client"
+import { getFormatsWithPublicLists } from "@/app/api/dao/lists"
 import { ArrowRightCircleIcon } from "@heroicons/react/16/solid"
+import { Format, List } from "@prisma/client"
+import ShortLink from "../share/shortLink"
 
 
 function ListCard({ list }: { list: List }) {
@@ -35,13 +35,7 @@ function FormatCard({ format, className, idx }: { format: Format & { lists: List
 
 export default async function Library() {
 
-    console.log(process.env.DB_URL)
-
-    const formats = await prisma.format.findMany({
-        include: {
-            lists: true,
-        },
-    })
+    const formats = await getFormatsWithPublicLists()
 
     return (
         <main className="items-center text-center align-top bg-inherit">

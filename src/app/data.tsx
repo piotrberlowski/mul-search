@@ -5,21 +5,23 @@ export const MASTER_UNIT_LIST = "https://masterunitlist.azurewebsites.net/"
 const BLANK = "Blank General List"
 const CONSTRAINTS_RE = /\[(.+) including (.+) during (.+)\]/
 
-export type Faction = {
+export interface Faction {
     label: string,
     value: number,
 }
 
 export async function fetchFactions() {
     const url = new URL("/Faction/Autocomplete?term=", MASTER_UNIT_LIST)
-    const res = await fetch(url.toString())
+    const sUrl = url.toString()
+    console.log("Fetching %s", sUrl)
+    const res = await fetch(sUrl)
 
     if (!res.ok) {
         // This will activate the closest `error.js` Error Boundary
         throw new Error('Cannot fetch factions...')
     }
 
-    return res.json()
+    return res.text().then(t=>JSON.parse(t)).catch(e => {console.log("Cannot fetch factions: " + e); return [];})
 }
 
 export const eras:Array<[string, string]> = [
@@ -135,12 +137,21 @@ export class MULSearchParams {
 
 }
 
-export function parseConstraints(constraints: string, factions: Factions): URLSearchParams{
-    
+interface BuilderSearchParams  {
+    era: string,
+    specific: string,
+    general: string,
+}
+
+export function parseConstraints(constraints: string, factions: Factions): BuilderSearchParams {
     const parsed = CONSTRAINTS_RE.exec(constraints)
     if (parsed == null) {
         console.log(`Couldn't parse constraints... ${constraints}`)
-        return new URLSearchParams(new URLSearchParams())
+        return {
+            era: "",
+            specific: "",
+            general: ""
+        }
     } 
     const [_, specific, general, era] = parsed
 
@@ -148,13 +159,27 @@ export function parseConstraints(constraints: string, factions: Factions): URLSe
     const specificId = factions.getFactionId(specific)
     const generalId = factions.getGeneralId(general)
 
-    return new URLSearchParams(
-        {
-            era: `${eraId || ""}`,
-            specific: `${specificId || ""}`,
-            general: `${generalId || ""}`,
-        }
-    )
+    return {
+        era: `${eraId || ""}`,
+        specific: `${specificId || ""}`,
+        general: `${generalId || ""}`,
+    }
+
 }
 
-
+export function constraintsToParams(constraints: string, factions: Factions): URLSearchParams{
+    const params = {
+        ...parseConstraints(constraints, factions)
+    }
+    return new URLSearchParams(
+        params
+    )
+}
+export function renderEras() {
+    return eras.map(eraKV => {
+        const [val, lab] = eraKV;
+        return (
+            <option key={val} value={val || ""}>{lab}</option>
+        );
+    });
+}
