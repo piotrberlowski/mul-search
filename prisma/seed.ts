@@ -13,6 +13,7 @@ function formatUpsert(name: string, description: string) {
     })
 }
 
+
 function listUpsert(key: string, description: string, format: Format, list: ConstrainedMulList) {
     return prisma.list.upsert({
         where: { key: key },

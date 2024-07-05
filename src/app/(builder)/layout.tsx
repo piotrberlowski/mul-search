@@ -4,8 +4,8 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 
 import { LIST_DRAWER_ID } from './builder/constants'
-import Header from '@/components/header'
 import FloatingFooter from '@/components/floatingFooter'
+import Navigation from '@/components/navbar'
 
 
 const inter = Inter({ subsets: ['latin'] })
@@ -25,7 +25,7 @@ export default function RootLayout({
     <html lang="en" className="w-dvw h-dvh">
       <body id={scrollableId} className={`${inter.className} h-dvh w-full`}>
           <div className='bg-inherit translate-y-0'>
-            <Header className='fixed max-xl:inset-x-2 xl:w-1/2 z-10'/>
+            <Navigation className='fixed max-xl:inset-x-2 xl:w-1/2 z-10'/>
             <main className="relative bg-inherit align-top items-center w-full">
               {children}
             </main>

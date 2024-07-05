@@ -1,10 +1,10 @@
 import { compareSelectedUnits } from "@/api/shareApi";
 import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, currentPV, exportTTSString, loadByName, loadLists, removeByName, saveByName, saveLists, toJeffsUnits, totalPV } from "@/api/unitListApi"
 import { IUnit } from "@/api/unitListApi";
-import { Factions, parseConstraints } from "@/app/data";
+import { Factions, constraintsToParams } from "@/app/data";
 import { LIST_PARAMETER } from "@/app/(utilities)/validate/result/validation";
 import { ChangeListener } from "@/api/commons";
-import { Dispatch, SetStateAction, createContext, useContext } from "react";
+import { createContext, useContext } from "react";
 
 export class ListBuilderController {
     private save: Save;
@@ -15,7 +15,7 @@ export class ListBuilderController {
     private setTotal?: ChangeListener<number>;
     private setStoredLists?: ChangeListener<string[]>;
     private summaryObserver?: ChangeListener<string>;
-    private constraintsObserver?: ChangeListener<string>;
+    public constraintsObserver?: ChangeListener<string>;
 
     constructor(
         searchConstraints: string,
@@ -56,7 +56,6 @@ export class ListBuilderController {
     public registerConstraintsObserver(setConstraints: ChangeListener<string>) {
         this.constraintsObserver = setConstraints
     }
-
 
     public getConstraints() {
         return this.constraints
@@ -213,7 +212,7 @@ export class ListBuilderController {
     }
 
     public toValidateParams(factions: Factions): URLSearchParams {
-        const params = parseConstraints(this.constraints, factions)
+        const params = constraintsToParams(this.constraints, factions)
         const unitString = this.save.units.map(su => `${su.skill}:${su.Name}`).join(";")
         params.append(LIST_PARAMETER, unitString)
         return params
@@ -226,6 +225,7 @@ export class ListBuilderController {
     public getCurrentListSummary(): string {
         return formatListSummary(this.save.units.length, totalPV(this.save.units))
     }
+
 
 }
 

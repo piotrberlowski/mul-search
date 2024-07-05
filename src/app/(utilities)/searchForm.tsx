@@ -1,10 +1,11 @@
 'use client'
 import { useSearchParams } from "next/navigation"
-import { Faction, Factions as Factions, eraMap, eras, parseConstraints } from "@/app/data"
+import { Faction, Factions as Factions, eraMap, constraintsToParams } from "@/app/data"
 import SearchInputPanel from "./searchInputPanel"
 import { useEffect, useState } from 'react';
 import Link from "next/link";
 import { LOCAL_STORAGE_NAME_AUTOSAVE, loadByName } from "@/api/unitListApi";
+import { renderEras } from "../data";
 
 function renderOptions(factions: Faction[]) {
     return factions
@@ -13,15 +14,6 @@ function renderOptions(factions: Faction[]) {
                 <option key={fa.value} value={fa.value || ""}>{fa.label}</option>
             )
         })
-}
-
-function renderEras() {
-    return eras.map(eraKV => {
-        const [val, lab] = eraKV
-        return (
-            <option key={val} value={val || ""}>{lab}</option>
-        )
-    })
 }
 
 export default function SearchForm({ factions }: { factions: Faction[] }) {
@@ -38,7 +30,7 @@ export default function SearchForm({ factions }: { factions: Faction[] }) {
     useEffect(() => {
             const load = loadByName(LOCAL_STORAGE_NAME_AUTOSAVE)
             if (load?.units) {
-                setSearchLink(<>Last build: <Link href={`/builder/?${parseConstraints(load.constraints, fData)}`}>{load.constraints}</Link></>)
+                setSearchLink(<>Last build: <Link href={`/builder/?${constraintsToParams(load.constraints, fData)}`}>{load.constraints}</Link></>)
             }
         }, 
         // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,9 +1,15 @@
+import { ConstrainedList, parseShare } from "@/api/shareApi"
+import { fetchFactions } from "@/app/data"
 import { Suspense } from "react"
 import VisualList from "./visualList"
-import { fetchFactions } from "@/app/data"
-import { MulUnit, MulList, ConstrainedList, parseShare } from "@/api/shareApi"
-import prisma from "@/../lib/prisma"
-import { Prisma } from "@prisma/client"
+import { findListByKey } from "@/app/api/dao/lists"
+
+const NOT_FOUND : ConstrainedList = {
+    constraints: "NOT FOUND",
+    name: "404",
+    total: 0,
+    units: [],
+}
 
 function ListFallback() {
     return (
@@ -17,38 +23,6 @@ interface ShareSearchParams {
     constraints?: string,
 }
 
-function fetchFromDb(key: string): Promise<ConstrainedList> {
-
-    return prisma.list.findUnique({
-        where: { key: key }
-    }).then(
-        (list) => {
-            if (list && list.content) {
-                return {
-                    constraints: list.constraints,
-                    name: list.name,
-                    total: list.total,
-                    units: (list.content as Prisma.JsonArray).map(o => o as MulUnit),
-                }
-            }
-            return {
-                constraints: "List not found",
-                name: "Empty",
-                total: 0,
-                units: [],
-            }
-        }
-    ).catch(e => {
-        console.error(e)
-        return {
-            constraints: e as string,
-            name: "Error loading list!",
-            total: 0,
-            units: [],
-        }
-    })
-}
-
 async function parseFromUrl(constraints?: string, encodedList?: string): Promise<ConstrainedList> {
     const parsed = parseShare(encodedList || 'empty;')
     return Promise.resolve({
@@ -59,7 +33,7 @@ async function parseFromUrl(constraints?: string, encodedList?: string): Promise
 
 function processParameters(searchParams: ShareSearchParams): Promise<ConstrainedList> {
     if (searchParams.key) {
-        return fetchFromDb(searchParams.key)
+        return findListByKey(searchParams.key) || NOT_FOUND
     }
     return parseFromUrl(searchParams.constraints, searchParams.list)
 }
@@ -73,7 +47,7 @@ export default async function SharedList({ searchParams }: { searchParams: Share
     return (
         <main className="relative items-center align-top bg-inherit">
             <Suspense fallback={<ListFallback />}>
-                <VisualList factions={factions} list={list} />
+                <VisualList list={list} factions={factions}/>
             </Suspense>
         </main>
     )

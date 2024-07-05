@@ -7,7 +7,8 @@ import { useEffect, useState } from "react"
 import { ConstrainedList, MulUnit } from '@/api/shareApi'
 import { ISelectedUnit, IUnit, LOCAL_STORAGE_NAME_AUTOSAVE, loadLists, saveByName, saveLists } from '../../../api/unitListApi'
 import { EMPTY_UNIT } from '@/app/(builder)/builder/unitLine'
-import { Faction, Factions, MASTER_UNIT_LIST, parseConstraints } from '@/app/data'
+import { Faction, Factions, MASTER_UNIT_LIST, constraintsToParams } from '@/app/data'
+import { FactionsContext, useFactionsContext } from "@/app/factionsContext"
 import CardGallery from './cardGallery'
 import SummaryTable from './summaryTable'
 import { list } from 'postcss'
@@ -37,8 +38,9 @@ async function fetchFromMul(queries: MulUnit[]) {
 
 }
 
-function ReadyList({ units, constraints, factions, name, total }: { units: ISelectedUnit[], constraints: string, name: string, total: number, factions: Faction[] }) {
+function ReadyList({ units, constraints, name, total }: { units: ISelectedUnit[], constraints: string, name: string, total: number }) {
     const router = useRouter()
+    const factions = useFactionsContext()
 
     function saveList(tweak: boolean) {
         const save = {
@@ -47,7 +49,7 @@ function ReadyList({ units, constraints, factions, name, total }: { units: ISele
         }
         if (tweak) {
             saveByName(save, LOCAL_STORAGE_NAME_AUTOSAVE)
-            const params = parseConstraints(constraints, new Factions(factions))
+            const params = constraintsToParams(constraints, factions)
             router.push("/builder?" + params.toString())
         } else {
             const lists = loadLists()
@@ -87,7 +89,7 @@ function ReadyList({ units, constraints, factions, name, total }: { units: ISele
 
 }
 
-export default function VisualList({ factions, list }: { factions: Faction[], list: ConstrainedList }) {
+export default function VisualList({ list, factions }: { list: ConstrainedList, factions: Faction[] }) {
     const [units, setUnits] = useState<ISelectedUnit[]>(new Array<ISelectedUnit>())
 
     useEffect(
@@ -101,11 +103,11 @@ export default function VisualList({ factions, list }: { factions: Faction[], li
     let visualisation = <div className="w-full h-full text-center items-center justify-items-center"><span className="loading loading-dots loading-lg"></span></div>
 
     if (units.length == list.units.length) {
-        visualisation = <ReadyList units={units} constraints={list.constraints} name={list.name} total={list.total} factions={factions} />
+        visualisation = <ReadyList units={units} constraints={list.constraints} name={list.name} total={list.total} />
     }
 
     return (
-        <>
+        <FactionsContext.Provider value={new Factions(factions)}>
             <Head>
                 <title>{`AS: ${list.name}`}</title>
                 <meta property="og:title" content={`AS: ${list.name}`} key="title" />
@@ -115,6 +117,6 @@ export default function VisualList({ factions, list }: { factions: Faction[], li
                 <div>{list.constraints} : {list.name}</div>
             </div>
             {visualisation}
-        </>
+        </FactionsContext.Provider>
     )
 }
