@@ -1,5 +1,5 @@
 'use client'
-import { SessionProvider, signIn, signOut, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -8,7 +8,7 @@ export function ConditionalSignInOut() {
     const router = useRouter()
     
     if (!session?.externalAccount)
-        return (<button className="btn btn-sm btn-ghost" onClick={() => signIn()}>Sign In</button>)
+        return (<button className="btn btn-sm btn-ghost" onClick={() => signIn().then(()=>router.refresh()).catch(e => console.log(e))}>Sign In</button>)
     return (
         <div className="dropdown dropdown-end">
             <div tabIndex={0} role="button" className="btn btn-ghost btn-sm">
@@ -19,7 +19,7 @@ export function ConditionalSignInOut() {
                     <Link className="btn btn-sm btn-outline" href="/user/">Lists</Link>
                 </li>
                 <li className="w-full p-0"><button className="btn btn-sm btn-ghost" onClick={() => {
-                    signOut().then(() => router.refresh());
+                    signOut().then(() => router.refresh()).catch(e => console.log(e));
                 }
                 }>Sign Out</button></li>
             </ul>
@@ -29,8 +29,6 @@ export function ConditionalSignInOut() {
 
 export function SignIn() {
     return (
-        <SessionProvider>
-            <ConditionalSignInOut />
-        </SessionProvider>
+        <ConditionalSignInOut />
     )
 }

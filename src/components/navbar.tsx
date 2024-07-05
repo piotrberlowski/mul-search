@@ -1,8 +1,7 @@
-import Link from "next/link";
-import getConfig from 'next/config';
 import { Bars3CenterLeftIcon } from "@heroicons/react/24/outline";
+import getConfig from 'next/config';
+import Link from "next/link";
 import { SignIn } from "./login";
-import { SessionProvider } from "next-auth/react";
 const { publicRuntimeConfig } = getConfig();
 
 export default function Navigation({ className }: { className?: string }) {

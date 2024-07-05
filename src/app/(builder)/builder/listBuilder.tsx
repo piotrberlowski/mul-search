@@ -45,15 +45,17 @@ function BuilderFooter({
     listName: string,
     controller: ListBuilderController,
 }) {
-    const session = useSession()
+    const {data: session, status} = useSession()
     const router = useRouter()
+
+    console.log(`Status: ${status}`)
 
     const [cmbBtn, cmbDlg] = useCombinations(units, <>Sub-lists</>, 'btn text-center w-full btn-sm')
     const [loadBtn, loadDlg] = useLoadDialog(listName, controller, (<>Load</>))
     const [saveBtn, saveDlg] = useSaveDialog({
         name: listName,
         controller: controller,
-        loggedIn: session?.data?.externalAccount != undefined,
+        loggedIn: session?.externalAccount != undefined || status === "authenticated",
     }, (<>Save</>))
 
     return (
@@ -155,14 +157,12 @@ export default function ListBuilder({ children }: { children: React.ReactNode })
                     </div>
                     <Lines save={save} controller={controller} />
                     <div className="flex-none w-full bg-inherit grid grid-cols-1">
-                        <SessionProvider>
-                            <BuilderFooter
-                                units={save.units}
-                                total={total}
-                                constraints={controller.getConstraints()}
-                                listName={name}
-                                controller={controller} />
-                        </SessionProvider>
+                        <BuilderFooter
+                            units={save.units}
+                            total={total}
+                            constraints={controller.getConstraints()}
+                            listName={name}
+                            controller={controller} />
                     </div>
                 </div>
             </div>
