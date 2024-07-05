@@ -4,8 +4,9 @@ import { ConstrainedList, MulUnit, toMulUnits } from "@/api/shareApi";
 import { Save, totalPV } from "@/api/unitListApi";
 import { Prisma } from "@prisma/client";
 import { randomUUID } from "crypto";
-import prisma, { prismaOrError } from "../../../../lib/prisma";
+import prisma from "@/../lib/prisma"
 import { findCurrentUserId } from "./users";
+import { prismaOrError } from "./utils";
 
 export async function getFormatsWithPublicLists() {
     if (!prisma) return []
@@ -31,7 +32,6 @@ export async function findListByKey(key: string): Promise<ConstrainedList> {
             units: []
         })
     }
-
     return prisma.list.findUnique({
         where: { key: key }
     }).then(
@@ -63,10 +63,10 @@ export async function findListByKey(key: string): Promise<ConstrainedList> {
 }
 
 export async function findListsByCurrentUser() {
-    const prisma = prismaOrError()
+    const db = prismaOrError()
     const userId = await findCurrentUserId()
     if (!userId) return "403: Forbidden."
-    const lists = await prisma.list.findMany({
+    const lists = await db.list.findMany({
         select: {
             key: true,
             name: true,
@@ -84,10 +84,10 @@ export async function findListsByCurrentUser() {
 }
 
 export async function saveList(name: string, save: Save) {
-    const prisma = prismaOrError()
+    const db = prismaOrError()
     const userId = await findCurrentUserId()
     if (!userId) return "403: Forbidden."
-    await prisma?.list.create({
+    await db.list.create({
         data: {
             name: name,
             key: randomUUID(),
