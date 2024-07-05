@@ -101,9 +101,9 @@ export async function saveList(name: string, save: Save) {
 }
 
 export async function deleteListByKey(key: string) {
-    const prisma = prismaOrError()
+    const db = prismaOrError()
     const userId = await findCurrentUserId()
-    const result = await prisma.list.delete(
+    const result = await db.list.delete(
         {
             where: {
                 ownerId: userId,
