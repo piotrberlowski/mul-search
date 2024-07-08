@@ -125,9 +125,7 @@ function chassisCheck(list: IResult[]) {
         const tripleChassisText = tripleChassis.map(([n,c]) => `${n}: ${c}`).join(",")
         return invalid(`Chassis repeated more than twice: ${tripleChassisText}}`)
     }
-    const doubleChassis = chassisCount.filter(([_,c]) => c==2)
-    const doubleChassisText = tripleChassis.map(([n,c]) => `${n}: ${c}`).join(",")
-    return (doubleChassis.length <= 2) ? VALID : invalid(`More than 2 chassis repeated twice: ${doubleChassisText}`)
+    return VALID
 }
 
 export const LIST_CHECKS: Check[] = [
