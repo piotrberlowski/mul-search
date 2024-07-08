@@ -1,18 +1,22 @@
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import React, { ReactNode, useRef, useState } from "react";
 import { ListBuilderController } from "./listBuilderController";
+import Link from "next/link";
 
 type LoadProps = {
     name: string
     controller: ListBuilderController
+    loggedIn: boolean
 }
 
 /*
 <button className="h-1/2 w-full" onClick={e => controller.load(listName)}>Load</button>
 */
 
-const RefLoadPanel = React.forwardRef<HTMLDialogElement, LoadProps>(({ name, controller }, ref) => {
+const RefLoadPanel = React.forwardRef<HTMLDialogElement, LoadProps>(({ name, controller, loggedIn }, ref) => {
     const [currentName, setCurrentName] = useState(name)
+
+    const loggedInLists = (loggedIn) ? (<Link href="/user" className="btn btn-sm btn-outline text-xs">Click here for server saves</Link>) : ""
 
     function loadList() {
         controller.load(currentName)
@@ -23,6 +27,7 @@ const RefLoadPanel = React.forwardRef<HTMLDialogElement, LoadProps>(({ name, con
         <dialog id="dlg_load" className="modal text-xs z-100 modal-middle" ref={ref}>
             <div className="modal-box w-full rounded-md">
                 <div className="relative">
+                    {loggedInLists}
                     <div className="label">
                         <span className="label-text">Pick list to load:</span>
                     </div>
@@ -50,7 +55,7 @@ const RefLoadPanel = React.forwardRef<HTMLDialogElement, LoadProps>(({ name, con
 )
 RefLoadPanel.displayName = "LoadPanel"
 
-export default function useLoadDialog(name: string, controller: ListBuilderController, children?: ReactNode, className?: string) {
+export default function useLoadDialog(props: LoadProps, children?: ReactNode, className?: string) {
     const [isOpen, setOpen] = useState(false)
     const panelRef = useRef<HTMLDialogElement>(null)
     function onOpen() {
@@ -59,7 +64,7 @@ export default function useLoadDialog(name: string, controller: ListBuilderContr
     }
     return [
         <button className="btn btx-xs" onClick={() => onOpen()} key="ldBtn">{children}</button>,
-        <RefLoadPanel ref={panelRef} name={name} controller={controller} key="ldDlg"/>,
+        <RefLoadPanel ref={panelRef} {...props} key="ldDlg"/>,
     ]
 }
 

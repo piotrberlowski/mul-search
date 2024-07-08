@@ -50,12 +50,18 @@ function BuilderFooter({
 
     console.log(`Status: ${status}`)
 
+    const loggedIn = session?.externalAccount != undefined || status === "authenticated"
+
     const [cmbBtn, cmbDlg] = useCombinations(units, <>Sub-lists</>, 'btn text-center w-full btn-sm')
-    const [loadBtn, loadDlg] = useLoadDialog(listName, controller, (<>Load</>))
+    const [loadBtn, loadDlg] = useLoadDialog({
+        name: listName, 
+        controller: controller,
+        loggedIn: loggedIn,
+    }, (<>Load</>))
     const [saveBtn, saveDlg] = useSaveDialog({
         name: listName,
         controller: controller,
-        loggedIn: session?.externalAccount != undefined || status === "authenticated",
+        loggedIn: loggedIn,
     }, (<>Save</>))
 
     return (
