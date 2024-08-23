@@ -10,7 +10,7 @@ export const LIST_PARAMETER = "list";
 async function fetchUnit(mu: ValidateUnit, era: string, specific: string, general?: string) {
     const url = new URL("/Unit/QuickList", MASTER_UNIT_LIST)
     url.searchParams.append('Name', mu.name)
-    url.searchParams.append('AvailabilityEras', era)
+    url.searchParams.append('AvailableEras', era)
     url.searchParams.append('Factions', specific)
     if (general) {
         url.searchParams.append('Factions', general)
