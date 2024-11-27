@@ -23,7 +23,6 @@ const RefLoadPanel = React.forwardRef<HTMLDialogElement, LoadProps>(({ name, con
     }
 
     return (
-        //items-center text-center overflow-scroll 
         <dialog id="dlg_load" className="modal text-xs z-100 modal-middle" ref={ref}>
             <div className="modal-box w-full rounded-md">
                 <div className="relative">
@@ -67,5 +66,3 @@ export default function useLoadDialog(props: LoadProps, children?: ReactNode, cl
         <RefLoadPanel ref={panelRef} {...props} key="ldDlg"/>,
     ]
 }
-
-

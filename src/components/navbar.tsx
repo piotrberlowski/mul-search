@@ -6,7 +6,7 @@ const { publicRuntimeConfig } = getConfig();
 
 export default function Navigation({ className }: { className?: string }) {
     return (
-        <div className={`navbar min-h-max max-h-8 bg-base-100 ${className} flex print:hidden`}>
+        <div className={`navbar min-h-8 max-h-8 bg-base-100 ${className} flex print:hidden`}>
             <div className="flex-0">
                 <div className="dropdown">
                     <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">

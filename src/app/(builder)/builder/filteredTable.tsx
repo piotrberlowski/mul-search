@@ -251,7 +251,7 @@ export default function FilteredTable({ data }: { data: IUnit[] }) {
 
     return (
         <>
-            <div className="sticky z-20 top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
+            <div className="sticky z-15 top-0 mt-2 items-center text-center bg-inherit border-b border-b-solid border-b-1 border-b-black dark:border-b-white text-sm">
                 <div className="w-full grid grid-cols-6 md:grid-cols-8 gap-x-2 gap-y-1 overflow-x-clip overflow-y-visible hover:overflow-x-visible">
                     <QuickFilter label="Unit Name" className="col-span-6 md:col-span-3" filterCallback={flt => updateFilter({ name: flt })} />
                     <QuickFilter label="Abilities" className="col-span-2 md:col-span-3" filterCallback={flt => updateFilter({ abilities: flt })} tooltip='Use comma to search for multiple abilities: "AM, MEC"' />
