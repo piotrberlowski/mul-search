@@ -34,14 +34,14 @@ export default function BuilderApp({ factions }: { factions: Faction[] }) {
         <div className="">
             <FactionsContext.Provider value={factionData}>
                 <ListBuilderContext.Provider value={new ListBuilderController(listConstraints, LOCAL_STORAGE_NAME_AUTOSAVE)}>
-                    <div className="drawer auto-cols-fr xl:drawer-open bg-inherit mx-auto w-[98dvw]">
+                    <div className="drawer auto-cols-fr xl:drawer-open bg-inherit mx-auto w-full">
                         <input id={LIST_DRAWER_ID} type="checkbox" className="drawer-toggle" />
                         <div className="drawer-content col-start-1 bg-inherit mt-8" >
                             <Suspense fallback={<Loading name="Search Results" />}>
                                 <SearchResults search={mulSP} />
                             </Suspense>
                         </div>
-                        <div className="drawer-side z-20 col-start-2 h-dvh w-dvw flex bg-inherit">
+                        <div className="drawer-side z-20 col-start-2 h-dvh w-full flex bg-inherit">
                             <ListBuilder>
                                 <label htmlFor={LIST_DRAWER_ID} className="drawer-overlay xl:hidden btn btn-sm btn-error"><XCircleIcon className="h-5 w-5" /></label>
                             </ListBuilder>

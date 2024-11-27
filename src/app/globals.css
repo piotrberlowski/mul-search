@@ -46,6 +46,10 @@
   }
 }
 
+.scrollbar-padding {
+  padding-right: calc(100vw - 100%);
+}
+
 body {
   min-height: 100lvh;
   color: rgb(var(--foreground-rgb));
