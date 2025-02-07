@@ -1,5 +1,8 @@
+import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import { compareSelectedUnits } from "./shareApi";
 import { ISelectedUnit, currentPV, totalPV } from "./unitListApi";
+import { UNITS_KEY } from "./playApi";
+import { appendFile } from "fs";
 
 interface IUnitWithPV extends ISelectedUnit {
     pv: number
@@ -14,6 +17,25 @@ export function generateSubsets(units: ISelectedUnit[], minPV: number, maxPV: nu
         }
     })
     selectUnits(candidates, [], res, minPV, maxPV)
+    return deDuplicate(res)
+}
+
+function represent(units: ISelectedUnit[]): string {
+    return units.map(u => `${u.Id}:${u.skill}`).join()
+}
+
+function deDuplicate(lists: ISelectedUnit[][]): ISelectedUnit[][] {
+    let uniques = new Set<string>()
+    let res = new Array<ISelectedUnit[]>()
+    
+    lists.forEach(l => {
+        let repr = represent(l)
+        if (!uniques.has(repr)) {
+            uniques.add(repr)
+            res.push(l)
+        }
+    })
+
     return res
 }
 

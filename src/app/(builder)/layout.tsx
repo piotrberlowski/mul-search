@@ -35,7 +35,7 @@ export default async function RootLayout({
             </main>
           </div>
           <FloatingFooter>
-            <label htmlFor={LIST_DRAWER_ID} className='btn btn-circle btn-outline bg-base-200 btn-xs flex-0 xl:hidden pointer-events-auto scroll-padding'><ListBulletIcon className='h-4 w-4' /></label>
+            <label htmlFor={LIST_DRAWER_ID} className='btn btn-circle btn-outline bg-base-200 btn-xs flex-0 xl:hidden pointer-events-auto scrollbar-padding'><ListBulletIcon className='h-4 w-4' /></label>
           </FloatingFooter>
         </SessionProvider>
       </body>
