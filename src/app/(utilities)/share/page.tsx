@@ -3,6 +3,7 @@ import { fetchFactions } from "@/app/data"
 import { Suspense } from "react"
 import VisualList from "./visualList"
 import { findListByKey } from "@/app/api/dao/lists"
+import Head from "next/head"
 
 const NOT_FOUND : ConstrainedList = {
     constraints: "NOT FOUND",
@@ -46,6 +47,10 @@ export default async function SharedList({ searchParams }: { searchParams: Share
 
     return (
         <main className="relative items-center align-top bg-inherit">
+            <Head>
+                <meta property="og:title" content={`AS List: ${list.name}`}/>
+                <meta property="og:description" content={`Army List for ${list.constraints}`}/>
+            </Head>
             <Suspense fallback={<ListFallback />}>
                 <VisualList list={list} factions={factions}/>
             </Suspense>
