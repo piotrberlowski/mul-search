@@ -1,4 +1,13 @@
-import { IUnit } from "@/api/unitListApi"
+import { currentPV, IUnit, totalPV } from "@/api/unitListApi"
+
+
+const BF_TYPE_CV = "CV"
+const BF_TYPE_CI = "CI"
+const BF_TYPE_BA = "BA"
+const BF_TYPE_PM = "PM"
+
+const ITN_RE = /^IT([0-9]{1,2})$/
+
 
 export interface ValidateUnit {
     skill: string
@@ -48,7 +57,7 @@ Armies may have no more than:
 - 16 units per Army
 - 12 of any Mech Type (Battlemech/ Industrial/
 Omnimech)
-- 8 Combat Vehicles
+- 6 Combat Vehicles
 - 5 of any Infantry Type (includes Battlearmor)
 */
 function unitCountCheck(list: IResult[]) {
@@ -101,16 +110,27 @@ function pilotSkillCheck(list: IResult[]) {
     return (totalSkill17 == 0) ? VALID : invalid(`Units of skill <=1 or >=7: ${totalSkill17}`)
 }
 
+function canHaveRepeatedVariant(u?: IUnit) {
+    if (!u || !u.BFType) return false
+    const canHaveVariants = [BF_TYPE_BA, BF_TYPE_CI, BF_TYPE_PM].includes(u.BFType)
+    if (canHaveVariants) return canHaveVariants
+    if (BF_TYPE_CV === u.BFType) {
+        // CVs with IT3+ can have repeated variant
+        const itTotal = u.BFAbilities.split(",").map(a => ITN_RE.exec(a)).map(m => m ? +m[1] : 0).reduce((t,c)=>t+c)
+        return itTotal < 3
+    }
+    return false;
+}
 
 function variantCheck(list: IResult[]) {
-    const repeatedVariants = Array.from((list.filter(r => (r?.unit?.Type) && (["BattleMech", "IndustrialMech"].includes(r.unit.Type.Name)))).reduce( (acc, r) => {
+    const repeatedVariants = Array.from((list.filter(r => canHaveRepeatedVariant(r.unit))).reduce( (acc, r) => {
         if (r.unit) {
             acc.set(r.unit.Name, (acc.get(r.unit.Name)||0)+1)
         }
         return acc
     }, new Map<String, number>())).filter(([_, c]) => c>1)
     const variantsText = repeatedVariants.map(([n,c]) => `${n}: ${c}`).join(",")
-    return (repeatedVariants.length == 0) ? VALID : invalid(`More than one mech of the same variant: ${variantsText}`)
+    return (repeatedVariants.length == 0) ? VALID : invalid(`More than one unit of the same variant: ${variantsText}`)
 }
 
 function chassisCheck(list: IResult[]) {
@@ -128,18 +148,29 @@ function chassisCheck(list: IResult[]) {
     return VALID
 }
 
+function maxOneUnique(list: IResult[]) {
+    const uniques = list.filter(res => res.error === 'unique')
+    if (uniques.length > 1) {
+        const uniquesText = uniques.map(v => v.unit?.Name).join(",")
+        return invalid(`More than one unique unit: [${uniquesText}]`)
+    }
+    return VALID
+}
+
+
 export const LIST_CHECKS: Check[] = [
     check("Unit Count <=16", unitCountCheck),
     check("Max 12 Mechs", typeCountCheckFactory(["BattleMech", "IndustrialMech"], 12)),
-    check("Max 8 Combat Vehicles", typeCountCheckFactory(["Combat Vehicle"], 8)),
+    check("Max 6 Combat Vehicles", typeCountCheckFactory(["Combat Vehicle"], 6)),
     check("Max 5 Infantry", typeCountCheckFactory(["Infantry"], 5)),
     check("JMPS total <= 2", jmpsCheck),
-    check("Mech Variant check", variantCheck),
+    check("Unit Variant check", variantCheck),
     check("Chassis Rule of 2", chassisCheck),
     check("Pilot Skills (at most 2 of skill 2/6)", pilotSkillCheck),
+    check("Max one Unique", maxOneUnique),
 ]
 
-function judge(mu: ValidateUnit, valid: boolean, msg?: string, u?:IUnit) {
+export function judge(mu: ValidateUnit, valid: boolean, msg?: string, u?:IUnit) {
     return {
         ...mu,
         found: valid,
@@ -181,6 +212,9 @@ export function testUnit(v:ValidateUnit, u: IUnit) {
     }
     if (+v.skill > 6) {
         return judge(v, false, "Units with skill 7 or more not allowed", u)
+    }
+    if (currentPV({...u, skill: +v.skill}) < 7) {
+        return judge(v, false, "Units with adjusted PV less than 7 are not allowed", u)
     }
     return judge(v, true, undefined, u)
 }

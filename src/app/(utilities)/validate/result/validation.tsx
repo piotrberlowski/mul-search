@@ -3,9 +3,10 @@ import { ReadonlyURLSearchParams, useSearchParams } from "next/navigation";
 import { Faction, Factions, MASTER_UNIT_LIST, MULSearchParams } from '@/app/data'
 import React, { useEffect, useState } from "react";
 import { IUnit } from "@/api/unitListApi";
-import { IResult, LIST_CHECKS, ValidateUnit, testUnit } from "./results";
+import { IResult, LIST_CHECKS, ValidateUnit, judge, testUnit } from "./results";
 
 export const LIST_PARAMETER = "list";
+export const NOT_AVAILABLE_ERROR = "Not Available"
 
 async function fetchUnit(mu: ValidateUnit, era: string, specific: string, general?: string) {
     const url = new URL("/Unit/QuickList", MASTER_UNIT_LIST)
@@ -14,18 +15,17 @@ async function fetchUnit(mu: ValidateUnit, era: string, specific: string, genera
     url.searchParams.append('Factions', specific)
     if (general) {
         url.searchParams.append('Factions', general)
-        console.log(general)
     }
     return fetch(url.href).then(r => r.json()).then(({ Units }) => {
         const filtered = Units.filter((u: IUnit) => u.Name.trim().toLowerCase() == mu.name.trim().toLowerCase())
         if (filtered.length == 0) {
-            return { ...mu, error: "Not Available", found: false }
+            return { query: mu, error: NOT_AVAILABLE_ERROR, found: false, unit: undefined }
         } else if (filtered.length > 1) {
-            return { ...mu, error: "Ambiguous", found: true, unit: filtered[0] }
+            return { query: mu, error: "Ambiguous", found: true, unit: filtered[0] }
         }
-        return testUnit(mu, filtered[0])
+        return { query: mu, error: undefined, found: true, unit: filtered[0] }
     }).catch(e => {
-        return { ...mu, error: e, found: false }
+        return { query: mu, error: e, found: false, unit: undefined }
     })
 }
 
@@ -54,10 +54,26 @@ async function fetchFromMul(params: ReadonlyURLSearchParams) {
     }
 
     return Promise.all(
-        items.map(mu => fetchUnit(mu, era, specific, general))
+        items.map(mu => fetchUnit(mu, era, specific, general).then(iRes => {
+            // We have an error and need to return negative judgement
+            if (iRes.error) {
+                return { ...iRes.query, ...iRes }
+            }
+            return testUnit(mu, iRes.unit)
+        }).then(testRes => testRes.error ? testRes : testUniqueExtinct(mu, era, testRes.unit)))
     )
 
 }
+
+async function testUniqueExtinct(mu: ValidateUnit, era: string, unit: IUnit) {
+    return fetchUnit(mu, era, '3').then(
+        extinctRes =>
+            extinctRes.found
+                ? judge(mu, false, "Unit is Extinct in the given era", unit)
+                : fetchUnit(mu, era, '4').then(uniqueRes => judge(mu, true, uniqueRes.found ? 'unique' : undefined, unit))
+    )
+}
+
 
 function Results({ results }: { results: IResult[] }) {
     return (
@@ -75,12 +91,12 @@ function Results({ results }: { results: IResult[] }) {
             <h1>List Checks</h1>
             <div className="grid grid-cols-6 w-full gap-1 align-middle justify-center items-center">
                 {
-                    LIST_CHECKS.map(({name, check}) => {
+                    LIST_CHECKS.map(({ name, check }) => {
                         return {
                             name: name,
                             result: check(results),
                         }
-                    }).map(({name,result}, idx) => (
+                    }).map(({ name, result }, idx) => (
                         <React.Fragment key={idx}>
                             <div className="text-center align-middle col-span-3"><span>{name}</span></div>
                             <div role="alert" className={`alert text-center col-span-3 ${(result.valid) ? "alert-success" : "alert-error"}`}><span className="text-center h-full">{(result.valid) ? "Valid" : result.message}</span></div>
@@ -88,14 +104,14 @@ function Results({ results }: { results: IResult[] }) {
                     ))
                 }
             </div>
-            
+
         </div>
 
     )
 }
 
 
-export default function Validation({factions}:{factions: Faction[]}) {
+export default function Validation({ factions }: { factions: Faction[] }) {
     const [results, setResults] = useState<IResult[]>(new Array<IResult>())
 
     const params = useSearchParams()
