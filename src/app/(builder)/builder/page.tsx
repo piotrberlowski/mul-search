@@ -1,4 +1,4 @@
-import { getFactionsForUi } from '@/../lib/units/queries'
+import { parametersDao } from '@/app/api/dao/parametersDao'
 import { Suspense } from "react"
 import BuilderApp from './builderApp'
 
@@ -8,7 +8,7 @@ function CsrFallback() {
 
 export default async function Home() {
 
-  const factions = await getFactionsForUi()
+  const factions = await parametersDao.getFactions()
 
   return (
     <main className="relative items-center align-top bg-inherit">

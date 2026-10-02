@@ -1,4 +1,4 @@
-import { getUnits } from '@/../lib/units/queries'
+import { unitsDao } from '@/app/api/dao/unitsDao'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     return Response.json({ error: 'factionId and eraId are required' }, { status: 400 })
   }
 
-  const units = await getUnits({
+  const units = await unitsDao.getUnits({
     factionId,
     eraId,
     typeIds: typeIds.length ? typeIds : undefined,

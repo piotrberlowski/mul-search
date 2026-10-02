@@ -122,7 +122,7 @@ async function upsertUnits(bundle: MulBundle): Promise<number> {
       )`
     })
     await prisma.$executeRaw`
-      INSERT INTO "Unit" (
+      INSERT INTO "UnitMetadata" (
         "id", "name", "model", "typeId", "subType",
         "introEraId", "tonnage", "pv", "bv", "introYear", "removedAt", "createdAt", "updatedAt"
       )
@@ -155,7 +155,7 @@ async function upsertUnits(bundle: MulBundle): Promise<number> {
 
   const seen = units.map((unit) => unit.id)
   if (seen.length) {
-    await prisma.unit.updateMany({
+    await prisma.unitMetadata.updateMany({
       where: { id: { notIn: seen }, removedAt: null },
       data: { removedAt: new Date() },
     })
