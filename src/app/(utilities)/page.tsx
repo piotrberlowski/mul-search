@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { fetchFactions } from '@/app/data'
+import { getFactionsForUi } from '@/../lib/units/queries'
 import SearchForm from './searchForm'
 import Link from "next/link"
 
@@ -48,7 +48,7 @@ function Footnote() {
 
 export default async function Home() {
 
-  const factions = await fetchFactions()
+  const factions = await getFactionsForUi()
 
   return (
     <main className="relative items-center align-top bg-inherit">

@@ -62,3 +62,153 @@ model Account {
  
   @@id([provider, providerAccountId])
 }
+
+// MUL catalog. Integer primary keys are the MUL's own IDs, not autoincrement.
+
+model Era {
+  id            Int      @id
+  name          String
+  slug          String   @unique
+  yearStart     Int?
+  displayStart  Int?
+  yearEnd       Int?
+  color         String?
+  sort          Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  introUnits    Unit[]             @relation("UnitIntroEra")
+  availability  UnitAvailability[]
+}
+
+model Faction {
+  id           Int      @id
+  name         String
+  slug         String   @unique
+  yearStart    Int?
+  yearEnd      Int?
+  color        String?
+  manufacturer Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  availability UnitAvailability[]
+
+  @@index([name])
+}
+
+model UnitType {
+  id        Int      @id
+  name      String
+  slug      String   @unique
+  yearStart Int?
+  sort      Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  units     Unit[]
+}
+
+model Ability {
+  id        Int      @id
+  code      String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  units     UnitAbility[]
+
+  @@index([code])
+}
+
+model Unit {
+  id             String    @id
+  slug           String?   @unique
+  name           String
+  model          String?
+  typeId         Int
+  type           UnitType  @relation(fields: [typeId], references: [id])
+  subType        String?
+  introEraId     Int?
+  introEra       Era?      @relation("UnitIntroEra", fields: [introEraId], references: [id])
+  tonnage        Float?
+  pv             Int?
+  bv             Int?
+  introYear      Int?
+  size           Int?
+  move           String?
+  tmm            Int?
+  armor          Int?
+  structure      Int?
+  threshold      Int?
+  overheat       Int?
+  dmgS           String?
+  dmgM           String?
+  dmgL           String?
+  dmgE           String?
+  specials       String?
+  cardVersion    String?
+  imageUrl       String?
+  sourceLastMod  DateTime?
+  statsScrapedAt DateTime?
+  removedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  abilities      UnitAbility[]
+  availability   UnitAvailability[]
+  legacyIds      LegacyUnitId[]
+
+  @@index([typeId])
+  @@index([name])
+}
+
+model UnitAbility {
+  unitId    String
+  abilityId Int
+  unit      Unit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  ability   Ability @relation(fields: [abilityId], references: [id], onDelete: Cascade)
+
+  @@id([unitId, abilityId])
+}
+
+model UnitAvailability {
+  unitId    String
+  eraId     Int
+  factionId Int
+  unit      Unit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  era       Era     @relation(fields: [eraId], references: [id], onDelete: Cascade)
+  faction   Faction @relation(fields: [factionId], references: [id], onDelete: Cascade)
+
+  @@id([unitId, eraId, factionId])
+  @@index([factionId, eraId])
+}
+
+model LegacyUnitId {
+  legacyId   Int      @id
+  unitId     String
+  unit       Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  method     String
+  legacyName String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([unitId])
+}
+
+model SyncRun {
+  id               String    @id @default(cuid())
+  startedAt        DateTime
+  finishedAt       DateTime?
+  status           String
+  manifestHashes   Json?
+  unitsUpserted    Int       @default(0)
+  availabilityRows Int       @default(0)
+  pagesScraped     Int       @default(0)
+  pagesFailed      Int       @default(0)
+  errors           Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([status, startedAt])
+}

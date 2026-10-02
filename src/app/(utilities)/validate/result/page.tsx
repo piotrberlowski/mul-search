@@ -1,6 +1,6 @@
 import {Suspense} from "react"
 import Validation from "./validation"
-import { fetchFactions } from "@/app/data"
+import { getFactionsForUi } from "@/../lib/units/queries"
 
 function ListFallback() {
     return (
@@ -10,7 +10,7 @@ function ListFallback() {
 
 export default async function SharedList() {
 
-    const factions = await fetchFactions()
+    const factions = await getFactionsForUi()
 
     return (
         <main className="relative items-center align-top bg-inherit">

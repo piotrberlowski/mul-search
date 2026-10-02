@@ -10,18 +10,18 @@ export interface Faction {
     value: number,
 }
 
-export async function fetchFactions() {
-    const url = new URL("/Faction/Autocomplete?term=", MASTER_UNIT_LIST)
-    const sUrl = url.toString()
-    console.log("Fetching %s", sUrl)
-    const res = await fetch(sUrl)
-
-    if (!res.ok) {
-        // This will activate the closest `error.js` Error Boundary
-        throw new Error('Cannot fetch factions...')
+export async function fetchFactions(): Promise<Faction[]> {
+    try {
+        const res = await fetch('/api/factions', { cache: 'no-store' })
+        if (!res.ok) {
+            console.log("Cannot fetch factions: %s", res.status)
+            return []
+        }
+        return await res.json()
+    } catch (error) {
+        console.log("Cannot fetch factions: " + error)
+        return []
     }
-
-    return res.text().then(t=>JSON.parse(t)).catch(e => {console.log("Cannot fetch factions: " + e); return [];})
 }
 
 export const eras:Array<[string, string]> = [
