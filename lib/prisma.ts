@@ -6,8 +6,11 @@ declare global {
 }
 
 function createPrismaClient() {
+  const connectionString = process.env.MUL_USE_DIRECT === '1'
+    ? process.env.DB_URL_NON_POOLING
+    : process.env.DB_PRISMA_URL
   const adapter = new PrismaPg({
-    connectionString: process.env.DB_PRISMA_URL,
+    connectionString,
     connectionTimeoutMillis: 5000,
   })
   return new PrismaClient({ adapter })

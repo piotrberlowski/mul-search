@@ -1,7 +1,6 @@
-import { fetchFactions } from '@/app/data'
+import { getFactionsForUi } from '@/../lib/units/queries'
 import { Suspense } from "react"
 import BuilderApp from './builderApp'
-import { FactionsContext } from '@/app/factionsContext'
 
 function CsrFallback() {
   return <>Executing your search...</>
@@ -9,7 +8,7 @@ function CsrFallback() {
 
 export default async function Home() {
 
-  const factions = await fetchFactions()
+  const factions = await getFactionsForUi()
 
   return (
     <main className="relative items-center align-top bg-inherit">

@@ -1,5 +1,5 @@
 import { ConstrainedList, parseShare } from "@/api/shareApi"
-import { fetchFactions } from "@/app/data"
+import { getFactionsForUi } from "@/../lib/units/queries"
 import { Suspense } from "react"
 import VisualList from "./visualList"
 import { findListByKey } from "@/app/api/dao/lists"
@@ -42,7 +42,7 @@ function processParameters(searchParams: ShareSearchParams): Promise<Constrained
 
 export default async function SharedList({ searchParams }: { searchParams: ShareSearchParams }) {
 
-    const factions = await fetchFactions()
+    const factions = await getFactionsForUi()
     const list = await processParameters(searchParams)
 
     return (
