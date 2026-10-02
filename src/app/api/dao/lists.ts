@@ -2,7 +2,7 @@
 
 import { ConstrainedList, MulUnit, toMulUnits } from "@/api/shareApi";
 import { Save, totalPV } from "@/api/unitListApi";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { randomUUID } from "crypto";
 import prisma from "@/../lib/prisma"
 import { findCurrentUserId } from "./users";

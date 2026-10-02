@@ -1,6 +1,6 @@
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import NextAuth, { NextAuthConfig } from "next-auth"
-import JWT from "next-auth/jwt"
+import type {} from "next-auth/jwt"
 import Auth0 from "next-auth/providers/auth0"
 import Discord from "next-auth/providers/discord"
 import Google from "next-auth/providers/google"

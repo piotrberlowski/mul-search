@@ -1,6 +1,6 @@
 import { getFormatsWithPublicLists } from "@/app/api/dao/lists"
 import { ArrowRightCircleIcon } from "@heroicons/react/16/solid"
-import { Format, List } from "@prisma/client"
+import type { Format, List } from "@/generated/prisma/client"
 import ShortLink from "../share/shortLink"
 
 
