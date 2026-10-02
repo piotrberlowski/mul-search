@@ -1,5 +1,5 @@
 import { ConstrainedList as ConstrainedMulList, MulUnit } from "@/api/shareApi";
-import { Format, Prisma } from "@prisma/client";
+import { Format, Prisma } from "@/generated/prisma/client";
 import prisma from "../lib/prisma";
 
 function formatUpsert(name: string, description: string) {
