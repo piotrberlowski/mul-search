@@ -1,6 +1,6 @@
 import {Suspense} from "react"
 import Validation from "./validation"
-import { getFactionsForUi } from "@/../lib/units/queries"
+import { parametersDao } from "@/app/api/dao/parametersDao"
 
 function ListFallback() {
     return (
@@ -10,7 +10,7 @@ function ListFallback() {
 
 export default async function SharedList() {
 
-    const factions = await getFactionsForUi()
+    const factions = await parametersDao.getFactions()
 
     return (
         <main className="relative items-center align-top bg-inherit">

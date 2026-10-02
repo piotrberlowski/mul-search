@@ -29,47 +29,72 @@ export function isStaleUnit(
 export async function unitsNeedingScrape(limit?: number) {
   const sitemap = await fetchSitemap()
   const lastModBySlug = new Map(sitemap.map((entry) => [entry.slug, entry.lastMod]))
-  const units = await prisma.unit.findMany({
+  const units = await prisma.unitMetadata.findMany({
     where: { removedAt: null },
     select: {
       id: true,
-      slug: true,
-      sourceLastMod: true,
-      statsScrapedAt: true,
+      name: true,
+      stats: {
+        select: {
+          slug: true,
+          sourceLastMod: true,
+          statsScrapedAt: true,
+        },
+      },
     },
-    orderBy: [{ statsScrapedAt: { sort: 'asc', nulls: 'first' } }, { name: 'asc' }],
   })
 
-  const stale = units.filter((unit) => isStaleUnit(unit, lastModBySlug))
+  const stale = units
+    .map((unit) => ({
+      id: unit.id,
+      name: unit.name,
+      slug: unit.stats?.slug ?? null,
+      sourceLastMod: unit.stats?.sourceLastMod ?? null,
+      statsScrapedAt: unit.stats?.statsScrapedAt ?? null,
+    }))
+    .filter((unit) => isStaleUnit(unit, lastModBySlug))
+    .sort((a, b) => {
+      if (!a.statsScrapedAt && b.statsScrapedAt) return -1
+      if (a.statsScrapedAt && !b.statsScrapedAt) return 1
+      const aTime = a.statsScrapedAt?.getTime() ?? 0
+      const bTime = b.statsScrapedAt?.getTime() ?? 0
+      if (aTime !== bTime) return aTime - bTime
+      return a.name.localeCompare(b.name)
+    })
   const selected = typeof limit === 'number' ? stale.slice(0, limit) : stale
   return { units: selected, lastModBySlug }
 }
 
-export async function scrapeUnit(id: string, sourceLastMod?: Date | null) {
+export async function scrapeUnit(id: string, lastModBySlug: Map<string, Date | null>) {
   const html = await fetchMulText(`/u/${id}`)
   const parsed = parseUnitPage(html)
-  await prisma.unit.update({
-    where: { id },
-    data: {
-      slug: parsed.slug ?? undefined,
-      cardVersion: parsed.hasCard ? parsed.cardVersion : null,
-      imageUrl: parsed.imageUrl,
-      pv: parsed.pv ?? undefined,
-      size: parsed.size,
-      move: parsed.move,
-      tmm: parsed.tmm,
-      armor: parsed.armor,
-      structure: parsed.structure,
-      threshold: parsed.threshold,
-      overheat: parsed.overheat,
-      dmgS: parsed.dmgS,
-      dmgM: parsed.dmgM,
-      dmgL: parsed.dmgL,
-      dmgE: parsed.dmgE,
-      specials: parsed.specials,
-      sourceLastMod: parsed.slug ? sourceLastMod ?? undefined : undefined,
-      statsScrapedAt: new Date(),
-    },
+  if (!parsed.slug || parsed.size == null || parsed.dmgS == null || parsed.dmgM == null || parsed.dmgL == null || parsed.dmgE == null) {
+    throw new Error('page is missing slug, size, or damage')
+  }
+  const scrapedAt = new Date()
+  const data = {
+    slug: parsed.slug,
+    size: parsed.size,
+    move: parsed.move,
+    tmm: parsed.tmm,
+    armor: parsed.armor,
+    structure: parsed.structure,
+    threshold: parsed.threshold,
+    overheat: parsed.overheat,
+    dmgS: parsed.dmgS,
+    dmgM: parsed.dmgM,
+    dmgL: parsed.dmgL,
+    dmgE: parsed.dmgE,
+    specials: parsed.specials,
+    cardVersion: parsed.hasCard ? parsed.cardVersion : null,
+    imageUrl: parsed.imageUrl,
+    sourceLastMod: lastModBySlug.get(parsed.slug) ?? null,
+    statsScrapedAt: scrapedAt,
+  }
+  await prisma.unitStats.upsert({
+    where: { unitId: id },
+    create: { unitId: id, ...data },
+    update: data,
   })
   return parsed
 }
@@ -88,16 +113,7 @@ export async function scrapeUnits(options: {
   for (const [index, unit] of pending.entries()) {
     if (options.deadline && Date.now() >= options.deadline) break
     try {
-      const parsed = await scrapeUnit(unit.id, unit.slug ? lastModBySlug.get(unit.slug) : undefined)
-      if (parsed.slug && !unit.slug) {
-        const lastMod = lastModBySlug.get(parsed.slug)
-        if (lastMod) {
-          await prisma.unit.update({
-            where: { id: unit.id },
-            data: { sourceLastMod: lastMod },
-          })
-        }
-      }
+      const parsed = await scrapeUnit(unit.id, lastModBySlug)
       scraped += 1
       console.log(`[scrape] ${index + 1}/${pending.length} ${unit.id} ${parsed.slug ?? ''} ok`)
     } catch (error) {

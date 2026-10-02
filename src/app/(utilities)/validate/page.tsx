@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { getFactionsForUi } from "@/../lib/units/queries"
+import { parametersDao } from "@/app/api/dao/parametersDao"
 import ValidateForm from "./validateForm"
 import {  ChevronDoubleRightIcon, ChevronDownIcon  } from "@heroicons/react/24/outline"
 
@@ -50,7 +50,7 @@ function Footnote() {
 
 export default async function Home() {
 
-  const factions = await getFactionsForUi()
+  const factions = await parametersDao.getFactions()
 
   return (
     <main className="relative items-center align-top bg-inherit">

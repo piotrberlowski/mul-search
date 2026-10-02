@@ -30,7 +30,7 @@ async function fetchMekbayUnits(): Promise<MekbayUnit[]> {
 
 async function main() {
   const [ours, mekbay] = await Promise.all([
-    prisma.unit.findMany({
+    prisma.unitMetadata.findMany({
       where: { removedAt: null },
       select: { id: true, name: true, model: true },
     }),

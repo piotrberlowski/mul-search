@@ -77,8 +77,9 @@ model Era {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  introUnits    Unit[]             @relation("UnitIntroEra")
-  availability  UnitAvailability[]
+  introUnits         Unit[]             @relation("UnitIntroEra")
+  metadataIntroUnits UnitMetadata[]     @relation("MetadataIntroEra")
+  availability       UnitAvailability[]
 }
 
 model Faction {
@@ -106,7 +107,8 @@ model UnitType {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  units     Unit[]
+  units         Unit[]
+  metadataUnits UnitMetadata[]
 }
 
 model Ability {
@@ -116,7 +118,7 @@ model Ability {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  units     UnitAbility[]
+  units UnitAbility[]
 
   @@index([code])
 }
@@ -155,19 +157,67 @@ model Unit {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  abilities      UnitAbility[]
-  availability   UnitAvailability[]
-  legacyIds      LegacyUnitId[]
+  @@index([typeId])
+  @@index([name])
+}
+
+// Bundle load and scrape on this branch write these tables.
+// The original "Unit" table stays in place for the scrape still running from step1-unit-db.
+model UnitMetadata {
+  id         String    @id
+  name       String
+  model      String?
+  typeId     Int
+  type       UnitType  @relation(fields: [typeId], references: [id])
+  subType    String?
+  introEraId Int?
+  introEra   Era?      @relation("MetadataIntroEra", fields: [introEraId], references: [id])
+  tonnage    Float?
+  pv         Int?
+  bv         Int?
+  introYear  Int?
+  removedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  stats        UnitStats?
+  abilities    UnitAbility[]
+  availability UnitAvailability[]
+  legacyIds    LegacyUnitId[]
 
   @@index([typeId])
   @@index([name])
 }
 
+model UnitStats {
+  unitId         String       @id
+  unit           UnitMetadata @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  slug           String       @unique
+  size           Int
+  move           String?
+  tmm            Int?
+  armor          Int?
+  structure      Int?
+  threshold      Int?
+  overheat       Int?
+  dmgS           String
+  dmgM           String
+  dmgL           String
+  dmgE           String
+  specials       String?
+  cardVersion    String?
+  imageUrl       String?
+  sourceLastMod  DateTime?
+  statsScrapedAt DateTime
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
 model UnitAbility {
   unitId    String
   abilityId Int
-  unit      Unit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  ability   Ability @relation(fields: [abilityId], references: [id], onDelete: Cascade)
+  unit      UnitMetadata @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  ability   Ability      @relation(fields: [abilityId], references: [id], onDelete: Cascade)
 
   @@id([unitId, abilityId])
 }
@@ -176,9 +226,9 @@ model UnitAvailability {
   unitId    String
   eraId     Int
   factionId Int
-  unit      Unit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  era       Era     @relation(fields: [eraId], references: [id], onDelete: Cascade)
-  faction   Faction @relation(fields: [factionId], references: [id], onDelete: Cascade)
+  unit      UnitMetadata @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  era       Era          @relation(fields: [eraId], references: [id], onDelete: Cascade)
+  faction   Faction      @relation(fields: [factionId], references: [id], onDelete: Cascade)
 
   @@id([unitId, eraId, factionId])
   @@index([factionId, eraId])
@@ -187,7 +237,7 @@ model UnitAvailability {
 model LegacyUnitId {
   legacyId   Int      @id
   unitId     String
-  unit       Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unit       UnitMetadata @relation(fields: [unitId], references: [id], onDelete: Cascade)
   method     String
   legacyName String?
   createdAt  DateTime @default(now())
