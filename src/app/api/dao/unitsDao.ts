@@ -3,7 +3,7 @@ import 'server-only'
 import { unstable_cache } from 'next/cache'
 import prisma from '../../../../lib/prisma'
 import { MUL_ORIGIN } from '../../../../lib/mul/types'
-import type { Unit } from '../../../../lib/units/unit'
+import type { Unit } from '@/api/unit'
 
 export type ListedUnit = {
   Id: string
