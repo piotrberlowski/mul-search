@@ -6,7 +6,7 @@ import { PlusIcon } from "@heroicons/react/24/outline"
 import { ListBuilderController, useBuilderContext, formatDamageString } from "./listBuilderController"
 
 export const EMPTY_UNIT = {
-    Id: 0,
+    Id: "",
     Name: "",
     Role: {
         Name: "None",
@@ -127,7 +127,7 @@ export default function UnitLine({ unit, idx, mech }: { unit: IUnit, idx: number
                 </button>
                 <div className="col-span-2 text-left">
 
-                    <a href={"http://www.masterunitlist.info/Unit/Details/" + unit.Id} target="_blank">{unit.Name}</a>
+                    <a href={unit.slug ? `https://masterunitlist.battletech.com/units/${unit.slug}` : "https://masterunitlist.battletech.com/"} target="_blank">{unit.Name}</a>
                 </div>
                 <div>{unit.BFPointValue}</div>
                 <div className="truncate hidden md:block">{unit.Role.Name}</div>
