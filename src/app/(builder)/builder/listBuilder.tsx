@@ -1,6 +1,7 @@
 'use client'
 import ShareLink from '@/app/(utilities)/share/shareLink';
-import { Factions, fetchFactions } from '@/app/data';
+import { Factions } from '@/app/data';
+import { getFactions } from '@/app/api/dao/parameters';
 import { useCombinations } from '@/components/combinations';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -83,7 +84,7 @@ function BuilderFooter({
                     <li>{saveBtn}</li>
                     <li>{loadBtn}</li>
                     <li><button className="btn text-center w-full btn-sm" onClick={e => {
-                        fetchFactions()
+                        getFactions()
                             .then(f => new Factions(f))
                             .then(f => controller.toValidateParams(f))
                             .then(p => router.push("/validate/result?" + p.toString()))

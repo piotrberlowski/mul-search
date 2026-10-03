@@ -10,20 +10,6 @@ export interface Faction {
     value: number,
 }
 
-export async function fetchFactions(): Promise<Faction[]> {
-    try {
-        const res = await fetch('/api/factions', { cache: 'no-store' })
-        if (!res.ok) {
-            console.log("Cannot fetch factions: %s", res.status)
-            return []
-        }
-        return await res.json()
-    } catch (error) {
-        console.log("Cannot fetch factions: " + error)
-        return []
-    }
-}
-
 export const eras:Array<[string, string]> = [
     ["10", "Star League"],
     ["11","Early Succession War"],
