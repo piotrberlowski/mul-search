@@ -1,6 +1,5 @@
 'use client'
-import { Faction, Factions, eraMap, eras } from "@/app/data";
-import Link from "next/link";
+import { Faction } from "@/app/data";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from 'react';
 import { parsePdf } from "./pdf/parsePdf";
@@ -14,40 +13,36 @@ function renderOptions(factions: Faction[]) {
         })
 }
 
-function renderEras() {
-    return eras.map(eraKV => {
-        const [val, lab] = eraKV
-        return (
-            <option key={val} value={val || ""}>{lab}</option>
-        )
-    })
-}
+export default function ValidateForm({
+    eras,
+    factionsByEra,
+}: {
+    eras: Faction[],
+    factionsByEra: { eraId: number, factions: Faction[] }[],
+}) {
 
-export default function ValidateForm({ factions }: { factions: Faction[] }) {
-
-    const fData = new Factions(factions)
     const router = useRouter()
 
     const params = useSearchParams()
 
     const [spec, setSpec] = useState(params.get('specific')?.toString())
-    const [gen, setGen] = useState(params.get('general')?.toString())
     const [era, setEra] = useState(params.get('era')?.toString())
     const [error, setError] = useState<string>()
     const [pdf, setFile] = useState<File>()
+    const factionsForEra = factionsByEra.find((entry) => `${entry.eraId}` === era)?.factions ?? []
 
-    const mulGenLink = (era && spec) ? (
-        <Link href={`http://masterunitlist.info/Era/FactionEraDetails?FactionId=${spec}&EraId=${era}`} target="_blank">-&gt; Use this link to find the General List for {fData.getFactionName(spec)} in {eraMap.get(era)} era &lt;-</Link>
-    ) : (<></>)
-
+    function onEra(value: string) {
+        setEra(value)
+        const allowed = factionsByEra.find((entry) => `${entry.eraId}` === value)?.factions ?? []
+        if (!allowed.some((faction) => `${faction.value}` === spec)) {
+            setSpec('')
+        }
+    }
 
     function submit(serializedList: string) {
         const params = new URLSearchParams()
         params.append("era", `${era}`)
         params.append("specific", `${spec}`)
-        if (gen) {
-            params.append("general", `${gen}`)
-        }
         params.append("list", serializedList)
         router.push(`/validate/result?${params.toString()}`)
     }
@@ -77,34 +72,23 @@ export default function ValidateForm({ factions }: { factions: Faction[] }) {
         <form className="my-1 border border-solid border-gray-800 dark:border-gray-300 p-1 items-center">
             <label className="form-control bg-inherit w-3/4 mx-auto">
                 <div className="label">
-                    <span className="label-text">Faction</span>
+                    <span className="label-text">Availability Era</span>
                 </div>
-                <select className="select select-bordered select-sm" name="specific" value={spec} onChange={e => setSpec(e.target.value)}>
+                <select name="era" className="select select-bordered select-sm" value={era} onChange={e => onEra(e.target.value)}>
                     <option value=''></option>
-                    {renderOptions(fData.getFactions())}
+                    {renderOptions(eras)}
                 </select>
             </label>
             <label className="form-control bg-inherit w-3/4 mx-auto">
                 <div className="label">
-                    <span className="label-text">Availability Era</span>
+                    <span className="label-text">Faction</span>
                 </div>
-                <select name="era" className="select select-bordered select-sm" value={era} onChange={e => setEra(e.target.value)}>
+                <select className="select select-bordered select-sm" name="specific" value={spec} onChange={e => setSpec(e.target.value)} disabled={!era}>
                     <option value=''></option>
-                    {renderEras()}
+                    {renderOptions(factionsForEra)}
                 </select>
             </label>
 
-            <div className="w-100 text-center items-ceter">
-                {mulGenLink}
-            </div>
-            <label className="form-control bg-inherit w-3/4 mx-auto">
-                <div className="label">
-                    <span className="label-text">General List</span>
-                </div>
-                <select className="select select-bordered select-sm" name="general" value={gen} onChange={e => setGen(e.target.value)}>
-                    {renderOptions(fData.getGenerals())}
-                </select>
-            </label>
             <label className="form-control bg-inherit w-3/4 mx-auto">
                 <div className="label">
                     <span className="label-text">MUL PDF</span>

@@ -8,12 +8,16 @@ function CsrFallback() {
 
 export default async function Home() {
 
-  const factions = await parametersDao.getFactions()
+  const [factions, eras, factionsByEra] = await Promise.all([
+    parametersDao.getFactions(),
+    parametersDao.getEras(),
+    parametersDao.getFactionsByEra(),
+  ])
 
   return (
     <main className="relative items-center align-top bg-inherit">
       <Suspense fallback={<CsrFallback />}>
-          <BuilderApp factions={factions} />
+          <BuilderApp factions={factions} eras={eras} factionsByEra={factionsByEra} />
       </Suspense>
     </main>
   )
