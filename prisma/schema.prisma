@@ -77,7 +77,6 @@ model Era {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  introUnits         Unit[]             @relation("UnitIntroEra")
   metadataIntroUnits UnitMetadata[]     @relation("MetadataIntroEra")
   availability       UnitAvailability[]
 }
@@ -107,7 +106,6 @@ model UnitType {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  units         Unit[]
   metadataUnits UnitMetadata[]
 }
 
@@ -123,46 +121,6 @@ model Ability {
   @@index([code])
 }
 
-model Unit {
-  id             String    @id
-  slug           String?   @unique
-  name           String
-  model          String?
-  typeId         Int
-  type           UnitType  @relation(fields: [typeId], references: [id])
-  subType        String?
-  introEraId     Int?
-  introEra       Era?      @relation("UnitIntroEra", fields: [introEraId], references: [id])
-  tonnage        Float?
-  pv             Int?
-  bv             Int?
-  introYear      Int?
-  size           Int?
-  move           String?
-  tmm            Int?
-  armor          Int?
-  structure      Int?
-  threshold      Int?
-  overheat       Int?
-  dmgS           String?
-  dmgM           String?
-  dmgL           String?
-  dmgE           String?
-  specials       String?
-  cardVersion    String?
-  imageUrl       String?
-  sourceLastMod  DateTime?
-  statsScrapedAt DateTime?
-  removedAt      DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  @@index([typeId])
-  @@index([name])
-}
-
-// Bundle load and scrape on this branch write these tables.
-// The original "Unit" table stays in place for the scrape still running from step1-unit-db.
 model UnitMetadata {
   id         String    @id
   name       String
