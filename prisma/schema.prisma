@@ -135,6 +135,7 @@ model UnitMetadata {
   bv         Int?
   introYear  Int?
   removedAt  DateTime?
+  statsUnscrapeableAt DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
