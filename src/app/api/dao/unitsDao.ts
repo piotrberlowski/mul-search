@@ -3,7 +3,6 @@ import 'server-only'
 import { unstable_cache } from 'next/cache'
 import prisma from '../../../../lib/prisma'
 import { MUL_ORIGIN } from '../../../../lib/mul/types'
-import type { Unit } from '@/api/unit'
 
 export type ListedUnit = {
   Id: string
@@ -77,37 +76,6 @@ function damageNumber(value: string | null | undefined): number {
 export function cardUrl(slug: string | null | undefined, cardVersion: string | null | undefined): string | null {
   if (!slug || !cardVersion) return null
   return `${MUL_ORIGIN}/units/${slug}/card.png?v=${cardVersion}`
-}
-
-export function toUnit(unit: MetadataRow): Unit | null {
-  if (!unit.stats) return null
-  return {
-    id: unit.id,
-    name: unit.name,
-    model: unit.model,
-    typeId: unit.typeId,
-    subType: unit.subType,
-    introEraId: unit.introEraId,
-    tonnage: unit.tonnage,
-    pv: unit.pv,
-    bv: unit.bv,
-    introYear: unit.introYear,
-    slug: unit.stats.slug,
-    size: unit.stats.size,
-    move: unit.stats.move,
-    tmm: unit.stats.tmm,
-    armor: unit.stats.armor,
-    structure: unit.stats.structure,
-    threshold: unit.stats.threshold,
-    overheat: unit.stats.overheat,
-    dmgS: unit.stats.dmgS,
-    dmgM: unit.stats.dmgM,
-    dmgL: unit.stats.dmgL,
-    dmgE: unit.stats.dmgE,
-    specials: unit.stats.specials,
-    cardVersion: unit.stats.cardVersion,
-    imageUrl: unit.stats.imageUrl,
-  }
 }
 
 export function toListedUnit(unit: MetadataRow): ListedUnit {
