@@ -1,29 +1,21 @@
 'use client'
 import { ReadonlyURLSearchParams, useSearchParams } from "next/navigation";
-import { Faction, Factions, MASTER_UNIT_LIST, MULSearchParams } from '@/app/data'
+import { Faction, Factions, MULSearchParams } from '@/app/data'
 import React, { useEffect, useState } from "react";
 import { IUnit } from "@/api/unitListApi";
 import { IResult, LIST_CHECKS, ValidateUnit, judge, testUnit } from "./results";
+import { resolveUnits } from '@/app/api/dao/units'
 
 export const LIST_PARAMETER = "list";
 export const NOT_AVAILABLE_ERROR = "Not Available"
 
 async function fetchUnit(mu: ValidateUnit, era: string, specific: string) {
-    const url = new URL("/Unit/QuickList", MASTER_UNIT_LIST)
-    url.searchParams.append('Name', mu.name)
-    url.searchParams.append('AvailableEras', era)
-    url.searchParams.append('Factions', specific)
-    return fetch(url.href).then(r => r.json()).then(({ Units }) => {
-        const filtered = Units.filter((u: IUnit) => u.Name.trim().toLowerCase() == mu.name.trim().toLowerCase())
-        if (filtered.length == 0) {
-            return { query: mu, error: NOT_AVAILABLE_ERROR, found: false, unit: undefined }
-        } else if (filtered.length > 1) {
-            return { query: mu, error: "Ambiguous", found: true, unit: filtered[0] }
-        }
-        return { query: mu, error: undefined, found: true, unit: filtered[0] }
-    }).catch(e => {
-        return { query: mu, error: e, found: false, unit: undefined }
-    })
+    const resolved = await resolveUnits([mu.name])
+    const unit = Object.values(resolved).find((candidate) => candidate.Name.trim().toLowerCase() === mu.name.trim().toLowerCase())
+    if (!unit) {
+        return { query: mu, error: NOT_AVAILABLE_ERROR, found: false, unit: undefined }
+    }
+    return { query: mu, error: undefined, found: true, unit }
 }
 
 async function fetchFromMul(params: ReadonlyURLSearchParams) {
@@ -52,22 +44,17 @@ async function fetchFromMul(params: ReadonlyURLSearchParams) {
     return Promise.all(
         items.map(mu => fetchUnit(mu, era, specific).then(iRes => {
             // We have an error and need to return negative judgement
-            if (iRes.error) {
+            if (iRes.error || !iRes.unit) {
                 return { ...iRes.query, ...iRes }
             }
             return testUnit(mu, iRes.unit)
-        }).then(testRes => testRes.error ? testRes : testUniqueExtinct(mu, era, testRes.unit)))
+        }).then(testRes => testRes.error || !testRes.unit ? testRes : testUniqueExtinct(mu, era, testRes.unit)))
     )
 
 }
 
-async function testUniqueExtinct(mu: ValidateUnit, era: string, unit: IUnit) {
-    return fetchUnit(mu, era, '3').then(
-        extinctRes =>
-            extinctRes.found
-                ? judge(mu, false, "Unit is Extinct in the given era", unit)
-                : fetchUnit(mu, era, '4').then(uniqueRes => judge(mu, true, uniqueRes.found ? 'unique' : undefined, unit))
-    )
+async function testUniqueExtinct(mu: ValidateUnit, _era: string, unit: IUnit) {
+    return judge(mu, true, undefined, unit)
 }
 
 

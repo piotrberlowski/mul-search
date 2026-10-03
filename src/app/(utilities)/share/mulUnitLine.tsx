@@ -6,7 +6,7 @@ export function UnitLine({ unit }: { unit: ISelectedUnit }) {
     return (
         <div className="grid grid-cols-11 my-0 border border-solid border-gray-400 dark:border-gray-800 font-small text-center items-center w-full">
             <div className="col-span-3 text-left">
-                <a href={"http://www.masterunitlist.info/Unit/Details/" + unit.Id} target="_blank">{unit.Name}</a>
+                <a href={unit.slug ? `https://masterunitlist.battletech.com/units/${unit.slug}` : "https://masterunitlist.battletech.com/"} target="_blank">{unit.Name}</a>
             </div>
             <div>{unit.skill}</div>
             <div>{currentPV(unit)}</div>

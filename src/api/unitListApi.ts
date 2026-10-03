@@ -18,7 +18,7 @@ export interface IType {
 }
 
 export interface IUnit {
-    Id: number,
+    Id: string,
     Name: string,
     Type: IType,
     Role: IRole,
@@ -26,6 +26,8 @@ export interface IUnit {
     Class: string,
     Variant: string,
     ImageUrl: string,
+    slug?: string | null,
+    cardUrl?: string | null,
     BFDamageShort: number,
     BFDamageMedium: number,
     BFDamageLong: number,
@@ -121,7 +123,7 @@ export function toJeffsUnits(units: ISelectedUnit[]): JeffsUnit[] {
     return units.map(
         unit => {
             return {
-                mulID: unit.Id,
+                mulID: Number(unit.Id) || 0,
                 damage: {
                     short: unit.BFDamageShort,
                     medium: unit.BFDamageMedium,
@@ -218,24 +220,9 @@ export function exportTTSString(name: string, units: ISelectedUnit[]) {
     storeTTSString(`{${ttsUnits}}`)
 }
 export const UNIT_TYPES: IType[] = [
-    {
-        Id: 18,
-        Name: "Battle Mech",
-    },
-    {
-        Id: 19,
-        Name: "Combat Vehicle",
-    },
-    {
-        Id: 21,
-        Name: "Infantry"
-    },
-    {
-        Id: 20,
-        Name: "Industrial Mech"
-    },
-    {
-        Id: 24,
-        Name: "Support",
-    }
+    { Id: 1, Name: "BattleMech" },
+    { Id: 4, Name: "Combat Vehicle" },
+    { Id: 6, Name: "Infantry" },
+    { Id: 7, Name: "IndustrialMech" },
+    { Id: 9, Name: "Support Vehicle" },
 ]

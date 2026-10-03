@@ -1,7 +1,6 @@
 import { ReadonlyURLSearchParams } from "next/navigation"
 
 
-export const MASTER_UNIT_LIST = "https://masterunitlist.azurewebsites.net/"
 const WITH_GENERAL_RE = /\[(.+) including (.+) during (.+)\]/
 const FACTION_ERA_RE = /\[(.+) during (.+)\]/
 
@@ -65,21 +64,6 @@ export class MULSearchParams {
 
         this.specific = specific
         this.era = era
-    }
-
-    public toUrl(unitType?: number) {
-        const target = new URL("/Unit/QuickList", MASTER_UNIT_LIST)
-
-        target.searchParams.append('minPV', '1')
-        target.searchParams.append('maxPV', '999')
-        target.searchParams.append('Factions', this.specific ?? '')
-        target.searchParams.append('AvailableEras', this.era ?? '')
-
-        if (unitType) {
-            target.searchParams.append('Types', `${unitType}`)
-        }
-
-        return target.href
     }
 
     public describe(factions: Factions) {
