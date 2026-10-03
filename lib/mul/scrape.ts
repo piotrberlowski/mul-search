@@ -30,7 +30,7 @@ export async function unitsNeedingScrape(limit?: number) {
   const sitemap = await fetchSitemap()
   const lastModBySlug = new Map(sitemap.map((entry) => [entry.slug, entry.lastMod]))
   const units = await prisma.unitMetadata.findMany({
-    where: { removedAt: null },
+    where: { removedAt: null, statsUnscrapeableAt: null },
     select: {
       id: true,
       name: true,
@@ -69,7 +69,11 @@ export async function scrapeUnit(id: string, lastModBySlug: Map<string, Date | n
   const html = await fetchMulText(`/u/${id}`)
   const parsed = parseUnitPage(html)
   if (!parsed.slug || parsed.size == null || parsed.dmgS == null || parsed.dmgM == null || parsed.dmgL == null || parsed.dmgE == null) {
-    throw new Error('page is missing slug, size, or damage')
+    await prisma.unitMetadata.update({
+      where: { id },
+      data: { statsUnscrapeableAt: new Date() },
+    })
+    return { status: 'unscrapeable' as const, slug: parsed.slug }
   }
   const scrapedAt = new Date()
   const data = {
@@ -96,7 +100,11 @@ export async function scrapeUnit(id: string, lastModBySlug: Map<string, Date | n
     create: { unitId: id, ...data },
     update: data,
   })
-  return parsed
+  await prisma.unitMetadata.update({
+    where: { id },
+    data: { statsUnscrapeableAt: null },
+  })
+  return { status: 'ok' as const, slug: parsed.slug }
 }
 
 export async function scrapeUnits(options: {
@@ -113,9 +121,13 @@ export async function scrapeUnits(options: {
   for (const [index, unit] of pending.entries()) {
     if (options.deadline && Date.now() >= options.deadline) break
     try {
-      const parsed = await scrapeUnit(unit.id, lastModBySlug)
-      scraped += 1
-      console.log(`[scrape] ${index + 1}/${pending.length} ${unit.id} ${parsed.slug ?? ''} ok`)
+      const result = await scrapeUnit(unit.id, lastModBySlug)
+      if (result.status === 'unscrapeable') {
+        console.log(`[scrape] ${index + 1}/${pending.length} ${unit.id} ${result.slug ?? ''} unscrapeable`)
+      } else {
+        scraped += 1
+        console.log(`[scrape] ${index + 1}/${pending.length} ${unit.id} ${result.slug ?? ''} ok`)
+      }
     } catch (error) {
       failed += 1
       const message = error instanceof Error ? error.message : String(error)

@@ -21,13 +21,9 @@ function Intro() {
           To start working on your list, please:
         </p>
         <ul className="list-disc ml-5">
-          <li>select a faction to play</li>
           <li>select the availability era for your units</li>
-          <li>select the applicable &quot;general list&quot; for your faction in your era</li>
+          <li>select a faction that fields units in that era</li>
         </ul>
-        <p className="my-1">
-          Once you have the faction and era selected, the tool <b>will</b> give you a link which you can follow to see which general list is relevant.
-        </p>
       </div>
     </div>
   )
@@ -48,13 +44,16 @@ function Footnote() {
 
 export default async function Home() {
 
-  const factions = await parametersDao.getFactions()
+  const [eras, factionsByEra] = await Promise.all([
+    parametersDao.getEras(),
+    parametersDao.getFactionsByEra(),
+  ])
 
   return (
     <main className="relative items-center align-top bg-inherit">
       <Intro />
       <Suspense fallback={<CsrFallback />}>
-        <SearchForm factions={factions} />
+        <SearchForm eras={eras} factionsByEra={factionsByEra} />
       </Suspense>
       <Footnote />
     </main>

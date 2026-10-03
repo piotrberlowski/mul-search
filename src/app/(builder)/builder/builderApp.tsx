@@ -1,7 +1,7 @@
 'use client'
 import { LOCAL_STORAGE_NAME_AUTOSAVE } from "@/api/unitListApi";
 import { Faction, Factions, MULSearchParams } from '@/app/data';
-import { FactionsContext } from "@/app/factionsContext";
+import { EraCatalogContext, FactionsContext } from "@/app/factionsContext";
 import { XCircleIcon } from "@heroicons/react/16/solid";
 import dynamic from "next/dynamic";
 import { useSearchParams } from 'next/navigation';
@@ -23,16 +23,29 @@ const ListBuilder = dynamic(
     }
 )
 
-export default function BuilderApp({ factions }: { factions: Faction[] }) {
+export default function BuilderApp({
+    factions,
+    eras,
+    factionsByEra,
+}: {
+    factions: Faction[],
+    eras: Faction[],
+    factionsByEra: { eraId: number, factions: Faction[] }[],
+}) {
 
     const params = useSearchParams()
     const mulSP = new MULSearchParams(params)
     const factionData = new Factions(factions)
-    const listConstraints = mulSP.describe(factionData)
+    const eraName = eras.find((era) => `${era.value}` === (mulSP.era ?? ''))?.label
+    const factionName = factionData.getFactionName(mulSP.specific ?? '')
+    const listConstraints = (factionName && eraName)
+        ? `[${factionName} during ${eraName}]`
+        : mulSP.describe(factionData)
 
     return <>
         <div className="">
             <FactionsContext.Provider value={factionData}>
+                <EraCatalogContext.Provider value={{ eras, factionsByEra }}>
                 <ListBuilderContext.Provider value={new ListBuilderController(listConstraints, LOCAL_STORAGE_NAME_AUTOSAVE)}>
                     <div className="drawer auto-cols-fr xl:drawer-open bg-inherit mx-auto w-full">
                         <input id={LIST_DRAWER_ID} type="checkbox" className="drawer-toggle" />
@@ -48,6 +61,7 @@ export default function BuilderApp({ factions }: { factions: Faction[] }) {
                         </div>
                     </div>
                 </ListBuilderContext.Provider>
+                </EraCatalogContext.Provider>
             </FactionsContext.Provider>
         </div>
     </>

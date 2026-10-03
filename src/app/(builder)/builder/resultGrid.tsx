@@ -4,7 +4,7 @@ import { IUnit, UNIT_TYPES } from '@/api/unitListApi'
 import React, { useState } from 'react'
 import useSWR from 'swr'
 import { Factions, MULSearchParams, constraintsToParams } from '@/app/data'
-import { useFactionsContext } from "@/app/factionsContext"
+import { useFactionsContext, useEraCatalog } from "@/app/factionsContext"
 import FilteredTable from './filteredTable'
 import { ListBuilderController, useBuilderContext } from './listBuilderController'
 import './unitLine'
@@ -59,9 +59,14 @@ function ConstraintsLabel({children}:{children: React.ReactNode}) {
 
 export default function ResultGrid() {
     const factions = useFactionsContext()
+    const { eras } = useEraCatalog()
     const controller = useBuilderContext()
     const router = useRouter()
-    const params = new MULSearchParams(useSearchParams())
+    const searchParams = useSearchParams()
+    const params = new MULSearchParams(searchParams)
+    const eraName = eras.find((era) => `${era.value}` === (searchParams.get('era') ?? ''))?.label
+    const factionName = factions.getFactionName(searchParams.get('specific') ?? '')
+    const constraintLabel = (factionName && eraName) ? `[${factionName} during ${eraName}]` : params.describe(factions)
 
     controller.registerConstraintsObserver((constraints) => {
         console.log("Re-setting constraints: " + constraints)
@@ -75,7 +80,7 @@ export default function ResultGrid() {
         <>
             <div className="flex w-full">
                 <ConstraintsLabel>
-                    {params.describe(factions)}
+                    {constraintLabel}
                 </ConstraintsLabel>
                 <BuilderLabelDynamic />
             </div>

@@ -1,14 +1,22 @@
-import { renderEras } from "@/app/data";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { ReactNode, useRef, useState } from "react";
+import { useEraCatalog } from "@/app/factionsContext";
 
 interface EraParams {}
 
 const RefEraPanel = React.forwardRef<HTMLDialogElement, EraParams>(({}, ref) => {
     const router = useRouter()
     const params = useSearchParams()
-    const [era, setEra] = useState(params.get("era")||"")  
+    const { eras, factionsByEra } = useEraCatalog()
+    const factionId = params.get("specific")
+    const erasForFaction = eras.filter((era) =>
+        factionsByEra.some((entry) =>
+            `${entry.eraId}` === `${era.value}` &&
+            entry.factions.some((faction) => `${faction.value}` === factionId)
+        )
+    )
+    const [era, setEra] = useState(params.get("era")||"")
 
     function navigate() {
         const newParams = new URLSearchParams(params)
@@ -16,10 +24,9 @@ const RefEraPanel = React.forwardRef<HTMLDialogElement, EraParams>(({}, ref) => 
         router.push(
             '/builder?' + newParams.toString(),
         )
-    }   
+    }
 
     return (
-        //items-center text-center overflow-scroll 
         <dialog id="dlg_era" className="modal text-xs z-100 modal-middle" ref={ref}>
             <div className="modal-box w-full rounded-md">
                 <div className="relative">
@@ -34,7 +41,9 @@ const RefEraPanel = React.forwardRef<HTMLDialogElement, EraParams>(({}, ref) => 
                     }>
                     <option key="" value=""></option>
                     {
-                        renderEras()
+                        erasForFaction.map((eraOption) => (
+                            <option key={eraOption.value} value={eraOption.value}>{eraOption.label}</option>
+                        ))
                     }
                 </select>
                 <div className="modal-action my-0 flex text-center items-center p-1">
@@ -47,7 +56,7 @@ const RefEraPanel = React.forwardRef<HTMLDialogElement, EraParams>(({}, ref) => 
         </dialog>
     )
 }
-) 
+)
 RefEraPanel.displayName = "EraPanel"
 
 export default function useEraDialog(children?: ReactNode, className?: string) {

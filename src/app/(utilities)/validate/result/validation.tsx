@@ -8,14 +8,11 @@ import { IResult, LIST_CHECKS, ValidateUnit, judge, testUnit } from "./results";
 export const LIST_PARAMETER = "list";
 export const NOT_AVAILABLE_ERROR = "Not Available"
 
-async function fetchUnit(mu: ValidateUnit, era: string, specific: string, general?: string) {
+async function fetchUnit(mu: ValidateUnit, era: string, specific: string) {
     const url = new URL("/Unit/QuickList", MASTER_UNIT_LIST)
     url.searchParams.append('Name', mu.name)
     url.searchParams.append('AvailableEras', era)
     url.searchParams.append('Factions', specific)
-    if (general) {
-        url.searchParams.append('Factions', general)
-    }
     return fetch(url.href).then(r => r.json()).then(({ Units }) => {
         const filtered = Units.filter((u: IUnit) => u.Name.trim().toLowerCase() == mu.name.trim().toLowerCase())
         if (filtered.length == 0) {
@@ -40,7 +37,6 @@ async function fetchFromMul(params: ReadonlyURLSearchParams) {
     })
     const era = params.get("era")
     const specific = params.get("specific")
-    const general = params.get("general") ?? undefined
 
     if (!(era && specific && items)) {
         return Promise.resolve<IResult[]>([
@@ -54,7 +50,7 @@ async function fetchFromMul(params: ReadonlyURLSearchParams) {
     }
 
     return Promise.all(
-        items.map(mu => fetchUnit(mu, era, specific, general).then(iRes => {
+        items.map(mu => fetchUnit(mu, era, specific).then(iRes => {
             // We have an error and need to return negative judgement
             if (iRes.error) {
                 return { ...iRes.query, ...iRes }

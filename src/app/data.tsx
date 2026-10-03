@@ -2,8 +2,8 @@ import { ReadonlyURLSearchParams } from "next/navigation"
 
 
 export const MASTER_UNIT_LIST = "https://masterunitlist.azurewebsites.net/"
-const BLANK = "Blank General List"
-const CONSTRAINTS_RE = /\[(.+) including (.+) during (.+)\]/
+const WITH_GENERAL_RE = /\[(.+) including (.+) during (.+)\]/
+const FACTION_ERA_RE = /\[(.+) during (.+)\]/
 
 export interface Faction {
     label: string,
@@ -28,24 +28,12 @@ export const eraMap: Map<string, string> = new Map(eras)
 
 export class Factions {
     private factionNames: Map<string, string> = new Map()
-    private generalNames: Map<string, string> = new Map()
-    private generals: Faction[] = []
     private factions: Faction[] = []
 
     constructor(factions: Faction[]) {
-        this.generals.push({
-            label: BLANK,
-            value: 0
-        })
-        this.generalNames.set("", BLANK)
         factions.forEach(v => {
-            if (v.label.toLowerCase().endsWith("general")) {
-                this.generals.push(v)
-                this.generalNames.set(`${v.value}`, v.label)
-            } else {
-                this.factions.push(v)
-                this.factionNames.set(`${v.value}`, v.label)
-            }
+            this.factions.push(v)
+            this.factionNames.set(`${v.value}`, v.label)
         })
     }
 
@@ -53,25 +41,12 @@ export class Factions {
         return this.factions
     }
 
-    public getGenerals() {
-        return this.generals
-    }
-
-    public getGeneralId(general: string) {
-        return this.generals.find(f => f.label == general)?.value
-    }
-
     public getFactionId(specific: string) {
         return this.factions.find(f => f.label == specific)?.value
     }
 
-
     public getFactionName(id:string) {
         return this.factionNames.get(id)
-    }
-
-    public getGeneralName(id:string | null | undefined) {
-        return this.generalNames.get(id ?? "")
     }
 }
 
@@ -79,20 +54,17 @@ export class MULSearchParams {
     public canSearch: boolean
     specific: string | null
     era: string | null
-    general: string | null
 
     constructor(
         searchParams: ReadonlyURLSearchParams
     ) {
         const era = searchParams.get('era')
         const specific = searchParams.get('specific')
-        const general = searchParams.get('general')
 
         this.canSearch = !(!era || !specific)
 
         this.specific = specific
         this.era = era
-        this.general = general
     }
 
     public toUrl(unitType?: number) {
@@ -107,10 +79,6 @@ export class MULSearchParams {
             target.searchParams.append('Types', `${unitType}`)
         }
 
-        if (this.general) {
-            target.searchParams.append('Factions', this.general)
-        }
-
         return target.href
     }
 
@@ -118,7 +86,7 @@ export class MULSearchParams {
         if (!this.specific || !this.era) {
             return "[Unknown]"
         }
-        return `[${factions.getFactionName(this.specific)} including ${factions.getGeneralName(this.general)} during ${eraMap.get(this.era)}]`
+        return `[${factions.getFactionName(this.specific)} during ${eraMap.get(this.era)}]`
     }
 
 }
@@ -126,29 +94,27 @@ export class MULSearchParams {
 interface BuilderSearchParams  {
     era: string,
     specific: string,
-    general: string,
 }
 
 export function parseConstraints(constraints: string, factions: Factions): BuilderSearchParams {
-    const parsed = CONSTRAINTS_RE.exec(constraints)
-    if (parsed == null) {
+    const withGeneral = WITH_GENERAL_RE.exec(constraints)
+    const simple = withGeneral ? null : FACTION_ERA_RE.exec(constraints)
+    const specific = withGeneral?.[1] ?? simple?.[1]
+    const era = withGeneral?.[3] ?? simple?.[2]
+    if (!specific || !era) {
         console.log(`Couldn't parse constraints... ${constraints}`)
         return {
             era: "",
             specific: "",
-            general: ""
         }
-    } 
-    const [_, specific, general, era] = parsed
+    }
 
     const [eraId, _1] = eras.find(([_, name]) => name == era) || [null, null]
     const specificId = factions.getFactionId(specific)
-    const generalId = factions.getGeneralId(general)
 
     return {
         era: `${eraId || ""}`,
         specific: `${specificId || ""}`,
-        general: `${generalId || ""}`,
     }
 
 }
