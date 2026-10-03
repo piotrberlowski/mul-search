@@ -10,20 +10,6 @@ export interface Faction {
     value: number,
 }
 
-export async function fetchFactions() {
-    const url = new URL("/Faction/Autocomplete?term=", MASTER_UNIT_LIST)
-    const sUrl = url.toString()
-    console.log("Fetching %s", sUrl)
-    const res = await fetch(sUrl)
-
-    if (!res.ok) {
-        // This will activate the closest `error.js` Error Boundary
-        throw new Error('Cannot fetch factions...')
-    }
-
-    return res.text().then(t=>JSON.parse(t)).catch(e => {console.log("Cannot fetch factions: " + e); return [];})
-}
-
 export const eras:Array<[string, string]> = [
     ["10", "Star League"],
     ["11","Early Succession War"],

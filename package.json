@@ -13,7 +13,10 @@
     "postinstall": "prisma generate",
     "prismaVer": "dotenv -e .env.development.local -- prisma migrate dev && prisma generate",
     "prismaLocal": "dotenv -e .env.local -- prisma migrate dev && prisma generate",
-    "seedLocal": "dotenv -e .env.local -- prisma db seed"
+    "seedLocal": "dotenv -e .env.local -- prisma db seed",
+    "test": "tsx --test lib/mul/*.test.ts",
+    "mul:backfill": "dotenv -e .env.local -- tsx scripts/mul-backfill.ts",
+    "mul:legacy": "dotenv -e .env.local -- tsx scripts/build-legacy-map.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
@@ -28,6 +31,7 @@
     "@types/react-dom": "18.2.7",
     "autoprefixer": "10.4.14",
     "bcrypt": "^5.1.1",
+    "cheerio": "^1.2.0",
     "eslint": "8.47.0",
     "eslint-config-next": "^14.1.2",
     "next": "^14.1.2",
