@@ -7,15 +7,16 @@ import { useEffect, useState } from "react"
 import { ConstrainedList, MulUnit } from '@/api/shareApi'
 import { ISelectedUnit, IUnit, LOCAL_STORAGE_NAME_AUTOSAVE, loadLists, saveByName, saveLists } from '../../../api/unitListApi'
 import { EMPTY_UNIT } from '@/app/(builder)/builder/unitLine'
-import { Faction, Factions, MASTER_UNIT_LIST, constraintsToParams } from '@/app/data'
+import { Faction, Factions, constraintsToParams } from '@/app/data'
 import { FactionsContext, useFactionsContext } from "@/app/factionsContext"
 import CardGallery from './cardGallery'
 import SummaryTable from './summaryTable'
 import { list } from 'postcss'
+import { resolveUnits } from '@/app/api/dao/units'
 
 
-function selectUnit(mulUnit: MulUnit, { Units }: { Units: IUnit[] }): ISelectedUnit {
-    const data = Units.find(u => u.Id == mulUnit.id) || EMPTY_UNIT
+function selectUnit(mulUnit: MulUnit, units: IUnit[]): ISelectedUnit {
+    const data = units.find(u => u.Id == mulUnit.id || u.Name.trim().toLowerCase() === mulUnit.name.trim().toLowerCase()) || EMPTY_UNIT
     return {
         ordinal: mulUnit.ordinal,
         skill: mulUnit.skill,
@@ -24,18 +25,10 @@ function selectUnit(mulUnit: MulUnit, { Units }: { Units: IUnit[] }): ISelectedU
     }
 }
 
-async function fetchUnit(mu: MulUnit) {
-    const url = new URL("/Unit/QuickList", MASTER_UNIT_LIST)
-    url.searchParams.append('Name', mu.name)
-    return fetch(url.href).then(r => r.json()).then(data => selectUnit(mu, data))
-}
-
 async function fetchFromMul(queries: MulUnit[]) {
-
-    return Promise.all(
-        queries.map(mu => fetchUnit(mu))
-    )
-
+    const resolved = await resolveUnits(queries.flatMap((unit) => [unit.id, unit.name]))
+    const units = Object.values(resolved)
+    return queries.map((unit) => selectUnit(unit, units))
 }
 
 function ReadyList({ units, constraints, name, total }: { units: ISelectedUnit[], constraints: string, name: string, total: number }) {

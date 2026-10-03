@@ -1,8 +1,7 @@
 'use client'
 
 import { IUnit, UNIT_TYPES } from '@/api/unitListApi'
-import React, { useState } from 'react'
-import useSWR from 'swr'
+import React, { useEffect, useState } from 'react'
 import { Factions, MULSearchParams, constraintsToParams } from '@/app/data'
 import { useFactionsContext, useEraCatalog } from "@/app/factionsContext"
 import FilteredTable from './filteredTable'
@@ -11,35 +10,40 @@ import './unitLine'
 import dynamic from 'next/dynamic'
 import useEraDialog from './eraDialog'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { getUnitsForSearch } from '@/app/api/dao/units'
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json())
+export function useSearch(factionId: string | null, eraId: string | null, typeId: number): IUnit[] | string {
+    const [data, setData] = useState<IUnit[] | string>('Loading...')
 
-export function useSearch(url: string): IUnit[] | string {
+    useEffect(() => {
+        const faction = Number(factionId)
+        const era = Number(eraId)
+        if (!Number.isFinite(faction) || !Number.isFinite(era)) {
+            setData('Unable to fetch units...')
+            return
+        }
+        let cancelled = false
+        getUnitsForSearch(faction, era, typeId)
+            .then((units) => {
+                if (!cancelled) setData(units)
+            })
+            .catch((error) => {
+                console.log(error)
+                if (!cancelled) setData('Unable to fetch units...')
+            })
+        return () => { cancelled = true }
+    }, [factionId, eraId, typeId])
 
-    console.log(`Trying to fetch ${url}`)
-
-    const { data, error } = useSWR(
-        url,
-        fetcher
-    )
-
-    if (error) {
-        console.log(error)
-        return 'Unable to fetch units...'
-    }
-
-    if (!data) return 'Loading...'
-
-    return data.Units
+    return data
 }
 
 function ResultTab({ search, typeId }: { search: MULSearchParams, typeId: number }) {
-    const data = useSearch(search.toUrl(typeId))
+    const data = useSearch(search.specific, search.era, typeId)
     if (typeof (data) === "string") {
         return data
     }
     return (
-        <FilteredTable key={search.toUrl(typeId)} data={data} mech={typeId == 18}/>
+        <FilteredTable key={`${search.specific}-${search.era}-${typeId}`} data={data} mech={typeId == 1}/>
     )
 }
 

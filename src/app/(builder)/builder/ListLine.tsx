@@ -22,7 +22,7 @@ export function ListLine({ unit, controller }: { unit: ISelectedUnit; controller
         setLance(newLance);
         controller.updateTotal();
     }
-    const dmgString = formatDamageString(unit, unit.Type.Id == 18)
+    const dmgString = formatDamageString(unit, unit.Type.Id == 1)
     return (
         <div className="flex flex-nowrap w-full border border-solid border-gray-400 dark:border-gray-800 text-center items-center">
             <select className="grow-0 hidden md:block bg-base-200 select-bordered select-xs min-h-[1rem] h-3 leading-3 text-xs rounded-sm px-1 mr-2" value={unit.lance || ''} onChange={(e) => lanceOnSelect(e.target.value)}>
@@ -31,7 +31,7 @@ export function ListLine({ unit, controller }: { unit: ISelectedUnit; controller
             </select>
             <div className="flex-1 grid grid-cols-8 md:grid-cols-12 my-0 text-xs lg:text-sm  text-center items-center">
                 <div className="col-span-2 md:col-span-3 text-left">
-                    <a href={"http://www.masterunitlist.info/Unit/Details/" + unit.Id} target="_blank">{unit.Name}</a>
+                    <a href={unit.slug ? `https://masterunitlist.battletech.com/units/${unit.slug}` : "https://masterunitlist.battletech.com/"} target="_blank">{unit.Name}</a>
                 </div>
                 <div className='items-right text-right'>
                     <select value={unit.skill} onChange={e => skillOnSelect(e.target.value)} className="bg-base-200 select-bordered select-xs  min-h-[1rem] h-3 leading-3 text-xs rounded-sm px-1">

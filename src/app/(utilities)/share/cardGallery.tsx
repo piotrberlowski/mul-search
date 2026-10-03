@@ -1,30 +1,28 @@
 import { ISelectedUnit, currentPV, groupByLance } from "@/api/unitListApi"
-import Image from "next/image"
 import React, { useMemo } from "react"
-import { MASTER_UNIT_LIST } from "@/app/data"
 
-const CARD_WIDTH = 1050
-const CARD_HEIGHT = 750
+function CardFace({ unit }: { unit: ISelectedUnit }) {
+    if (!unit.cardUrl) {
+        return <div className="w-full aspect-[1008/720] border border-black flex items-center justify-center text-xs">No card</div>
+    }
+    const overlay = unit.skill !== 4
+    return (
+        <div className="relative w-full" style={{ containerType: 'inline-size' }}>
+            <img src={unit.cardUrl} alt={`${unit.Name} @ ${unit.skill}`} className="w-full h-auto" />
+            {overlay && (
+                <>
+                    <div className="absolute flex items-center justify-center font-bold" style={{ left: '47.2%', top: '27.5%', width: '3.6%', height: '5.6%', background: '#b9b9b9', fontSize: '4cqw' }}>{unit.skill}</div>
+                    <div className="absolute flex items-center justify-center font-bold" style={{ left: '88%', top: '3.5%', width: '10.5%', height: '7%', background: 'white', fontSize: '5cqw' }}>{currentPV(unit)}</div>
+                </>
+            )}
+        </div>
+    )
+}
 
 function MemoImage({ ordinal, unit }: { ordinal: number, unit: ISelectedUnit }) {
-    const memoTarget = useMemo(() => {
-        const target = new URL(`/Unit/Card/${unit.Id}`, MASTER_UNIT_LIST)
-        target.searchParams.set("skill", `${unit.skill}`)
-        return target
-    }, [unit])
-
     return useMemo(() => (
-        <Image
-            key={ordinal}
-            src={memoTarget.toString()}
-            width={CARD_WIDTH}
-            height={CARD_HEIGHT}
-            alt={`${unit.Id}: ${unit.Name} @ ${unit.skill}`}
-            style={{
-                objectFit: 'contain'
-            }}
-        />
-    ), [ordinal, unit, memoTarget])
+        <CardFace key={ordinal} unit={unit} />
+    ), [ordinal, unit])
 }
 
 

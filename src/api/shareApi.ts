@@ -2,7 +2,7 @@ import { ISelectedUnit, currentPV } from "./unitListApi";
 
 export type MulUnit = {
     name: string,
-    id: number,
+    id: string | number,
     skill: number,
     lance: string,
     ordinal: number,
@@ -67,7 +67,7 @@ export function parseShare(importString: string): MulList {
         .map((s, idx) => {
             const [id, skill, name, lance] = s.split(':')
             return {
-                id: parseInt(id),
+                id: id,
                 skill: parseInt(skill) || 4,
                 name: name,
                 lance: lance || '',
