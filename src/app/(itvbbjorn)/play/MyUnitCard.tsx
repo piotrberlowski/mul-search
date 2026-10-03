@@ -1,5 +1,4 @@
 import { PencilSquareIcon } from '@heroicons/react/20/solid';
-import Image from 'next/image';
 import { useRef, useState } from 'react';
 import AttackDamageTable from './AttackDamageTable';
 import CardEditModal from './CardEditPanel';
@@ -100,7 +99,7 @@ export function MyUnitCard({ controller, useHexes }: { controller: UnitCardContr
             <div className="flex gap-1">
                 <UnitDetails className="w-2/3" controller={controller} useHexes={useHexes} />
                 <div className='flex w-1/3 grow-0 justify-center items-center bg-white align-middle relative'>
-                    <Image src={controller.getCard().ImageUrl} alt={`${controller.getCard().Name}`} className='align-middle' fill style={{ objectFit: 'contain', }} />
+                    <img src={controller.getCard().ImageUrl} alt={`${controller.getCard().Name}`} className='align-middle object-contain w-full h-full' />
                     <div className="absolute top-0 right-0 text-lg font-bold text-red-700 p-1 border border-gray-400 border-2 bg-white">
                         {displayedCost}
                     </div>

@@ -7,7 +7,7 @@ export default function Header({className}:{className?:string}) {
     return (
       <div className={`h-8 z-10 flex flex-wrap min-h-8 border border-black border-black dark:border-white border-solid rounded-md items-center align-bottom print:hidden ${className}`}>
         <div className='w-full text-xs md:text-xl text-center'>
-          <Link href="/">List Builder for AS ({publicRuntimeConfig?.version})</Link> powered by <Link href="http://masterunitlist.info" target="_blank">Master Unit List API</Link>
+          <Link href="/">List Builder for AS ({publicRuntimeConfig?.version})</Link> powered by <Link href="https://masterunitlist.battletech.com" target="_blank">Master Unit List</Link>
         </div>
       </div>
     )
