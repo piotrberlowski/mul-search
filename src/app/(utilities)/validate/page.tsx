@@ -18,14 +18,9 @@ function Intro() {
           <ChevronDoubleRightIcon className="h-5 w-5 my-2 flex-none"/> Please select the following list attributes:
         </div>
         <ul className="list-disc ml-10">
-          <li>faction</li>
           <li>availability era</li>
-          <li>&quot;general list&quot;</li>
+          <li>faction</li>
         </ul>
-        <ChevronDownIcon className="h-5 w-5 my-1"/>
-        <p className="ml-5">
-          Manually verify if the general list is applicable based on the provided link.
-        </p>
         <ChevronDownIcon className="h-5 w-5 my-1"/>
         <p className="ml-5">
           Upload the Master Unit List PDF.
@@ -50,13 +45,16 @@ function Footnote() {
 
 export default async function Home() {
 
-  const factions = await parametersDao.getFactions()
+  const [eras, factionsByEra] = await Promise.all([
+    parametersDao.getEras(),
+    parametersDao.getFactionsByEra(),
+  ])
 
   return (
     <main className="relative items-center align-top bg-inherit">
       <Intro />
       <Suspense fallback={<CsrFallback />}>
-        <ValidateForm factions={factions} />
+        <ValidateForm eras={eras} factionsByEra={factionsByEra} />
       </Suspense>
       <Footnote />
     </main>

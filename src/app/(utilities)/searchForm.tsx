@@ -1,11 +1,10 @@
 'use client'
 import { useSearchParams } from "next/navigation"
-import { Faction, Factions as Factions, eraMap, constraintsToParams } from "@/app/data"
+import { Faction, Factions as Factions, constraintsToParams } from "@/app/data"
 import SearchInputPanel from "./searchInputPanel"
 import { useEffect, useState } from 'react';
 import Link from "next/link";
 import { LOCAL_STORAGE_NAME_AUTOSAVE, loadByName } from "@/api/unitListApi";
-import { renderEras } from "../data";
 
 function renderOptions(factions: Faction[]) {
     return factions
@@ -16,51 +15,52 @@ function renderOptions(factions: Faction[]) {
         })
 }
 
-export default function SearchForm({ factions }: { factions: Faction[] }) {
-
-    const fData = new Factions(factions)
+export default function SearchForm({
+    eras,
+    factionsByEra,
+}: {
+    eras: Faction[],
+    factionsByEra: { eraId: number, factions: Faction[] }[],
+}) {
 
     const params = useSearchParams()
 
     const [spec, setSpec] = useState(params.get('specific')?.toString())
-    const [gen, setGen] = useState(params.get('general')?.toString())
     const [era, setEra] = useState(params.get('era')?.toString())
     const [searchLink, setSearchLink] = useState(<></>)
+    const factionsForEra = factionsByEra.find((entry) => `${entry.eraId}` === era)?.factions ?? []
 
     useEffect(() => {
             const load = loadByName(LOCAL_STORAGE_NAME_AUTOSAVE)
             if (load?.units) {
+                const fData = new Factions(factionsByEra.flatMap((entry) => entry.factions))
                 setSearchLink(<>Last build: <Link href={`/builder/?${constraintsToParams(load.constraints, fData)}`}>{load.constraints}</Link></>)
             }
-        }, 
+        },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     )
 
-    const mulGenLink = (era && spec) ? (
-            <Link href={`http://masterunitlist.info/Era/FactionEraDetails?FactionId=${spec}&EraId=${era}`} target="_blank">-&gt; Use this link to find the General List for {fData.getFactionName(spec)} in {eraMap.get(era)} era &lt;-</Link>
-        ) : (<></>)
+    function onEra(value: string) {
+        setEra(value)
+        const allowed = factionsByEra.find((entry) => `${entry.eraId}` === value)?.factions ?? []
+        if (!allowed.some((faction) => `${faction.value}` === spec)) {
+            setSpec('')
+        }
+    }
 
     return (
         <form className="my-1 border border-solid border-gray-800 dark:border-gray-300 p-1 items-center" method='GET' action="/builder">
-            <SearchInputPanel title="Faction" className="text-center items-center bg-inherit w-3/4 mx-auto">
-                    <select className="flex w-full" name="specific" value={spec} onChange={e => setSpec(e.target.value)}>
-                        <option value=''></option>
-                        {renderOptions(fData.getFactions())}
-                    </select>
-            </SearchInputPanel>
             <SearchInputPanel title="Availability Era" className="text-center items-center bg-inherit w-3/4 mx-auto">
-                <select name="era" className="flex w-full" value={era} onChange={e => setEra(e.target.value)}>
+                <select name="era" className="flex w-full" value={era} onChange={e => onEra(e.target.value)}>
                     <option value=''></option>
-                    {renderEras()}
+                    {renderOptions(eras)}
                 </select>
             </SearchInputPanel>
-            <div className="w-100 text-center items-ceter">
-                {mulGenLink}
-            </div>
-            <SearchInputPanel title="General List" className="text-center items-center bg-inherit w-3/4 mx-auto">
-                    <select className="flex w-full" name="general" value={gen} onChange={e => setGen(e.target.value)}>
-                        {renderOptions(fData.getGenerals())}
+            <SearchInputPanel title="Faction" className="text-center items-center bg-inherit w-3/4 mx-auto">
+                    <select className="flex w-full" name="specific" value={spec} onChange={e => setSpec(e.target.value)} disabled={!era}>
+                        <option value=''></option>
+                        {renderOptions(factionsForEra)}
                     </select>
             </SearchInputPanel>
             <div className="flex-1 text-center">

@@ -11,6 +11,7 @@ export interface UnitMetadata {
   bv: number | null
   introYear: number | null
   removedAt: Date | null
+  statsUnscrapeableAt: Date | null
 }
 
 // One row per scraped page. unitId is the primary key and the foreign key to UnitMetadata.
