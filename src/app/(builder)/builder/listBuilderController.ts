@@ -3,7 +3,6 @@ import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, exportTTSString, form
 import { IUnit } from "@/api/unitListApi";
 import { searchParamsFromIds } from "@/app/data";
 import { LIST_PARAMETER } from "@/app/(utilities)/validate/result/validation";
-import { resolveListIds } from "@/app/api/dao/listContext";
 import { ChangeListener } from "@/api/commons";
 import { createContext, useContext } from "react";
 
@@ -60,10 +59,7 @@ export class ListBuilderController {
 
     private matchesSearch() {
         if (this.save.units.length === 0) return true
-        if (this.save.eraId != null && this.save.factionId != null && this.eraId != null && this.factionId != null) {
-            return this.save.eraId === this.eraId && this.save.factionId === this.factionId
-        }
-        return this.save.constraints === this.constraints
+        return this.save.eraId === this.eraId && this.save.factionId === this.factionId
     }
 
     public registerBuilder(
@@ -101,7 +97,10 @@ export class ListBuilderController {
         if (!this.setSave) 
             return
         if (!this.matchesSearch()) {
-            alert(`Cannot add unit. Please clear the list or set your search to: \n ${this.save.constraints} `)
+            const target = this.save.eraId == null || this.save.factionId == null
+                ? 'This list has no era or faction. Clear the list first.'
+                : `Please clear the list or set your search to:\n${this.save.constraints}`
+            alert(`Cannot add unit. ${target}`)
             return
         }
         this.addUnit(unit)
@@ -192,25 +191,7 @@ export class ListBuilderController {
             this.updateTotal()
             this.constraintsObserver?.(save)
         }
-        if (load.eraId != null && load.factionId != null) {
-            apply(load)
-            return
-        }
-        resolveListIds(load.constraints).then((matched) => {
-            const save: Save = {
-                ...load,
-                eraId: matched.eraId,
-                factionId: matched.factionId,
-                constraints: matched.label ?? load.constraints,
-            }
-            if (matched.eraId != null && matched.factionId != null) {
-                saveByName(save, loadName)
-            }
-            apply(save)
-        }).catch((error) => {
-            console.log(error)
-            apply(load)
-        })
+        apply(load)
     }
 
     public exportExternal(name: string, format: string) {

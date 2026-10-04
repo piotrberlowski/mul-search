@@ -3,7 +3,6 @@
 import { IUnit, UNIT_TYPES } from '@/api/unitListApi'
 import React, { useEffect, useState } from 'react'
 import { MULSearchParams, searchParamsFromIds } from '@/app/data'
-import { resolveListIds } from '@/app/api/dao/listContext'
 import { useFactionsContext, useEraCatalog } from "@/app/factionsContext"
 import FilteredTable from './filteredTable'
 import { ListBuilderController, useBuilderContext } from './listBuilderController'
@@ -80,17 +79,8 @@ export default function ResultGrid() {
     const constraintLabel = (factionName && eraName) ? `[${factionName} during ${eraName}]` : "[Unknown]"
 
     controller.registerConstraintsObserver((save) => {
-        const open = (eraId: number | null, factionId: number | null) => {
-            if (eraId == null || factionId == null) return
-            router.push("/builder?" + searchParamsFromIds(eraId, factionId).toString())
-        }
-        if (save.eraId != null && save.factionId != null) {
-            open(save.eraId, save.factionId)
-            return
-        }
-        resolveListIds(save.constraints)
-            .then((matched) => open(matched.eraId, matched.factionId))
-            .catch((error) => console.log(error))
+        if (save.eraId == null || save.factionId == null) return
+        router.push("/builder?" + searchParamsFromIds(save.eraId, save.factionId).toString())
     })
     
     return (

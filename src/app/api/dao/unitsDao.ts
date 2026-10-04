@@ -150,12 +150,13 @@ export class UnitsDao {
     return ids.map((id) => byId.get(id)).filter((unit): unit is ListedUnit => Boolean(unit))
   }
 
-  async isAvailable(unitId: string, eraId: number, factionId: number) {
-    const row = await prisma.unitAvailability.findUnique({
-      where: { unitId_eraId_factionId: { unitId, eraId, factionId } },
+  async availableUnitIds(unitIds: string[], eraId: number, factionId: number) {
+    if (!unitIds.length) return new Set<string>()
+    const rows = await prisma.unitAvailability.findMany({
+      where: { eraId, factionId, unitId: { in: unitIds } },
       select: { unitId: true },
     })
-    return Boolean(row)
+    return new Set(rows.map((row) => row.unitId))
   }
 
   async resolveLegacy(idsOrNames: Array<string | number>) {
