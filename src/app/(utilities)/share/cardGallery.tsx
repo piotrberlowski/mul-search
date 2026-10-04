@@ -1,14 +1,17 @@
 import { ISelectedUnit, currentPV, groupByLance } from "@/api/unitListApi"
 import React, { useMemo } from "react"
 
+const CARD_WIDTH = 1008
+const CARD_HEIGHT = 720
+
 function CardFace({ unit }: { unit: ISelectedUnit }) {
     if (!unit.cardUrl) {
-        return <div className="w-full aspect-[1008/720] border border-black flex items-center justify-center text-xs">No card</div>
+        return <div className="flex aspect-[1008/720] w-full items-center justify-center border border-black text-xs">No card</div>
     }
     const overlay = unit.skill !== 4
     return (
         <div className="relative w-full" style={{ containerType: 'inline-size' }}>
-            <img src={unit.cardUrl} alt={`${unit.Name} @ ${unit.skill}`} className="w-full h-auto" />
+            <img src={unit.cardUrl} alt={`${unit.Name} @ ${unit.skill}`} width={CARD_WIDTH} height={CARD_HEIGHT} className="block h-auto w-full" />
             {overlay && (
                 <>
                     <div className="absolute flex items-center justify-center font-bold" style={{ left: '47.2%', top: '27.5%', width: '3.6%', height: '5.6%', background: '#b9b9b9', fontSize: '4cqw' }}>{unit.skill}</div>
@@ -73,10 +76,10 @@ export default function CardGallery({ units }: { units: ISelectedUnit[] }) {
                 <div className='hidden print:block print:mx-3' style={{ pageBreakAfter: "always" }}>
                     <MulListTable units={lanceUnits} />
                 </div>
-                <div className='grid grid-cols-2 gap-0.5 max-w-fit mx-auto'>
+                <div className='mx-auto grid w-full grid-cols-2 gap-0.5'>
                     {
                         lanceUnits.map((u, idx) => (
-                            <div key={idx} className="max-w-fit print:w-[437px] print:[h-313]">
+                            <div key={idx} className="min-w-0">
                                 <MemoImage unit={u} ordinal={idx} />
                             </div>
                         ))
