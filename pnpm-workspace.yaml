@@ -1,0 +1,7 @@
+allowBuilds:
+  '@prisma/engines': true
+  bcrypt: true
+  canvas: true
+  esbuild: true
+  prisma: true
+  unrs-resolver: true

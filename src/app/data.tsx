@@ -1,12 +1,16 @@
 import { ReadonlyURLSearchParams } from "next/navigation"
-import { searchParamsFromIds } from "../../lib/lists/context"
 
 export interface Faction {
     label: string,
     value: number,
 }
 
-export { searchParamsFromIds }
+export function searchParamsFromIds(eraId?: number | null, factionId?: number | null) {
+    const params = new URLSearchParams()
+    if (eraId != null) params.set('era', String(eraId))
+    if (factionId != null) params.set('specific', String(factionId))
+    return params
+}
 
 export class Factions {
     private factionNames: Map<string, string> = new Map()
