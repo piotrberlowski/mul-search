@@ -1,5 +1,6 @@
-import { ConstrainedList as ConstrainedMulList, MulUnit } from "@/api/shareApi";
+import { ConstrainedList as ConstrainedMulList } from "@/api/shareApi";
 import { Format, Prisma } from "@/generated/prisma/client";
+import { matchListContext } from "../lib/lists/context";
 import prisma from "../lib/prisma";
 
 function formatUpsert(name: string, description: string) {
@@ -14,10 +15,23 @@ function formatUpsert(name: string, description: string) {
 }
 
 
-function listUpsert(key: string, description: string, format: Format, list: ConstrainedMulList) {
+async function listUpsert(key: string, description: string, format: Format, list: ConstrainedMulList) {
+    const [eras, factions] = await Promise.all([
+        prisma.era.findMany({ select: { id: true, name: true } }),
+        prisma.faction.findMany({ select: { id: true, name: true } }),
+    ])
+    const matched = matchListContext(list.constraints, eras, factions)
+    const constraints = matched.label ?? list.constraints
+    const context = {
+        ...(matched.eraId != null ? { era: { connect: { id: matched.eraId } } } : {}),
+        ...(matched.factionId != null ? { faction: { connect: { id: matched.factionId } } } : {}),
+    }
     return prisma.list.upsert({
         where: { key: key },
-        update: {},
+        update: {
+            ...context,
+            constraints,
+        },
         create: {
             key: key,
             name: list.name,
@@ -27,7 +41,8 @@ function listUpsert(key: string, description: string, format: Format, list: Cons
             },
             total: list.total,
             content: list.units as Prisma.JsonArray,
-            constraints: list.constraints,
+            constraints,
+            ...context,
         }
     })
 }

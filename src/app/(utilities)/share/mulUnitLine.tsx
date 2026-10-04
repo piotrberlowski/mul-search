@@ -1,5 +1,5 @@
 'use client'
-import { ISelectedUnit, currentPV } from "@/api/unitListApi";
+import { ISelectedUnit, currentPV, formatDamageBrackets } from "@/api/unitListApi";
 
 
 export function UnitLine({ unit }: { unit: ISelectedUnit }) {
@@ -12,7 +12,7 @@ export function UnitLine({ unit }: { unit: ISelectedUnit }) {
             <div>{currentPV(unit)}</div>
             <div>{unit.Role.Name}</div>
             <div>{unit.BFMove}</div>
-            <div>{unit.BFDamageShort}/{unit.BFDamageMedium}/{unit.BFDamageLong}</div>
+            <div>{formatDamageBrackets(unit)}</div>
             <div>{unit.BFArmor} + {unit.BFStructure}</div>
             <div>{unit.BFOverheat}</div>
             <div className="text-xs truncate col-span-2 text-left">{unit.BFAbilities}</div>

@@ -23,7 +23,7 @@ export default async function RootLayout({
   const session = await auth()
   return (
     <html lang="en">
-      <body id={scrollableId} className={`${inter.className} h-dvh w-full flex flex-col px-2 relative`}>
+      <body id={scrollableId} className={`${inter.className} min-h-dvh w-full flex flex-col px-2 pb-6 relative`}>
         <SessionProvider session={session}>
           <div className='flex-0 flex'>
             <Navigation className="flex-1"/>

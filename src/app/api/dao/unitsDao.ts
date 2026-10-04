@@ -16,6 +16,9 @@ export type ListedUnit = {
   BFDamageShort: number
   BFDamageMedium: number
   BFDamageLong: number
+  dmgS: string | null
+  dmgM: string | null
+  dmgL: string | null
   BFMove: string
   BFPointValue: number
   BFArmor: number
@@ -33,6 +36,7 @@ export type ListedUnit = {
 
 const unitInclude = {
   type: true,
+  role: true,
   stats: true,
 } as const
 
@@ -48,6 +52,7 @@ type MetadataRow = {
   bv: number | null
   introYear: number | null
   type: { name: string }
+  role: { name: string } | null
   stats: {
     slug: string
     size: number
@@ -84,7 +89,7 @@ export function toListedUnit(unit: MetadataRow): ListedUnit {
     Id: unit.id,
     Name: [unit.name, unit.model].filter(Boolean).join(' '),
     Type: { Id: unit.typeId, Name: unit.type.name },
-    Role: { Name: '' },
+    Role: { Name: unit.role?.name ?? '' },
     Rules: '',
     Class: unit.name,
     Variant: unit.model ?? '',
@@ -92,6 +97,9 @@ export function toListedUnit(unit: MetadataRow): ListedUnit {
     BFDamageShort: damageNumber(stats?.dmgS),
     BFDamageMedium: damageNumber(stats?.dmgM),
     BFDamageLong: damageNumber(stats?.dmgL),
+    dmgS: stats?.dmgS ?? null,
+    dmgM: stats?.dmgM ?? null,
+    dmgL: stats?.dmgL ?? null,
     BFMove: stats?.move ?? '',
     BFPointValue: unit.pv ?? 0,
     BFArmor: stats?.armor ?? 0,
@@ -140,6 +148,14 @@ export class UnitsDao {
     })
     const byId = new Map(units.map((unit) => [unit.id, toListedUnit(unit)]))
     return ids.map((id) => byId.get(id)).filter((unit): unit is ListedUnit => Boolean(unit))
+  }
+
+  async isAvailable(unitId: string, eraId: number, factionId: number) {
+    const row = await prisma.unitAvailability.findUnique({
+      where: { unitId_eraId_factionId: { unitId, eraId, factionId } },
+      select: { unitId: true },
+    })
+    return Boolean(row)
   }
 
   async resolveLegacy(idsOrNames: Array<string | number>) {

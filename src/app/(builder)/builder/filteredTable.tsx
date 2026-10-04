@@ -3,10 +3,8 @@ import { processMoves } from '@/api/card';
 import { ChangeListener } from '@/api/commons';
 import { IUnit } from '@/api/unitListApi';
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import UnitLine, { UnitComparators, UnitHeader } from './unitLine';
-import RulesReferences from '@/app/(itvbbjorn)/play/RulesReferences';
-import { MULSearchParams } from '@/app/data';
 import { useSearchParams } from 'next/navigation';
 
 const moveRex = /^(\d+)?(:)?(\d+)?([fwhvjt])?$/
@@ -150,7 +148,6 @@ type FilterFields = {
     maxSz?: number;
     minOV?: number;
     maxOV?: number,
-    experimental?: boolean;
 };
 
 
@@ -168,13 +165,6 @@ class Filter {
         }
     }
 
-    private matchesExperimental(unit: IUnit) {
-        const rules = unit.Rules?.toLocaleLowerCase().trim()
-        const f = this.fields.experimental
-        const include = f || (rules != "unknown" && rules != "experimental")
-        return include
-    }
-
     public matches(unit: IUnit) {
 
         return includesIfFilter(this.fields.name, unit.Name)
@@ -187,7 +177,6 @@ class Filter {
             && matchesIfFilter(this.fields.minOV, (f) => unit.BFOverheat >= f)
             && matchesIfFilter(this.fields.maxOV, (f) => unit.BFOverheat <= f)
             && matchesIfFilter(this.fields.dmg, (f) => matchDmg(f, unit))
-            && this.matchesExperimental(unit)
     }
 
     public withOverrides(overrides: FilterFields) {
@@ -226,29 +215,10 @@ function QuickFilter({ label, className, filterCallback, tooltip }: FilterParams
     )
 }
 
-function QuickCheck({ label, className, filterCallback, tooltip }: FilterParams<boolean>) {
-
-    const [value, setValue] = useState(false)
-
-    function filter(v: boolean) {
-        setValue(v)
-        filterCallback(v)
-    }
-
-    return (
-        <FilterBox tooltip={tooltip} className={className} >
-            <label className="label cursor-pointer p-0 justify-start">
-                <input type="checkbox" checked={value} className="checkbox checkbox-md" onChange={e => filter(e.target.checked)} />
-                <div className="label-text text-xs ml-1 text-nowrap whitespace-nowrap text-clip overflow-hidden">{label}</div>
-            </label>
-        </FilterBox>
-    )
-
-}
-
 export default function FilteredTable({ data, mech}: { data: IUnit[], mech: boolean }) {
     const params = useSearchParams()
     const [units, setUnits] = useState(data)
+    useEffect(() => { setUnits(data) }, [data])
     const [filter, setFilter] = useState(new Filter())
     const [sort, setSort] = useState({
         column: 'Name',
@@ -309,7 +279,6 @@ export default function FilteredTable({ data, mech}: { data: IUnit[], mech: bool
                             }
                         }
                         tooltip='"4" for exactly 4, "3:" for 3 or larger' />
-                    <QuickCheck label="Experimental Rules" className="col-span-2 overflow-hidden text-ellipsis" filterCallback={flt => updateFilter({experimental: flt})} />
                 </div>
                 <div className="text-sm">
                     <UnitHeader initial={sort} onSort={setSort} mech={mech}/>

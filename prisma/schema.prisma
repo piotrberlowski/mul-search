@@ -23,6 +23,10 @@ model List {
   formatId    String? @db.Uuid
   content     Json
   constraints String
+  eraId       Int?
+  era         Era?      @relation(fields: [eraId], references: [id])
+  factionId   Int?
+  faction     Faction?  @relation(fields: [factionId], references: [id])
   total       Int
   createdAt   DateTime @default(now())
   ownerId     String? 
@@ -79,6 +83,7 @@ model Era {
 
   metadataIntroUnits UnitMetadata[]     @relation("MetadataIntroEra")
   availability       UnitAvailability[]
+  lists              List[]
 }
 
 model Faction {
@@ -93,8 +98,19 @@ model Faction {
   updatedAt    DateTime @updatedAt
 
   availability UnitAvailability[]
+  lists        List[]
 
   @@index([name])
+}
+
+model Role {
+  id        Int      @id
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  units UnitMetadata[]
 }
 
 model UnitType {
@@ -127,6 +143,8 @@ model UnitMetadata {
   model      String?
   typeId     Int
   type       UnitType  @relation(fields: [typeId], references: [id])
+  roleId     Int?
+  role       Role?     @relation(fields: [roleId], references: [id])
   subType    String?
   introEraId Int?
   introEra   Era?      @relation("MetadataIntroEra", fields: [introEraId], references: [id])

@@ -2,6 +2,8 @@ export const LOCAL_STORAGE_NAME_AUTOSAVE = 'autosave'
 const LOCAL_STORAGE_KEY = 'alphaStrikeLists'
 const LOCAL_STORAGE_LIST_KEY_PREFIX = 'alphaStrikeList_'
 const LOCAL_STORAGE_CONSTRAINT_KEY_PREFIX = 'alphaStrikeList_constraint_'
+const LOCAL_STORAGE_ERA_KEY_PREFIX = 'alphaStrikeList_era_'
+const LOCAL_STORAGE_FACTION_KEY_PREFIX = 'alphaStrikeList_faction_'
 const LOCAL_STORAGE_TTS = 'alphaStrikeTTS'
 
 export interface ILanced {
@@ -31,6 +33,9 @@ export interface IUnit {
     BFDamageShort: number,
     BFDamageMedium: number,
     BFDamageLong: number,
+    dmgS?: string | null,
+    dmgM?: string | null,
+    dmgL?: string | null,
     BFMove: string,
     BFPointValue: number,
     BFArmor: number,
@@ -48,7 +53,21 @@ export type AddUnitCallback = (unit: IUnit) => void
 
 export type Save = {
     units: ISelectedUnit[],
-    constraints: string
+    constraints: string,
+    eraId: number | null,
+    factionId: number | null,
+}
+
+export function damageBracket(text: string | null | undefined, value: number) {
+    return text != null && text !== '' ? text : String(value)
+}
+
+export function formatDamageBrackets(unit: IUnit) {
+    return [
+        damageBracket(unit.dmgS, unit.BFDamageShort),
+        damageBracket(unit.dmgM, unit.BFDamageMedium),
+        damageBracket(unit.dmgL, unit.BFDamageLong),
+    ].join('/')
 }
 
 export interface ISelectedUnit extends IUnit, ILanced {
@@ -173,6 +192,21 @@ function updateDefaultLance(units: ISelectedUnit[]) {
     units.forEach(u => u.lance ||= '')
 }
 
+function readStoredId(key: string): number | null {
+    const raw = localStorage.getItem(key)
+    if (raw == null || raw === '') return null
+    const n = Number(raw)
+    return Number.isFinite(n) ? n : null
+}
+
+function writeStoredId(key: string, id: number | null) {
+    if (id == null) {
+        localStorage.removeItem(key)
+        return
+    }
+    localStorage.setItem(key, String(id))
+}
+
 export function loadByName(name: string): Save {
     const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
     const result = localStorage.getItem(listKey)
@@ -185,6 +219,8 @@ export function loadByName(name: string): Save {
     return {
         units: units,
         constraints: constraints,
+        eraId: readStoredId(LOCAL_STORAGE_ERA_KEY_PREFIX + name),
+        factionId: readStoredId(LOCAL_STORAGE_FACTION_KEY_PREFIX + name),
     }
 }
 
@@ -194,6 +230,8 @@ export function saveByName(save: Save, name: string) {
     const unitList = JSON.stringify(save.units)
     localStorage.setItem(listKey, unitList)
     localStorage.setItem(constraintKey, save.constraints)
+    writeStoredId(LOCAL_STORAGE_ERA_KEY_PREFIX + name, save.eraId)
+    writeStoredId(LOCAL_STORAGE_FACTION_KEY_PREFIX + name, save.factionId)
 }
 
 export function removeByName(name: string) {
@@ -201,6 +239,8 @@ export function removeByName(name: string) {
     const constraintKey = LOCAL_STORAGE_CONSTRAINT_KEY_PREFIX + name
     localStorage.removeItem(listKey)
     localStorage.removeItem(constraintKey)
+    localStorage.removeItem(LOCAL_STORAGE_ERA_KEY_PREFIX + name)
+    localStorage.removeItem(LOCAL_STORAGE_FACTION_KEY_PREFIX + name)
 }
 
 function storeTTSString(tts: string) {

@@ -14,7 +14,8 @@
     "prismaVer": "dotenv -e .env.development.local -- prisma migrate dev && prisma generate",
     "prismaLocal": "dotenv -e .env.local -- prisma migrate dev && prisma generate",
     "seedLocal": "dotenv -e .env.local -- prisma db seed",
-    "test": "tsx --test lib/mul/*.test.ts",
+    "test": "tsx --test lib/mul/*.test.ts lib/lists/*.test.ts",
+    "lists:context": "dotenv -e .env.local -- tsx scripts/rewrite-list-context.ts",
     "mul:backfill": "dotenv -e .env.local -- tsx scripts/mul-backfill.ts",
     "mul:legacy": "dotenv -e .env.local -- tsx scripts/build-legacy-map.ts"
   },

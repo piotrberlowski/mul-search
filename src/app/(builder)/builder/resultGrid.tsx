@@ -2,7 +2,8 @@
 
 import { IUnit, UNIT_TYPES } from '@/api/unitListApi'
 import React, { useEffect, useState } from 'react'
-import { Factions, MULSearchParams, constraintsToParams } from '@/app/data'
+import { MULSearchParams, searchParamsFromIds } from '@/app/data'
+import { resolveListIds } from '@/app/api/dao/listContext'
 import { useFactionsContext, useEraCatalog } from "@/app/factionsContext"
 import FilteredTable from './filteredTable'
 import { ListBuilderController, useBuilderContext } from './listBuilderController'
@@ -14,6 +15,12 @@ import { getUnitsForSearch } from '@/app/api/dao/units'
 
 export function useSearch(factionId: string | null, eraId: string | null, typeId: number): IUnit[] | string {
     const [data, setData] = useState<IUnit[] | string>('Loading...')
+    const [query, setQuery] = useState({ factionId, eraId, typeId })
+
+    if (factionId !== query.factionId || eraId !== query.eraId || typeId !== query.typeId) {
+        setQuery({ factionId, eraId, typeId })
+        setData('Loading...')
+    }
 
     useEffect(() => {
         const faction = Number(factionId)
@@ -70,14 +77,20 @@ export default function ResultGrid() {
     const params = new MULSearchParams(searchParams)
     const eraName = eras.find((era) => `${era.value}` === (searchParams.get('era') ?? ''))?.label
     const factionName = factions.getFactionName(searchParams.get('specific') ?? '')
-    const constraintLabel = (factionName && eraName) ? `[${factionName} during ${eraName}]` : params.describe(factions)
+    const constraintLabel = (factionName && eraName) ? `[${factionName} during ${eraName}]` : "[Unknown]"
 
-    controller.registerConstraintsObserver((constraints) => {
-        console.log("Re-setting constraints: " + constraints)
-        const newParams = constraintsToParams(constraints, factions).toString()
-        router.push(
-            "/builder?"+newParams
-        )
+    controller.registerConstraintsObserver((save) => {
+        const open = (eraId: number | null, factionId: number | null) => {
+            if (eraId == null || factionId == null) return
+            router.push("/builder?" + searchParamsFromIds(eraId, factionId).toString())
+        }
+        if (save.eraId != null && save.factionId != null) {
+            open(save.eraId, save.factionId)
+            return
+        }
+        resolveListIds(save.constraints)
+            .then((matched) => open(matched.eraId, matched.factionId))
+            .catch((error) => console.log(error))
     })
     
     return (

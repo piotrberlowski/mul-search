@@ -10,12 +10,15 @@ function ListFallback() {
 
 export default async function SharedList() {
 
-    const factions = await parametersDao.getFactions()
+    const [factions, eras] = await Promise.all([
+        parametersDao.getFactions(),
+        parametersDao.getEras(),
+    ])
 
     return (
         <main className="relative items-center align-top bg-inherit">
             <Suspense fallback={<ListFallback/>}>
-                <Validation factions={factions}/>
+                <Validation factions={factions} eras={eras}/>
             </Suspense>
         </main>
     )

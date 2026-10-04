@@ -187,7 +187,6 @@ Aerospace
 Advanced Aerospace
 Support Vehicles
 Advanced Support Vehicles
-Any unit that is Experimental Tech Level.
 ---
 TODO: Outstanding checks
 * Any unit that is Unique in the chosen Era.
@@ -203,9 +202,6 @@ export function testUnit(v:ValidateUnit, u: IUnit) {
     }
     if (["Advanced Aerospace", "Aerospace", "Support Vehicle", "Advanced Support"].includes(u.Type.Name)) {
         return judge(v, false, `Forbidden Unit Type: ${u.Type.Name}`, u)
-    }
-    if (u.Rules == "Experimental") {
-        return judge(v, false, "Experimental rules level not allowed", u)
     }
     if (+v.skill < 2) {
         return judge(v, false, "Units with skill 1 or less not allowed", u)

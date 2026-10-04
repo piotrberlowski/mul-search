@@ -41,6 +41,8 @@ export async function findListByKey(key: string): Promise<ConstrainedList> {
                     constraints: list.constraints,
                     name: list.name,
                     total: list.total,
+                    eraId: list.eraId,
+                    factionId: list.factionId,
                     units: (list.content as Prisma.JsonArray).map(o => o as MulUnit),
                 }
             }
@@ -92,6 +94,8 @@ export async function saveList(name: string, save: Save) {
             name: name,
             key: randomUUID(),
             constraints: save.constraints,
+            eraId: save.eraId,
+            factionId: save.factionId,
             total: totalPV(save.units),
             content: toMulUnits(save.units),
             ownerId: userId
