@@ -193,7 +193,7 @@ TODO: Outstanding checks
 * Any unit that is Extinct in the chosen Era.
 
 */
-export function testUnit(v:ValidateUnit, u: IUnit) {
+export function testUnit(v: ValidateUnit, u?: IUnit) {
     if (!u) {
         return judge(v, false, "Not Found")
     }

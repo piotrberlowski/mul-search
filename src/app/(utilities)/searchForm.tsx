@@ -1,11 +1,10 @@
 'use client'
 import { useSearchParams } from "next/navigation"
 import { Faction, searchParamsFromIds } from "@/app/data"
-import { resolveListIds } from "@/app/api/dao/listContext"
 import SearchInputPanel from "./searchInputPanel"
 import { useEffect, useState } from 'react';
 import Link from "next/link";
-import { LOCAL_STORAGE_NAME_AUTOSAVE, loadByName, saveByName } from "@/api/unitListApi";
+import { LOCAL_STORAGE_NAME_AUTOSAVE, loadByName } from "@/api/unitListApi";
 
 function renderOptions(factions: Faction[]) {
     return factions
@@ -38,16 +37,7 @@ export default function SearchForm({
                 if (eraId == null || factionId == null) return
                 setSearchLink(<>Last build: <Link href={`/builder/?${searchParamsFromIds(eraId, factionId)}`}>{label}</Link></>)
             }
-            if (load.eraId != null && load.factionId != null) {
-                show(load.eraId, load.factionId, load.constraints)
-                return
-            }
-            resolveListIds(load.constraints).then((matched) => {
-                if (matched.eraId == null || matched.factionId == null) return
-                const label = matched.label ?? load.constraints
-                saveByName({ ...load, eraId: matched.eraId, factionId: matched.factionId, constraints: label }, LOCAL_STORAGE_NAME_AUTOSAVE)
-                show(matched.eraId, matched.factionId, label)
-            }).catch((error) => console.log(error))
+            show(load.eraId, load.factionId, load.constraints)
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],

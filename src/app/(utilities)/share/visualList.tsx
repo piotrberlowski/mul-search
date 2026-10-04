@@ -8,7 +8,6 @@ import { ConstrainedList, MulUnit } from '@/api/shareApi'
 import { ISelectedUnit, IUnit, LOCAL_STORAGE_NAME_AUTOSAVE, loadLists, saveByName, saveLists } from '../../../api/unitListApi'
 import { EMPTY_UNIT } from '@/app/(builder)/builder/unitLine'
 import { Faction, Factions, searchParamsFromIds } from '@/app/data'
-import { resolveListIds } from '@/app/api/dao/listContext'
 import { FactionsContext } from "@/app/factionsContext"
 import CardGallery from './cardGallery'
 import SummaryTable from './summaryTable'
@@ -57,13 +56,7 @@ function ReadyList({ units, constraints, name, total, eraId, factionId }: { unit
                 saveLists(lists)
             }
         }
-        if (eraId != null && factionId != null) {
-            open(eraId, factionId, constraints)
-            return
-        }
-        resolveListIds(constraints).then((matched) => {
-            open(matched.eraId, matched.factionId, matched.label ?? constraints)
-        }).catch((error) => console.log(error))
+        open(eraId ?? null, factionId ?? null, constraints)
     }
 
     return (

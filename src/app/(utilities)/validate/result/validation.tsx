@@ -4,7 +4,7 @@ import { Faction, Factions, MULSearchParams } from '@/app/data'
 import React, { useEffect, useState } from "react";
 import { IUnit } from "@/api/unitListApi";
 import { IResult, LIST_CHECKS, ValidateUnit, judge, testUnit } from "./results";
-import { resolveUnits, unitIsAvailable } from '@/app/api/dao/units'
+import { resolveUnitsAvailability } from '@/app/api/dao/units'
 
 export const LIST_PARAMETER = "list";
 export const NOT_AVAILABLE_ERROR = "Not Available"
@@ -23,27 +23,13 @@ function parseListItem(entry: string): ValidateUnit & { id?: string } {
     return { skill, name: rest }
 }
 
-async function fetchUnit(mu: ValidateUnit & { id?: string }, era: string, specific: string) {
-    const key = mu.id ?? mu.name
-    const resolved = await resolveUnits([key])
-    const unit = resolved[key]
-    if (!unit) {
-        return { query: mu, error: undefined, found: false, unit: undefined }
-    }
-    const available = await unitIsAvailable(unit.Id, Number(era), Number(specific))
-    if (!available) {
-        return { query: { ...mu, name: unit.Name }, error: NOT_AVAILABLE_ERROR, found: false, unit }
-    }
-    return { query: { ...mu, name: unit.Name }, error: undefined, found: true, unit }
-}
-
 async function fetchFromMul(params: ReadonlyURLSearchParams) {
     const list = params.get(LIST_PARAMETER)
     const items = (list ?? "").split(';').filter(p => p.length > 0).map(parseListItem)
     const era = params.get("era")
     const specific = params.get("specific")
 
-    if (!(era && specific && items)) {
+    if (!(era && specific && items.length)) {
         return Promise.resolve<IResult[]>([
             {
                 skill: "",
@@ -54,18 +40,24 @@ async function fetchFromMul(params: ReadonlyURLSearchParams) {
         ])
     }
 
-    return Promise.all(
-        items.map(mu => fetchUnit(mu, era, specific).then(iRes => {
-            if (iRes.error) {
-                return { ...iRes.query, found: false, error: iRes.error, unit: iRes.unit }
-            }
-            return testUnit(mu, iRes.unit as IUnit)
-        }).then(testRes => testRes.error || !testRes.unit ? testRes : testUniqueExtinct(mu, era, testRes.unit)))
+    const resolved = await resolveUnitsAvailability(
+        items.map((item) => item.id ?? item.name),
+        Number(era),
+        Number(specific),
     )
-
+    return items.map((item) => {
+        const row = resolved[item.id ?? item.name]
+        if (!row?.unit) return testUnit(item)
+        const named = { ...item, name: row.unit.Name }
+        if (!row.available) {
+            return { ...named, found: false, error: NOT_AVAILABLE_ERROR, unit: row.unit }
+        }
+        const tested = testUnit(named, row.unit)
+        return tested.error || !tested.unit ? tested : testUniqueExtinct(named, era, tested.unit)
+    })
 }
 
-async function testUniqueExtinct(mu: ValidateUnit, _era: string, unit: IUnit) {
+function testUniqueExtinct(mu: ValidateUnit, _era: string, unit: IUnit) {
     return judge(mu, true, undefined, unit)
 }
 
