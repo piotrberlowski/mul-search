@@ -48,10 +48,3 @@ export function matchListContext(
     label: `[${faction.name} during ${era.name}]`,
   }
 }
-
-export function searchParamsFromIds(eraId?: number | null, factionId?: number | null) {
-  const params = new URLSearchParams()
-  if (eraId != null) params.set('era', String(eraId))
-  if (factionId != null) params.set('specific', String(factionId))
-  return params
-}
