@@ -24,10 +24,7 @@ Use your favourite editor to deal with code (VSCode was used to write most of th
 First, run the development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
 ```
 
