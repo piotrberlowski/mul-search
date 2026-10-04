@@ -3,21 +3,24 @@ import React, { useMemo } from "react"
 
 const CARD_WIDTH = 1008
 const CARD_HEIGHT = 720
+const CARD_INK = '#231f20'
+const SKILL_FILL = '#d1d3d4'
+
+const cardInk = {
+    color: CARD_INK,
+    printColorAdjust: 'exact' as const,
+    WebkitPrintColorAdjust: 'exact' as const,
+}
 
 function CardFace({ unit }: { unit: ISelectedUnit }) {
     if (!unit.cardUrl) {
         return <div className="flex aspect-[1008/720] w-full items-center justify-center border border-black text-xs">No card</div>
     }
-    const overlay = unit.skill !== 4
     return (
         <div className="relative w-full" style={{ containerType: 'inline-size' }}>
             <img src={unit.cardUrl} alt={`${unit.Name} @ ${unit.skill}`} width={CARD_WIDTH} height={CARD_HEIGHT} className="block h-auto w-full" />
-            {overlay && (
-                <>
-                    <div className="absolute flex items-center justify-center font-bold" style={{ left: '47.2%', top: '27.5%', width: '3.6%', height: '5.6%', background: '#b9b9b9', fontSize: '4cqw' }}>{unit.skill}</div>
-                    <div className="absolute flex items-center justify-center font-bold" style={{ left: '88%', top: '3.5%', width: '10.5%', height: '7%', background: 'white', fontSize: '5cqw' }}>{currentPV(unit)}</div>
-                </>
-            )}
+            <div className="absolute flex items-center justify-center font-bold" style={{ ...cardInk, left: '47.2%', top: '27.5%', width: '3.6%', height: '5.6%', background: SKILL_FILL, fontSize: '4cqw' }}>{unit.skill}</div>
+            <div className="absolute flex items-center justify-center font-bold" style={{ ...cardInk, left: '75.6%', top: '2.4%', width: '22.2%', height: '11.4%', background: '#fff', border: '0.4cqw solid #231f20', fontSize: '3.4cqw', lineHeight: 1 }}>PV: {currentPV(unit)}</div>
         </div>
     )
 }
@@ -76,7 +79,7 @@ export default function CardGallery({ units }: { units: ISelectedUnit[] }) {
                 <div className='hidden print:block print:mx-3' style={{ pageBreakAfter: "always" }}>
                     <MulListTable units={lanceUnits} />
                 </div>
-                <div className='mx-auto grid w-full grid-cols-2 gap-0.5'>
+                <div className='mx-auto grid w-full max-w-[880px] grid-cols-2 gap-0.5'>
                     {
                         lanceUnits.map((u, idx) => (
                             <div key={idx} className="min-w-0">
