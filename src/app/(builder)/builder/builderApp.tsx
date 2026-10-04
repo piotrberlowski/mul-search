@@ -40,13 +40,13 @@ export default function BuilderApp({
     const factionName = factionData.getFactionName(mulSP.specific ?? '')
     const listConstraints = (factionName && eraName)
         ? `[${factionName} during ${eraName}]`
-        : mulSP.describe(factionData)
+        : "[Unknown]"
 
     return <>
         <div className="">
             <FactionsContext.Provider value={factionData}>
                 <EraCatalogContext.Provider value={{ eras, factionsByEra }}>
-                <ListBuilderContext.Provider value={new ListBuilderController(listConstraints, LOCAL_STORAGE_NAME_AUTOSAVE)}>
+                <ListBuilderContext.Provider value={new ListBuilderController(listConstraints, LOCAL_STORAGE_NAME_AUTOSAVE, mulSP.era, mulSP.specific)}>
                     <div className="drawer auto-cols-fr xl:drawer-open bg-inherit mx-auto w-full">
                         <input id={LIST_DRAWER_ID} type="checkbox" className="drawer-toggle" />
                         <div className="drawer-content col-start-1 bg-inherit mt-8" >

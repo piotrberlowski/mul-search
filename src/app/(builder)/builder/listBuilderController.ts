@@ -1,37 +1,69 @@
 import { compareSelectedUnits } from "@/api/shareApi";
-import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, currentPV, exportTTSString, loadByName, loadLists, removeByName, saveByName, saveLists, toJeffsUnits, totalPV } from "@/api/unitListApi"
+import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, exportTTSString, formatDamageBrackets, loadByName, loadLists, removeByName, saveByName, saveLists, toJeffsUnits, totalPV } from "@/api/unitListApi"
 import { IUnit } from "@/api/unitListApi";
-import { Factions, constraintsToParams } from "@/app/data";
+import { searchParamsFromIds } from "@/app/data";
 import { LIST_PARAMETER } from "@/app/(utilities)/validate/result/validation";
+import { resolveListIds } from "@/app/api/dao/listContext";
 import { ChangeListener } from "@/api/commons";
 import { createContext, useContext } from "react";
+
+function numberOrNull(value: string | null): number | null {
+    if (value == null || value === '') return null
+    const n = Number(value)
+    return Number.isFinite(n) ? n : null
+}
 
 export class ListBuilderController {
     private save: Save;
     private constraints: string;
+    private eraId: number | null;
+    private factionId: number | null;
     private storedLists: string[];
     private setSave?: ChangeListener<Save>;
     private setName?: ChangeListener<string>;
     private setTotal?: ChangeListener<number>;
     private setStoredLists?: ChangeListener<string[]>;
     private summaryObserver?: ChangeListener<string>;
-    public constraintsObserver?: ChangeListener<string>;
+    public constraintsObserver?: ChangeListener<Save>;
 
     constructor(
         searchConstraints: string,
         autosaveName: string,
+        eraId: string | null,
+        factionId: string | null,
     ) {
         this.constraints = searchConstraints
+        this.eraId = numberOrNull(eraId)
+        this.factionId = numberOrNull(factionId)
         if (typeof window !== 'undefined') {
             this.save = loadByName(autosaveName)
             this.storedLists = loadLists()
         } else {
             this.save = {
                 units: [],
-                constraints: ""
+                constraints: "",
+                eraId: null,
+                factionId: null,
             }
             this.storedLists = []
         }
+    }
+
+    private searchSave(units: ISelectedUnit[]): Save {
+        return {
+            units,
+            constraints: this.constraints,
+            eraId: this.eraId,
+            factionId: this.factionId,
+        }
+    }
+
+    private matchesSearch() {
+        if (this.save.units.length === 0) return true
+        if (this.save.eraId != null && this.save.factionId != null && this.eraId != null && this.factionId != null) {
+            return this.save.eraId === this.eraId && this.save.factionId === this.factionId
+        }
+        return this.save.constraints === this.constraints
     }
 
     public registerBuilder(
@@ -53,7 +85,7 @@ export class ListBuilderController {
         this.summaryObserver = observer
     }
 
-    public registerConstraintsObserver(setConstraints: ChangeListener<string>) {
+    public registerConstraintsObserver(setConstraints: ChangeListener<Save>) {
         this.constraintsObserver = setConstraints
     }
 
@@ -68,18 +100,9 @@ export class ListBuilderController {
     public guardedAddUnit(unit: IUnit) {
         if (!this.setSave) 
             return
-        if (this.save.constraints != this.constraints) {
-            if (this.save.units.length == 0) {
-                this.setSave(
-                    {
-                        ...this.save,
-                        constraints: this.constraints,
-                    }
-                )
-            } else {
-                alert(`Cannot add unit. Please clear the list or set your search to: \n ${this.constraints} `)
-                return
-            }
+        if (!this.matchesSearch()) {
+            alert(`Cannot add unit. Please clear the list or set your search to: \n ${this.save.constraints} `)
+            return
         }
         this.addUnit(unit)
     }
@@ -95,10 +118,7 @@ export class ListBuilderController {
             lance: '',
             ...unit
         }
-        this.save = {
-            units: [...this.save.units, selected].sort(compareSelectedUnits),
-            constraints: this.constraints,
-        }
+        this.save = this.searchSave([...this.save.units, selected].sort(compareSelectedUnits))
         this.setSave(this.save)
         this.updateTotal()
     }
@@ -107,8 +127,8 @@ export class ListBuilderController {
         if (!this.setSave) 
             return 
         this.save = {
+            ...this.save,
             units: this.save.units.filter(u => u.ordinal != ord),
-            constraints: this.save.constraints,
         }
         this.setSave(this.save)
         this.updateTotal()
@@ -119,8 +139,8 @@ export class ListBuilderController {
         if (!this.setSave || !this.setTotal) 
             return 
         this.save = {
+            ...this.save,
             units: this.save.units.sort(compareSelectedUnits),
-            constraints: this.constraints,
         }
         this.setSave(this.save)
         const total = totalPV(this.save.units)
@@ -133,10 +153,7 @@ export class ListBuilderController {
     public clear() {
         if (!this.setSave) 
             return 
-        this.save = {
-            units: [],
-            constraints: this.constraints,
-        }
+        this.save = this.searchSave([])
         this.setSave(this.save)
         this.updateTotal()
     }
@@ -164,17 +181,36 @@ export class ListBuilderController {
         if (!this.setName || !this.setSave)
             return
         const load = loadByName(loadName)
-        if (load.units.length > 0) {
-            this.save = load
-            this.setSave(load)
-            this.setName(loadName)
-            this.updateTotal()
-            if (this.constraintsObserver) {
-                this.constraintsObserver(load.constraints)
-            }
-        } else {
+        if (load.units.length === 0) {
             console.log("Loaded empty list... " + loadName)
+            return
         }
+        const apply = (save: Save) => {
+            this.save = save
+            this.setSave?.(save)
+            this.setName?.(loadName)
+            this.updateTotal()
+            this.constraintsObserver?.(save)
+        }
+        if (load.eraId != null && load.factionId != null) {
+            apply(load)
+            return
+        }
+        resolveListIds(load.constraints).then((matched) => {
+            const save: Save = {
+                ...load,
+                eraId: matched.eraId,
+                factionId: matched.factionId,
+                constraints: matched.label ?? load.constraints,
+            }
+            if (matched.eraId != null && matched.factionId != null) {
+                saveByName(save, loadName)
+            }
+            apply(save)
+        }).catch((error) => {
+            console.log(error)
+            apply(load)
+        })
     }
 
     public exportExternal(name: string, format: string) {
@@ -211,9 +247,9 @@ export class ListBuilderController {
         return this.storedLists
     }
 
-    public toValidateParams(factions: Factions): URLSearchParams {
-        const params = constraintsToParams(this.constraints, factions)
-        const unitString = this.save.units.map(su => `${su.skill}:${su.Name}`).join(";")
+    public toValidateParams(): URLSearchParams {
+        const params = searchParamsFromIds(this.eraId, this.factionId)
+        const unitString = this.save.units.map(su => `${su.skill}:${su.Id}`).join(";")
         params.append(LIST_PARAMETER, unitString)
         return params
     }
@@ -234,7 +270,7 @@ function formatListSummary(count: number, totalPV: number) {
 }
 
 export const ListBuilderContext = createContext<ListBuilderController>(
-    new ListBuilderController('none', LOCAL_STORAGE_NAME_AUTOSAVE)
+    new ListBuilderController('none', LOCAL_STORAGE_NAME_AUTOSAVE, null, null)
 )
 
 export function useBuilderContext() {
@@ -242,5 +278,6 @@ export function useBuilderContext() {
 }
 
 export function formatDamageString(unit: IUnit, mech: boolean) {
-    return unit.BFDamageShort + "/" + unit.BFDamageMedium + "/" + unit.BFDamageLong + (mech ? " | " + unit.BFOverheat : "")
+    const brackets = formatDamageBrackets(unit)
+    return mech ? `${brackets} | ${unit.BFOverheat}` : brackets
 }

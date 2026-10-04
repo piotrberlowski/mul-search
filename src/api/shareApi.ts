@@ -16,6 +16,8 @@ export interface MulList {
 
 export interface ConstrainedList extends MulList {
     constraints: string,
+    eraId?: number | null,
+    factionId?: number | null,
 }
 
 export function toMulUnits(units: ISelectedUnit[]): MulUnit[] {

@@ -7,8 +7,9 @@ import { useEffect, useState } from "react"
 import { ConstrainedList, MulUnit } from '@/api/shareApi'
 import { ISelectedUnit, IUnit, LOCAL_STORAGE_NAME_AUTOSAVE, loadLists, saveByName, saveLists } from '../../../api/unitListApi'
 import { EMPTY_UNIT } from '@/app/(builder)/builder/unitLine'
-import { Faction, Factions, constraintsToParams } from '@/app/data'
-import { FactionsContext, useFactionsContext } from "@/app/factionsContext"
+import { Faction, Factions, searchParamsFromIds } from '@/app/data'
+import { resolveListIds } from '@/app/api/dao/listContext'
+import { FactionsContext } from "@/app/factionsContext"
 import CardGallery from './cardGallery'
 import SummaryTable from './summaryTable'
 import { list } from 'postcss'
@@ -31,20 +32,24 @@ async function fetchFromMul(queries: MulUnit[]) {
     return queries.map((unit) => selectUnit(unit, units))
 }
 
-function ReadyList({ units, constraints, name, total }: { units: ISelectedUnit[], constraints: string, name: string, total: number }) {
+function ReadyList({ units, constraints, name, total, eraId, factionId }: { units: ISelectedUnit[], constraints: string, name: string, total: number, eraId?: number | null, factionId?: number | null }) {
     const router = useRouter()
-    const factions = useFactionsContext()
 
     function saveList(tweak: boolean) {
-        const save = {
-            units: units,
-            constraints: constraints,
-        }
-        if (tweak) {
-            saveByName(save, LOCAL_STORAGE_NAME_AUTOSAVE)
-            const params = constraintsToParams(constraints, factions)
-            router.push("/builder?" + params.toString())
-        } else {
+        const open = (nextEra: number | null, nextFaction: number | null, label: string) => {
+            const save = {
+                units: units,
+                constraints: label,
+                eraId: nextEra,
+                factionId: nextFaction,
+            }
+            if (tweak) {
+                saveByName(save, LOCAL_STORAGE_NAME_AUTOSAVE)
+                if (nextEra != null && nextFaction != null) {
+                    router.push("/builder?" + searchParamsFromIds(nextEra, nextFaction).toString())
+                }
+                return
+            }
             const lists = loadLists()
             saveByName(save, name)
             if (!lists.find(item => item == name)) {
@@ -52,8 +57,14 @@ function ReadyList({ units, constraints, name, total }: { units: ISelectedUnit[]
                 saveLists(lists)
             }
         }
+        if (eraId != null && factionId != null) {
+            open(eraId, factionId, constraints)
+            return
+        }
+        resolveListIds(constraints).then((matched) => {
+            open(matched.eraId, matched.factionId, matched.label ?? constraints)
+        }).catch((error) => console.log(error))
     }
-
 
     return (
         <>
@@ -96,7 +107,7 @@ export default function VisualList({ list, factions }: { list: ConstrainedList, 
     let visualisation = <div className="w-full h-full text-center items-center justify-items-center"><span className="loading loading-dots loading-lg"></span></div>
 
     if (units.length == list.units.length) {
-        visualisation = <ReadyList units={units} constraints={list.constraints} name={list.name} total={list.total} />
+        visualisation = <ReadyList units={units} constraints={list.constraints} name={list.name} total={list.total} eraId={list.eraId} factionId={list.factionId} />
     }
 
     return (

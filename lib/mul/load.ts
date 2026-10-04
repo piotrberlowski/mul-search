@@ -17,6 +17,7 @@ function unitWrite(unit: MulUnit, subTypeName: string | null) {
     pv: unit.pv ?? null,
     bv: unit.bv ?? null,
     introYear: unit.iy ?? null,
+    roleId: unit.r ?? null,
     removedAt: null,
   }
 }
@@ -89,6 +90,14 @@ async function upsertLookups(bundle: MulBundle) {
     })
   }
 
+  for (const role of bundle.roles) {
+    await prisma.role.upsert({
+      where: { id: role.id },
+      update: { name: role.name, slug: role.slug },
+      create: { id: role.id, name: role.name, slug: role.slug },
+    })
+  }
+
   for (const ability of bundle.abilities) {
     await prisma.ability.upsert({
       where: { id: ability.id },
@@ -111,6 +120,7 @@ async function upsertUnits(bundle: MulBundle): Promise<number> {
         ${data.model},
         ${data.typeId},
         ${data.subType},
+        ${data.roleId},
         ${data.introEraId},
         ${data.tonnage},
         ${data.pv},
@@ -123,7 +133,7 @@ async function upsertUnits(bundle: MulBundle): Promise<number> {
     })
     await prisma.$executeRaw`
       INSERT INTO "UnitMetadata" (
-        "id", "name", "model", "typeId", "subType",
+        "id", "name", "model", "typeId", "subType", "roleId",
         "introEraId", "tonnage", "pv", "bv", "introYear", "removedAt", "createdAt", "updatedAt"
       )
       VALUES ${Prisma.join(values)}
@@ -132,6 +142,7 @@ async function upsertUnits(bundle: MulBundle): Promise<number> {
         "model" = EXCLUDED."model",
         "typeId" = EXCLUDED."typeId",
         "subType" = EXCLUDED."subType",
+        "roleId" = EXCLUDED."roleId",
         "introEraId" = EXCLUDED."introEraId",
         "tonnage" = EXCLUDED."tonnage",
         "pv" = EXCLUDED."pv",

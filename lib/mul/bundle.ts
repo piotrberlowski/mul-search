@@ -6,6 +6,7 @@ import type {
   MulEra,
   MulFaction,
   MulManifest,
+  MulRole,
   MulUnit,
   MulUnitSubType,
   MulUnitType,
@@ -17,6 +18,7 @@ const LOOKUPS = [
   'unit_types',
   'unit_sub_types',
   'abilities',
+  'roles',
   'units',
   'availability',
 ] as const
@@ -41,6 +43,7 @@ export async function fetchBundle(manifest?: MulManifest): Promise<MulBundle> {
     unitTypes,
     unitSubTypes,
     abilities,
+    roles,
     units,
     availability,
   ] = await Promise.all([
@@ -49,6 +52,7 @@ export async function fetchBundle(manifest?: MulManifest): Promise<MulBundle> {
     fetchMulJson<MulUnitType[]>(`/data/${files.unit_types}`),
     fetchMulJson<MulUnitSubType[]>(`/data/${files.unit_sub_types}`),
     fetchMulJson<MulAbility[]>(`/data/${files.abilities}`),
+    fetchMulJson<MulRole[]>(`/data/${files.roles}`),
     fetchMulJson<MulUnit[]>(`/data/${files.units}`),
     fetchMulJson<MulAvailability>(`/data/${files.availability}`),
   ])
@@ -66,6 +70,7 @@ export async function fetchBundle(manifest?: MulManifest): Promise<MulBundle> {
     unitTypes,
     unitSubTypes,
     abilities,
+    roles,
     units,
     availability,
   }

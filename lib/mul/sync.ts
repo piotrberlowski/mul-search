@@ -43,7 +43,7 @@ export async function syncMul(options: SyncOptions = {}): Promise<SyncResult> {
   try {
     const manifest = await fetchManifest()
     hashes = Object.fromEntries(
-      ['eras', 'factions', 'unit_types', 'unit_sub_types', 'abilities', 'units', 'availability']
+      ['eras', 'factions', 'unit_types', 'unit_sub_types', 'abilities', 'roles', 'units', 'availability']
         .filter((key) => manifest.files[key])
         .map((key) => [key, manifest.files[key]]),
     )

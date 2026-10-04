@@ -1,29 +1,12 @@
 import { ReadonlyURLSearchParams } from "next/navigation"
-
-
-const WITH_GENERAL_RE = /\[(.+) including (.+) during (.+)\]/
-const FACTION_ERA_RE = /\[(.+) during (.+)\]/
+import { searchParamsFromIds } from "../../lib/lists/context"
 
 export interface Faction {
     label: string,
     value: number,
 }
 
-export const eras:Array<[string, string]> = [
-    ["10", "Star League"],
-    ["11","Early Succession War"],
-    ["255","Late Succession War - LosTech"],
-    ["256","Late Succession War - Renaissance"],
-    ["13","Clan Invasion"],
-    ["247","Civil War"],
-    ["14","Jihad"],
-    ["15","Early Republic"],
-    ["254","Late Republic"],
-    ["16","Dark Age"],
-    ["257","ilClan"],
-]
-
-export const eraMap: Map<string, string> = new Map(eras)
+export { searchParamsFromIds }
 
 export class Factions {
     private factionNames: Map<string, string> = new Map()
@@ -66,56 +49,4 @@ export class MULSearchParams {
         this.era = era
     }
 
-    public describe(factions: Factions) {
-        if (!this.specific || !this.era) {
-            return "[Unknown]"
-        }
-        return `[${factions.getFactionName(this.specific)} during ${eraMap.get(this.era)}]`
-    }
-
-}
-
-interface BuilderSearchParams  {
-    era: string,
-    specific: string,
-}
-
-export function parseConstraints(constraints: string, factions: Factions): BuilderSearchParams {
-    const withGeneral = WITH_GENERAL_RE.exec(constraints)
-    const simple = withGeneral ? null : FACTION_ERA_RE.exec(constraints)
-    const specific = withGeneral?.[1] ?? simple?.[1]
-    const era = withGeneral?.[3] ?? simple?.[2]
-    if (!specific || !era) {
-        console.log(`Couldn't parse constraints... ${constraints}`)
-        return {
-            era: "",
-            specific: "",
-        }
-    }
-
-    const [eraId, _1] = eras.find(([_, name]) => name == era) || [null, null]
-    const specificId = factions.getFactionId(specific)
-
-    return {
-        era: `${eraId || ""}`,
-        specific: `${specificId || ""}`,
-    }
-
-}
-
-export function constraintsToParams(constraints: string, factions: Factions): URLSearchParams{
-    const params = {
-        ...parseConstraints(constraints, factions)
-    }
-    return new URLSearchParams(
-        params
-    )
-}
-export function renderEras() {
-    return eras.map(eraKV => {
-        const [val, lab] = eraKV;
-        return (
-            <option key={val} value={val || ""}>{lab}</option>
-        );
-    });
 }

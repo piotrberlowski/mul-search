@@ -4,29 +4,42 @@ import { Faction, Factions, MULSearchParams } from '@/app/data'
 import React, { useEffect, useState } from "react";
 import { IUnit } from "@/api/unitListApi";
 import { IResult, LIST_CHECKS, ValidateUnit, judge, testUnit } from "./results";
-import { resolveUnits } from '@/app/api/dao/units'
+import { resolveUnits, unitIsAvailable } from '@/app/api/dao/units'
 
 export const LIST_PARAMETER = "list";
 export const NOT_AVAILABLE_ERROR = "Not Available"
 
-async function fetchUnit(mu: ValidateUnit, era: string, specific: string) {
-    const resolved = await resolveUnits([mu.name])
-    const unit = Object.values(resolved).find((candidate) => candidate.Name.trim().toLowerCase() === mu.name.trim().toLowerCase())
-    if (!unit) {
-        return { query: mu, error: NOT_AVAILABLE_ERROR, found: false, unit: undefined }
+function looksLikeUnitId(value: string) {
+    return /^\d+$/.test(value) || (/^[A-Za-z0-9]+$/.test(value) && /\d/.test(value))
+}
+
+function parseListItem(entry: string): ValidateUnit & { id?: string } {
+    const colon = entry.indexOf(':')
+    const skill = colon < 0 ? entry : entry.slice(0, colon)
+    const rest = colon < 0 ? '' : entry.slice(colon + 1)
+    if (looksLikeUnitId(rest)) {
+        return { skill, id: rest, name: rest }
     }
-    return { query: mu, error: undefined, found: true, unit }
+    return { skill, name: rest }
+}
+
+async function fetchUnit(mu: ValidateUnit & { id?: string }, era: string, specific: string) {
+    const key = mu.id ?? mu.name
+    const resolved = await resolveUnits([key])
+    const unit = resolved[key]
+    if (!unit) {
+        return { query: mu, error: undefined, found: false, unit: undefined }
+    }
+    const available = await unitIsAvailable(unit.Id, Number(era), Number(specific))
+    if (!available) {
+        return { query: { ...mu, name: unit.Name }, error: NOT_AVAILABLE_ERROR, found: false, unit }
+    }
+    return { query: { ...mu, name: unit.Name }, error: undefined, found: true, unit }
 }
 
 async function fetchFromMul(params: ReadonlyURLSearchParams) {
     const list = params.get(LIST_PARAMETER)
-    const items = (list ?? "").split(';').map(p => {
-        const [skill, unit] = p.split(":")
-        return {
-            skill: skill,
-            name: unit,
-        }
-    })
+    const items = (list ?? "").split(';').filter(p => p.length > 0).map(parseListItem)
     const era = params.get("era")
     const specific = params.get("specific")
 
@@ -43,11 +56,10 @@ async function fetchFromMul(params: ReadonlyURLSearchParams) {
 
     return Promise.all(
         items.map(mu => fetchUnit(mu, era, specific).then(iRes => {
-            // We have an error and need to return negative judgement
-            if (iRes.error || !iRes.unit) {
-                return { ...iRes.query, ...iRes }
+            if (iRes.error) {
+                return { ...iRes.query, found: false, error: iRes.error, unit: iRes.unit }
             }
-            return testUnit(mu, iRes.unit)
+            return testUnit(mu, iRes.unit as IUnit)
         }).then(testRes => testRes.error || !testRes.unit ? testRes : testUniqueExtinct(mu, era, testRes.unit)))
     )
 
@@ -94,12 +106,15 @@ function Results({ results }: { results: IResult[] }) {
 }
 
 
-export default function Validation({ factions }: { factions: Faction[] }) {
+export default function Validation({ factions, eras }: { factions: Faction[], eras: Faction[] }) {
     const [results, setResults] = useState<IResult[]>(new Array<IResult>())
 
     const params = useSearchParams()
     const mulParams = new MULSearchParams(params)
     const fData = new Factions(factions)
+    const eraName = eras.find((era) => `${era.value}` === (mulParams.era ?? ''))?.label
+    const factionName = fData.getFactionName(mulParams.specific ?? '')
+    const contextLabel = (factionName && eraName) ? `[${factionName} during ${eraName}]` : "[Unknown]"
 
     useEffect(
         () => { fetchFromMul(params).then(setResults).catch(err => console.log(err)) }
@@ -116,7 +131,7 @@ export default function Validation({ factions }: { factions: Faction[] }) {
     return (
         <div>
             <div className="w-full text-center items-center">
-                Validating: {mulParams.describe(fData)}
+                Validating: {contextLabel}
             </div>
             {visualisation}
         </div>

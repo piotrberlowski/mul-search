@@ -53,6 +53,12 @@ export type MulAbility = {
   u?: number
 }
 
+export type MulRole = {
+  id: number
+  name: string
+  slug: string
+}
+
 export type MulUnit = {
   id: string
   n: string
@@ -82,6 +88,7 @@ export type MulBundle = {
   unitTypes: MulUnitType[]
   unitSubTypes: MulUnitSubType[]
   abilities: MulAbility[]
+  roles: MulRole[]
   units: MulUnit[]
   availability: MulAvailability
 }
