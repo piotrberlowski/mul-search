@@ -2,6 +2,7 @@ import 'server-only'
 
 import { unstable_cache } from 'next/cache'
 import prisma from '../../../../lib/prisma'
+import type { UnitTypeOption } from '@/app/(builder)/builder/unitTypes'
 
 export type ParameterOption = {
   label: string
@@ -23,9 +24,17 @@ const loadEras = unstable_cache(
 const loadUnitTypes = unstable_cache(
   () => prisma.unitType.findMany({
     orderBy: [{ sort: 'asc' }, { id: 'asc' }],
-    select: { id: true, name: true, slug: true, sort: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      sort: true,
+      shortName: true,
+      placement: true,
+      placementSort: true,
+    },
   }),
-  ['mul-unit-types'],
+  ['mul-unit-types-placement'],
   { tags: ['units'] },
 )
 
@@ -82,7 +91,7 @@ export class ParametersDao {
     }
   }
 
-  async getUnitTypes(): Promise<{ id: number, name: string, slug: string, sort: number }[]> {
+  async getUnitTypes(): Promise<UnitTypeOption[]> {
     try {
       return await loadUnitTypes()
     } catch (error) {
