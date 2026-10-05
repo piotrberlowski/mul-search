@@ -181,10 +181,14 @@ export function exportTTSString(name: string, units: ISelectedUnit[]) {
     const ttsUnits = units.map(u => `{${u.Id},${u.skill}}`).join(',')
     storeTTSString(`{${ttsUnits}}`)
 }
+
 export const UNIT_TYPES: IType[] = [
     { Id: 1, Name: "BattleMech" },
     { Id: 4, Name: "Combat Vehicle" },
+    { Id: 3, Name: "OmniVehicle" },
+    { Id: 2, Name: "Battle Armor" },
     { Id: 6, Name: "Infantry" },
+    { Id: 8, Name: "ProtoMech" },
     { Id: 7, Name: "IndustrialMech" },
     { Id: 9, Name: "Support Vehicle" },
 ]
