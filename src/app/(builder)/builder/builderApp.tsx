@@ -9,6 +9,7 @@ import { Suspense } from 'react';
 import { LIST_DRAWER_ID } from "./constants";
 import { ListBuilderContext, ListBuilderController } from "./listBuilderController";
 import SearchResults from './searchResults';
+import { UnitTypeOption } from './unitTypes';
 
 function Loading({ name }: { name: string }) {
     return (<div>{name} loading...</div>)
@@ -27,10 +28,12 @@ export default function BuilderApp({
     factions,
     eras,
     factionsByEra,
+    unitTypes,
 }: {
     factions: Faction[],
     eras: Faction[],
     factionsByEra: { eraId: number, factions: Faction[] }[],
+    unitTypes: UnitTypeOption[],
 }) {
 
     const params = useSearchParams()
@@ -51,7 +54,7 @@ export default function BuilderApp({
                         <input id={LIST_DRAWER_ID} type="checkbox" className="drawer-toggle" />
                         <div className="drawer-content col-start-1 bg-inherit mt-8" >
                             <Suspense fallback={<Loading name="Search Results" />}>
-                                <SearchResults search={mulSP} />
+                                <SearchResults search={mulSP} unitTypes={unitTypes} />
                             </Suspense>
                         </div>
                         <div className="drawer-side z-20 col-start-2 h-dvh w-full flex bg-inherit">

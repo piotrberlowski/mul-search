@@ -4,8 +4,9 @@ import ResultGrid from './resultGrid'
 import React from 'react'
 import Link from 'next/link'
 import { MULSearchParams } from '@/app/data'
+import { UnitTypeOption } from './unitTypes'
 
-export default function SearchResults({ search }: { search: MULSearchParams }) {
+export default function SearchResults({ search, unitTypes }: { search: MULSearchParams, unitTypes: UnitTypeOption[] }) {
 
     if (!search.canSearch) {
         return (
@@ -16,7 +17,7 @@ export default function SearchResults({ search }: { search: MULSearchParams }) {
     }
 
     return (
-        <ResultGrid />
+        <ResultGrid unitTypes={unitTypes} />
     )
 
 }

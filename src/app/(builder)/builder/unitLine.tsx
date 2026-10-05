@@ -1,9 +1,9 @@
 import { IUnit } from "@/api/unitListApi"
-import { Sort } from "./filteredTable"
-import { useState } from "react"
 import { BarsArrowDownIcon, BarsArrowUpIcon } from "@heroicons/react/16/solid"
 import { PlusIcon } from "@heroicons/react/24/outline"
-import { ListBuilderController, useBuilderContext, formatDamageString } from "./listBuilderController"
+import { useState } from "react"
+import { Sort } from "./filteredTable"
+import { ListBuilderController, formatDamageString, useBuilderContext } from "./listBuilderController"
 
 export const EMPTY_UNIT = {
     Id: "",
@@ -55,14 +55,14 @@ function compareDamage(a: IUnit, b: IUnit) {
 export const UnitComparators: Record<string, comparator> = {
     Name: (a, b) => a.Name.localeCompare(b.Name),
     BFPointValue: (a, b) => a.BFPointValue - b.BFPointValue,
-    BFRole: (a:IUnit, b:IUnit) => a.Role.Name.localeCompare(b.Role.Name),
+    BFRole: (a: IUnit, b: IUnit) => a.Role.Name.localeCompare(b.Role.Name),
     BFMove: (a, b) => {
         const movA = a.BFMove
         const movB = b.BFMove
         const order = normalizeMove(movA).localeCompare(normalizeMove(movB))
         return (order != 0) ? order : movA.length - movB.length
     },
-    SynthDmg: (a:IUnit, b:IUnit) => compareDamage(a, b),
+    SynthDmg: (a: IUnit, b: IUnit) => compareDamage(a, b),
     SynthOV: (a, b) => a.BFOverheat - b.BFOverheat,
     SynthHP: (a, b) => a.BFStructure + a.BFArmor - b.BFStructure - b.BFArmor,
 }
@@ -84,7 +84,7 @@ function SortHeader({ sortId, currentSort, onSort, children, className }: { sort
     )
 }
 
-export function UnitHeader({ initial, onSort, mech }: { initial: Sort, onSort: (newSort: Sort) => void , mech: boolean}) {
+export function UnitHeader({ initial, onSort, mech }: { initial: Sort, onSort: (newSort: Sort) => void, mech: boolean }) {
     const [sortState, setSortState] = useState(initial)
 
     function handleSort(sort: Sort) {
@@ -94,15 +94,14 @@ export function UnitHeader({ initial, onSort, mech }: { initial: Sort, onSort: (
 
     const overheat = mech ? " | OV)" : ")"
     return (
-        <div className="font-bold grid grid-cols-9 md:grid-cols-12 my-0 text-xs md:text-sm text-center items-center w-full justify-center justify-items-center">
+        <div className="font-bold grid grid-cols-9 md:grid-cols-12 my-0 text-[0.6rem] sm:text-xs lg:text-sm text-center items-center w-full justify-center justify-items-center">
             <SortHeader sortId="Name" currentSort={sortState} onSort={handleSort} className="col-span-3 md:col-span-3 text-left">
                 Name
             </SortHeader>
             <SortHeader sortId="BFPointValue" currentSort={sortState} onSort={handleSort}>PV</SortHeader>
-            <SortHeader sortId="BFRole" currentSort={sortState} onSort={handleSort} className="hidden md:inline-flex">Role</SortHeader>
             <SortHeader sortId="BFMove" currentSort={sortState} onSort={handleSort}>Move</SortHeader>
 
-            <SortHeader sortId="SynthDmg" currentSort={sortState} onSort={handleSort} className="col-span-2 md:col-span-1">Dmg<br/>(S/M/L{overheat}</SortHeader>
+            <SortHeader sortId="SynthDmg" currentSort={sortState} onSort={handleSort} className="col-span-2 md:col-span-1">Dmg<span className="hidden lg:inline"><br />(S/M/L{overheat}</span></SortHeader>
             <SortHeader sortId="SynthHP" currentSort={sortState} onSort={handleSort} className="col-span-2 md:col-span-1">HP<br />(A/S)</SortHeader>
             <div className="hidden md:block md:col-span-1 text-left">Abilities...</div>
             <div className="col-start-12">Add</div>
@@ -121,16 +120,14 @@ export default function UnitLine({ unit, idx, mech }: { unit: IUnit, idx: number
     const dmgString = formatDamageString(unit, mech)
     return (
         <>
-            <div className="grid grid-cols-9 md:grid-cols-12 my-0 border border-solid border-gray-400 dark:border-gray-800 text-xs md:text-sm text-center items-center w-full bg-inherit">
+            <div className="grid grid-cols-9 md:grid-cols-12 my-0 border border-solid border-gray-400 dark:border-gray-800 text-[0.6rem] sm:text-xs lg:text-sm text-center items-center w-full bg-inherit">
                 <button className="btn btn-square btn-xs" onClick={onAddClick}>
-                    <PlusIcon className="h-3 w-3"/>
+                    <PlusIcon className="h-3 w-3" />
                 </button>
                 <div className="col-span-2 text-left">
-
                     <a href={unit.slug ? `https://masterunitlist.battletech.com/units/${unit.slug}` : "https://masterunitlist.battletech.com/"} target="_blank">{unit.Name}</a>
                 </div>
                 <div>{unit.BFPointValue}</div>
-                <div className="truncate hidden md:block">{unit.Role.Name}</div>
                 <div>{unit.BFMove}</div>
 
                 <div className="col-span-2 md:col-span-1">{dmgString}</div>
@@ -139,7 +136,7 @@ export default function UnitLine({ unit, idx, mech }: { unit: IUnit, idx: number
                 <div className="text-xs truncate hidden md:block md:col-span-2 text-left">{unit.BFAbilities}</div>
 
                 <button className="btn btn-square btn-xs col-start-12" onClick={onAddClick}>
-                    <PlusIcon className="h-3 w-3"/>
+                    <PlusIcon className="h-3 w-3" />
                 </button>
             </div>
         </>
