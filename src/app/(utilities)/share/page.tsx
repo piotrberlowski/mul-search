@@ -22,21 +22,31 @@ interface ShareSearchParams {
     key?: string,
     list?: string,
     constraints?: string,
+    era?: string,
+    specific?: string,
 }
 
-async function parseFromUrl(constraints?: string, encodedList?: string): Promise<ConstrainedList> {
-    const parsed = parseShare(encodedList || 'empty;')
-    return Promise.resolve({
-        constraints: constraints || "legacy",
-        ...parsed
-    })
+function idFromParam(value?: string): number | null {
+    if (value == null || value === '') return null
+    const n = Number(value)
+    return Number.isFinite(n) ? n : null
+}
+
+async function parseFromUrl(searchParams: ShareSearchParams): Promise<ConstrainedList> {
+    const parsed = parseShare(searchParams.list || 'empty;')
+    return {
+        ...parsed,
+        constraints: searchParams.constraints || "legacy",
+        eraId: idFromParam(searchParams.era),
+        factionId: idFromParam(searchParams.specific),
+    }
 }
 
 function processParameters(searchParams: ShareSearchParams): Promise<ConstrainedList> {
     if (searchParams.key) {
         return findListByKey(searchParams.key) || NOT_FOUND
     }
-    return parseFromUrl(searchParams.constraints, searchParams.list)
+    return parseFromUrl(searchParams)
 }
 
 
