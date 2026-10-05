@@ -89,6 +89,14 @@ export class ListBuilderController {
         return this.constraints
     }
 
+    public getEraId() {
+        return this.eraId
+    }
+
+    public getFactionId() {
+        return this.factionId
+    }
+
     public getUnits() {
         return this.save.units
     }
