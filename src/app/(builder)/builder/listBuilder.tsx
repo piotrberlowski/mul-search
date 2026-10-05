@@ -91,7 +91,6 @@ function BuilderFooter({
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Export</div></div>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
                     <li><ShareLink constraints={constraints} name={listName} total={total} units={units} eraId={controller.getEraId()} factionId={controller.getFactionId()} className='btn text-center w-full btn-sm' /></li>
-                    <li><button className="w-full btn text-center btn-sm" onClick={e => controller.exportExternal(listName, "jeff")}>Jeff&apos;s Tools</button></li>
                     <li><Link href="/tts/" target="_blank" className="btn text-center w-full btn-sm" onClick={e => controller.exportExternal(listName, "tts")}>TTS</Link></li>
                 </ul>
             </div>

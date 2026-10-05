@@ -80,53 +80,6 @@ export interface PvEntity {
     BFPointValue: number,
 }
 
-export type JeffsMove = {
-    move: number,
-    type: string
-}
-
-export type JeffsUnit = {
-    mulID: number,
-    damage: {
-        short: number,
-        medium: number,
-        long: number
-    },
-    name: string,
-    tmm: number,
-    role: string,
-    threshold: number,
-    imageURL: string,
-    move: JeffsMove[],
-    jumpMove: number,
-    structure: number,
-    armor: number,
-    type: string,
-    size: number,
-    showDetails: boolean,
-    abilities: string[],
-    overheat: number,
-    basePoints: number,
-    currentSkill: number
-}
-
-function toMoveArray(move: string): JeffsMove[] {
-    return move.split("/").map(mv => {
-        const [distance, type] = mv.split('"')
-        return {
-            move: parseInt(distance),
-            type: type,
-        }
-    })
-
-}
-
-export interface PvEntity {
-    skill: number,
-    BFPointValue: number,
-}
-
-
 export function currentPV(unit: PvEntity) {
     const levels = 4 - unit.skill
     const multiplier = (levels > 0) ? 0.2 : 0.1
@@ -136,37 +89,6 @@ export function currentPV(unit: PvEntity) {
 
 export function totalPV(units: PvEntity[]): number {
     return units.map(u => currentPV(u)).reduce((p, n) => p + n, 0)
-}
-
-export function toJeffsUnits(units: ISelectedUnit[]): JeffsUnit[] {
-    return units.map(
-        unit => {
-            return {
-                mulID: Number(unit.Id) || 0,
-                damage: {
-                    short: unit.BFDamageShort,
-                    medium: unit.BFDamageMedium,
-                    long: unit.BFDamageLong,
-                },
-                name: unit.Name,
-                tmm: unit.BFTMM,
-                role: unit.Role.Name,
-                threshold: unit.BFThreshold,
-                imageURL: unit.ImageUrl,
-                move: toMoveArray(unit.BFMove),
-                jumpMove: 0,
-                structure: unit.BFStructure,
-                armor: unit.BFArmor,
-                type: unit.BFType,
-                size: unit.BFSize,
-                showDetails: false,
-                abilities: (unit.BFAbilities) ? unit.BFAbilities.split(",") : [],
-                overheat: unit.BFOverheat,
-                basePoints: unit.BFPointValue,
-                currentSkill: unit.skill
-            }
-        }
-    )
 }
 
 export function loadLists(): string[] {
