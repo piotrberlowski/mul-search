@@ -113,14 +113,23 @@ model Role {
   units UnitMetadata[]
 }
 
+enum UnitTypePlacement {
+  primary
+  secondary
+  excluded
+}
+
 model UnitType {
-  id        Int      @id
-  name      String
-  slug      String   @unique
-  yearStart Int?
-  sort      Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            Int                @id
+  name          String
+  slug          String             @unique
+  yearStart     Int?
+  sort          Int                @default(0)
+  shortName     String?
+  placement     UnitTypePlacement?
+  placementSort Int                @default(0)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 
   metadataUnits UnitMetadata[]
 }

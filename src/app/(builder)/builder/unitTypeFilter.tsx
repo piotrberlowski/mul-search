@@ -1,13 +1,10 @@
 'use client'
 
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { SHORT_LABEL, type UnitTypeOption } from './unitTypes'
+import { type UnitTypeOption } from './unitTypes'
 
 function labelFor(type: UnitTypeOption, expanded: boolean) {
-    if (!expanded) {
-        const short = SHORT_LABEL[type.slug as keyof typeof SHORT_LABEL]
-        if (short) return short
-    }
+    if (!expanded && type.shortName) return type.shortName
     return type.name
 }
 

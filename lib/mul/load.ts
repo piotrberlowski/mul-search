@@ -72,6 +72,7 @@ async function upsertLookups(bundle: MulBundle) {
   }
 
   for (const type of bundle.unitTypes) {
+    // shortName, placement, and placementSort are local and are left unchanged.
     await prisma.unitType.upsert({
       where: { id: type.id },
       update: {
