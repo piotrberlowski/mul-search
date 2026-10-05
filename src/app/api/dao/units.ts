@@ -2,11 +2,13 @@
 
 import { unitsDao, type ListedUnit } from './unitsDao'
 
-export async function getUnitsForSearch(factionId: number, eraId: number, typeId?: number): Promise<ListedUnit[]> {
+export async function getUnitsForSearch(factionId: number, eraId: number, typeIds: number[]): Promise<ListedUnit[]> {
+  if (!typeIds.length) return []
+  const ids = [...new Set(typeIds)].sort((a, b) => a - b)
   return unitsDao.getUnits({
     factionId,
     eraId,
-    typeIds: typeId ? [typeId] : undefined,
+    typeIds: ids,
   })
 }
 

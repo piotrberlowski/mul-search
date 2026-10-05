@@ -20,6 +20,15 @@ const loadEras = unstable_cache(
   { tags: ['units'] },
 )
 
+const loadUnitTypes = unstable_cache(
+  () => prisma.unitType.findMany({
+    orderBy: [{ sort: 'asc' }, { id: 'asc' }],
+    select: { id: true, name: true, slug: true, sort: true },
+  }),
+  ['mul-unit-types'],
+  { tags: ['units'] },
+)
+
 const loadFactionsByEra = unstable_cache(async () => {
   const [factions, pairs] = await Promise.all([
     prisma.faction.findMany({ orderBy: { name: 'asc' } }),
@@ -69,6 +78,15 @@ export class ParametersDao {
       return await loadFactionsByEra()
     } catch (error) {
       console.error('Cannot load factions by era from database', error)
+      return []
+    }
+  }
+
+  async getUnitTypes(): Promise<{ id: number, name: string, slug: string, sort: number }[]> {
+    try {
+      return await loadUnitTypes()
+    } catch (error) {
+      console.error('Cannot load unit types from database', error)
       return []
     }
   }

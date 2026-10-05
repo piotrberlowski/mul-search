@@ -1,35 +1,43 @@
 'use client'
 
-import { IUnit, UNIT_TYPES } from '@/api/unitListApi'
-import React, { useEffect, useState } from 'react'
+import { IUnit } from '@/api/unitListApi'
+import { useEffect, useMemo, useState } from 'react'
 import { MULSearchParams, searchParamsFromIds } from '@/app/data'
 import { useFactionsContext, useEraCatalog } from "@/app/factionsContext"
 import FilteredTable from './filteredTable'
-import { ListBuilderController, useBuilderContext } from './listBuilderController'
+import { useBuilderContext } from './listBuilderController'
 import './unitLine'
 import dynamic from 'next/dynamic'
 import useEraDialog from './eraDialog'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getUnitsForSearch } from '@/app/api/dao/units'
+import UnitTypeFilter from './unitTypeFilter'
+import { arrangeUnitTypes, defaultSelectedIds, selectionIncludesHeat, UnitTypeOption } from './unitTypes'
 
-export function useSearch(factionId: string | null, eraId: string | null, typeId: number): IUnit[] | string {
-    const [data, setData] = useState<IUnit[] | string>('Loading...')
-    const [query, setQuery] = useState({ factionId, eraId, typeId })
+export function useSearch(factionId: string | null, eraId: string | null, typeIds: number[]): IUnit[] | string {
+    const typeKey = typeIds.join(',')
+    const [data, setData] = useState<IUnit[] | string>(typeKey ? 'Loading...' : [])
+    const [query, setQuery] = useState({ factionId, eraId, typeKey })
 
-    if (factionId !== query.factionId || eraId !== query.eraId || typeId !== query.typeId) {
-        setQuery({ factionId, eraId, typeId })
-        setData('Loading...')
+    if (factionId !== query.factionId || eraId !== query.eraId || typeKey !== query.typeKey) {
+        setQuery({ factionId, eraId, typeKey })
+        setData(typeKey ? 'Loading...' : [])
     }
 
     useEffect(() => {
+        if (!typeKey) {
+            setData([])
+            return
+        }
         const faction = Number(factionId)
         const era = Number(eraId)
         if (!Number.isFinite(faction) || !Number.isFinite(era)) {
             setData('Unable to fetch units...')
             return
         }
+        const ids = typeKey.split(',').map(Number)
         let cancelled = false
-        getUnitsForSearch(faction, era, typeId)
+        getUnitsForSearch(faction, era, ids)
             .then((units) => {
                 if (!cancelled) setData(units)
             })
@@ -38,21 +46,10 @@ export function useSearch(factionId: string | null, eraId: string | null, typeId
                 if (!cancelled) setData('Unable to fetch units...')
             })
         return () => { cancelled = true }
-    }, [factionId, eraId, typeId])
+    }, [factionId, eraId, typeKey])
 
     return data
 }
-
-function ResultTab({ search, typeId }: { search: MULSearchParams, typeId: number }) {
-    const data = useSearch(search.specific, search.era, typeId)
-    if (typeof (data) === "string") {
-        return data
-    }
-    return (
-        <FilteredTable key={`${search.specific}-${search.era}-${typeId}`} data={data} mech={typeId == 1}/>
-    )
-}
-
 
 const BuilderLabelDynamic = dynamic(() => import('@/app/(builder)/builder/builderLabel'), { ssr: false })
 
@@ -67,7 +64,7 @@ function ConstraintsLabel({children}:{children: React.ReactNode}) {
     )
 }
 
-export default function ResultGrid() {
+export default function ResultGrid({ unitTypes }: { unitTypes: UnitTypeOption[] }) {
     const factions = useFactionsContext()
     const { eras } = useEraCatalog()
     const controller = useBuilderContext()
@@ -77,12 +74,27 @@ export default function ResultGrid() {
     const eraName = eras.find((era) => `${era.value}` === (searchParams.get('era') ?? ''))?.label
     const factionName = factions.getFactionName(searchParams.get('specific') ?? '')
     const constraintLabel = (factionName && eraName) ? `[${factionName} during ${eraName}]` : "[Unknown]"
+    const arranged = useMemo(() => arrangeUnitTypes(unitTypes), [unitTypes])
+    const [selected, setSelected] = useState(() => new Set(defaultSelectedIds(unitTypes)))
+    const [expanded, setExpanded] = useState(false)
+    const selectedIds = useMemo(() => [...selected].sort((a, b) => a - b), [selected])
+    const data = useSearch(params.specific, params.era, selectedIds)
+    const mech = selectionIncludesHeat(arranged.all, selected)
 
     controller.registerConstraintsObserver((save) => {
         if (save.eraId == null || save.factionId == null) return
         router.push("/builder?" + searchParamsFromIds(save.eraId, save.factionId).toString())
     })
-    
+
+    function toggleType(id: number) {
+        setSelected((current) => {
+            const next = new Set(current)
+            if (next.has(id)) next.delete(id)
+            else next.add(id)
+            return next
+        })
+    }
+
     return (
         <>
             <div className="flex w-full">
@@ -91,17 +103,23 @@ export default function ResultGrid() {
                 </ConstraintsLabel>
                 <BuilderLabelDynamic />
             </div>
-            <div role="tablist" className="tabs tabs-lifted tabs-xs md:tabs-md p-1">
-                {
-                    UNIT_TYPES.map((t, idx) => (
-                        <React.Fragment key={t.Id}>
-                            <input type="radio" name="unit_types" role="tab" className="tab text-xs min-w-[65px] md:text-base md:min-w-max" aria-label={t.Name} defaultChecked={idx == 0} />
-                            <div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-md p-2">
-                                <ResultTab search={params} typeId={t.Id} />
-                            </div>
-                        </React.Fragment>
-                    ))
-                }
+            <UnitTypeFilter
+                folded={arranged.folded}
+                all={arranged.all}
+                selected={selected}
+                expanded={expanded}
+                onToggle={toggleType}
+                onClear={() => setSelected(new Set())}
+                onExpanded={setExpanded}
+            />
+            <div className="bg-base-100 border-base-300 rounded-md p-2">
+                {selectedIds.length === 0 ? (
+                    <div className="p-2 text-center text-sm">Select a unit type.</div>
+                ) : typeof data === 'string' ? (
+                    data
+                ) : (
+                    <FilteredTable key={`${params.specific}-${params.era}`} data={data} mech={mech} />
+                )}
             </div>
         </>
     )
