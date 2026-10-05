@@ -1,5 +1,5 @@
 import { compareSelectedUnits } from "@/api/shareApi";
-import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, exportTTSString, formatDamageBrackets, loadByName, loadLists, removeByName, saveByName, saveLists, toJeffsUnits, totalPV } from "@/api/unitListApi"
+import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, exportTTSString, formatDamageBrackets, loadByName, loadLists, removeByName, saveByName, saveLists, totalPV } from "@/api/unitListApi"
 import { IUnit } from "@/api/unitListApi";
 import { searchParamsFromIds } from "@/app/data";
 import { LIST_PARAMETER } from "@/app/(utilities)/validate/result/validation";
@@ -203,34 +203,10 @@ export class ListBuilderController {
     }
 
     public exportExternal(name: string, format: string) {
-        switch (format) {
-            case "jeff":
-                this.exportJeffsJson(`${name}`, this.save.units)
-                break
-            case "tts":
-                exportTTSString(name, this.save.units)
-                break
+        if (format === "tts") {
+            exportTTSString(name, this.save.units)
         }
     }
-
-    public exportJeffsJson(name: string, units: ISelectedUnit[]) {
-        const data = {
-            name: name,
-            members: toJeffsUnits(units),
-            lastUpdated: new Date().toISOString(),
-            formationBonus: "None",
-            groupLabel: "Star"
-        }
-
-        const jsonString = `data:text/json;chatset=utf-8,${encodeURIComponent(
-            JSON.stringify(data)
-        )}`;
-        const link = document.createElement("a");
-        link.href = jsonString;
-        link.download = "list.json";
-
-        link.click();
-    };
 
     public getStoredLists() {
         return this.storedLists

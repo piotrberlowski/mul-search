@@ -8,9 +8,8 @@ export default function FloatingFooter({scrollTarget, children}:{scrollTarget?:s
             {children}
           </ScrollToTop>
         </div>
-        <div className='grid grid-cols-3 w-full'>
+        <div className='grid grid-cols-2 w-full'>
           <span>Data: <a href="https://masterunitlist.battletech.com">Master Unit List.</a></span>
-          <span>Import for play in <a href="https://jdgwf.github.io/battletech-tools/alpha-strike/roster">Jeff&apos;s Battletech Tools</a></span>
           <span>Source: <a href="https://github.com/piotrberlowski/mul-search">GitHub</a>.</span>
         </div>
       </div>
