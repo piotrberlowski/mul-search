@@ -3,6 +3,7 @@ import React, { useMemo } from "react"
 
 const CARD_WIDTH = 1008
 const CARD_HEIGHT = 720
+const CARD_FRAME = 20
 const CARD_INK = '#231f20'
 const SKILL_FILL = '#d1d3d4'
 
@@ -20,7 +21,7 @@ function CardFace({ unit }: { unit: ISelectedUnit }) {
         <div className="relative w-full" style={{ containerType: 'inline-size' }}>
             <img src={unit.cardUrl} alt={`${unit.Name} @ ${unit.skill}`} width={CARD_WIDTH} height={CARD_HEIGHT} className="block h-auto w-full" />
             <div className="absolute flex items-center justify-center font-bold" style={{ ...cardInk, left: '47.2%', top: '27.5%', width: '3.6%', height: '5.6%', background: SKILL_FILL, fontSize: '4cqw' }}>{unit.skill}</div>
-            <div className="absolute flex items-center justify-center font-bold" style={{ ...cardInk, left: '75.6%', top: '2.4%', width: '22.2%', height: '11.4%', background: '#fff', border: '0.4cqw solid #231f20', fontSize: '3.4cqw', lineHeight: 1 }}>PV: {currentPV(unit)}</div>
+            <div className="absolute flex items-center justify-center font-bold" style={{ ...cardInk, left: '75.6%', top: `${(CARD_FRAME / CARD_HEIGHT) * 100}%`, right: `${(CARD_FRAME / CARD_WIDTH) * 100}%`, height: '11.4%', background: '#fff', border: '0.4cqw solid #231f20', fontSize: '3.4cqw', lineHeight: 1 }}>PV: {currentPV(unit)}</div>
         </div>
     )
 }
