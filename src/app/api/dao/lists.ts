@@ -85,14 +85,17 @@ export async function findListsByCurrentUser() {
     return lists
 }
 
-export async function saveList(name: string, save: Save) {
+export type ListWriteResult = { key: string } | { error: string }
+
+export async function saveList(name: string, save: Save): Promise<ListWriteResult> {
     const db = prismaOrError()
     const userId = await findCurrentUserId()
-    if (!userId) return "403: Forbidden."
+    if (!userId) return { error: "403: Forbidden." }
+    const key = randomUUID()
     await db.list.create({
         data: {
             name: name,
-            key: randomUUID(),
+            key: key,
             constraints: save.constraints,
             eraId: save.eraId,
             factionId: save.factionId,
@@ -100,6 +103,29 @@ export async function saveList(name: string, save: Save) {
             content: toMulUnits(save.units),
             ownerId: userId
         }
+    })
+    return { key }
+}
+
+export async function updateList(key: string, name: string, save: Save): Promise<string | null> {
+    const db = prismaOrError()
+    const userId = await findCurrentUserId()
+    if (!userId) return "403: Forbidden."
+    const existing = await db.list.findFirst({
+        where: { key, ownerId: userId },
+        select: { id: true },
+    })
+    if (!existing) return "List not found."
+    await db.list.update({
+        where: { id: existing.id },
+        data: {
+            name,
+            constraints: save.constraints,
+            eraId: save.eraId,
+            factionId: save.factionId,
+            total: totalPV(save.units),
+            content: toMulUnits(save.units),
+        },
     })
     return null
 }

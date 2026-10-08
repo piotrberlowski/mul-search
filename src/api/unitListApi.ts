@@ -1,5 +1,7 @@
 export const LOCAL_STORAGE_NAME_AUTOSAVE = 'autosave'
+export const WORK_IN_PROGRESS_NAME = 'Work in Progress'
 const LOCAL_STORAGE_KEY = 'alphaStrikeLists'
+const BUILDER_IDENTITY_KEY = 'alphaStrikeBuilderIdentity'
 const LOCAL_STORAGE_LIST_KEY_PREFIX = 'alphaStrikeList_'
 const LOCAL_STORAGE_CONSTRAINT_KEY_PREFIX = 'alphaStrikeList_constraint_'
 const LOCAL_STORAGE_ERA_KEY_PREFIX = 'alphaStrikeList_era_'
@@ -56,6 +58,57 @@ export type Save = {
     constraints: string,
     eraId: number | null,
     factionId: number | null,
+}
+
+export type BuilderIdentity = {
+    name: string
+    serverKey: string | null
+}
+
+export function isWorkInProgressName(name: string) {
+    return name.trim() === WORK_IN_PROGRESS_NAME
+}
+
+export function printListHeading(constraints: string, name: string) {
+    if (!name.trim() || isWorkInProgressName(name)) return constraints
+    return `${constraints} : ${name}`
+}
+
+export function validateStoredListName(name: string): string | null {
+    const trimmed = name.trim()
+    if (!trimmed) return 'Enter a name.'
+    if (isWorkInProgressName(trimmed)) return 'Choose a name other than Work in Progress.'
+    if (trimmed === LOCAL_STORAGE_NAME_AUTOSAVE) return 'Choose a different name.'
+    return null
+}
+
+export function defaultBuilderIdentity(): BuilderIdentity {
+    return { name: WORK_IN_PROGRESS_NAME, serverKey: null }
+}
+
+export function loadBuilderIdentity(): BuilderIdentity {
+    if (typeof window === 'undefined') return defaultBuilderIdentity()
+    try {
+        const raw = localStorage.getItem(BUILDER_IDENTITY_KEY)
+        if (!raw) return defaultBuilderIdentity()
+        const parsed = JSON.parse(raw) as Partial<BuilderIdentity>
+        const serverKey = typeof parsed.serverKey === 'string' && parsed.serverKey ? parsed.serverKey : null
+        if (!serverKey) return defaultBuilderIdentity()
+        const name = typeof parsed.name === 'string' && parsed.name.trim() ? parsed.name : WORK_IN_PROGRESS_NAME
+        return { name, serverKey }
+    } catch {
+        return defaultBuilderIdentity()
+    }
+}
+
+export function saveBuilderIdentity(identity: BuilderIdentity) {
+    if (typeof window === 'undefined') return
+    localStorage.setItem(BUILDER_IDENTITY_KEY, JSON.stringify(identity))
+}
+
+export function detachBuilderIdentity(serverKey: string) {
+    const current = loadBuilderIdentity()
+    if (current.serverKey === serverKey) saveBuilderIdentity(defaultBuilderIdentity())
 }
 
 export function damageBracket(text: string | null | undefined, value: number) {
