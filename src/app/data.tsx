@@ -12,6 +12,12 @@ export function searchParamsFromIds(eraId?: number | null, factionId?: number | 
     return params
 }
 
+export function builderHref(eraId?: number | null, factionId?: number | null) {
+    const params = searchParamsFromIds(eraId, factionId)
+    const qs = params.toString()
+    return qs ? `/builder?${qs}` : '/builder'
+}
+
 export class Factions {
     private factionNames: Map<string, string> = new Map()
     private factions: Faction[] = []

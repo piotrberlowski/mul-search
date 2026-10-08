@@ -4,13 +4,12 @@ import { useCombinations } from '@/components/combinations';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, groupByLance, totalPV } from '../../../api/unitListApi';
+import { ISelectedUnit, Save, WORK_IN_PROGRESS_NAME, groupByLance, loadBuilderIdentity, totalPV } from '../../../api/unitListApi';
 import PlayLink from '../../../components/playLink';
 import { ListLine } from './ListLine';
 import { ListBuilderController, useBuilderContext } from './listBuilderController';
-import useLoadDialog from './loadDialog';
-import useSaveDialog from './saveDialog';
-import { SessionProvider, useSession } from 'next-auth/react';
+import useNameDialog, { rememberOrSaveAs } from './saveDialog';
+import { useSession } from 'next-auth/react';
 
 function BuilderHeader({ controller, children }: { controller: ListBuilderController, children: React.ReactNode }) {
     const units = controller.getUnits()
@@ -36,32 +35,36 @@ function BuilderFooter({
     total,
     constraints,
     listName,
+    serverKey,
     controller,
 }: {
     units: ISelectedUnit[],
     total: number,
     constraints: string,
     listName: string,
+    serverKey: string | null,
     controller: ListBuilderController,
 }) {
     const {data: session, status} = useSession()
     const router = useRouter()
 
-    console.log(`Status: ${status}`)
-
     const loggedIn = session?.externalAccount != undefined || status === "authenticated"
+    const savedOnServer = serverKey != null
+    const displayName = savedOnServer ? listName : WORK_IN_PROGRESS_NAME
 
     const [cmbBtn, cmbDlg] = useCombinations(units, <>Sub-lists</>, 'btn text-center w-full btn-sm')
-    const [loadBtn, loadDlg] = useLoadDialog({
-        name: listName, 
-        controller: controller,
-        loggedIn: loggedIn,
-    }, (<>Load</>))
-    const [saveBtn, saveDlg] = useSaveDialog({
-        name: listName,
-        controller: controller,
-        loggedIn: loggedIn,
-    }, (<>Save</>))
+    const [nameBtn, nameDlg] = useNameDialog({
+        label: loggedIn ? 'Save as' : 'Remember for later',
+        confirmLabel: loggedIn ? 'Save as' : 'Remember for later',
+        initialName: loggedIn && savedOnServer ? listName : '',
+        onConfirm: rememberOrSaveAs(controller, loggedIn),
+    })
+
+    async function onSave(event: React.MouseEvent<HTMLButtonElement>) {
+        event.currentTarget.blur()
+        const error = await controller.overwrite()
+        if (error) alert(error)
+    }
 
     return (
         <div className="bg-inherit grid grid-cols-3 items-center text-center w-full text-xs md:text-sm lg:text-base h-12 md:h-8">
@@ -74,13 +77,14 @@ function BuilderFooter({
             </div>
             <div className="dropdown dropdown-top dropdown-end h-full text-center items-center">
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Edit</div></div>
-                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-64">
                     <li><button className="btn text-center w-full btn-sm" onClick={e => {
                         controller.clear()
                         e?.currentTarget.blur()
                     }}>Clear</button></li>
-                    <li>{saveBtn}</li>
-                    <li>{loadBtn}</li>
+                    {loggedIn && savedOnServer ? <li><button className="btn text-center w-full btn-sm" onClick={onSave}>Save</button></li> : null}
+                    <li>{nameBtn}</li>
+                    <li><Link href="/user" className="btn text-center w-full btn-sm">Load</Link></li>
                     <li><button className="btn text-center w-full btn-sm" onClick={e => {
                         router.push("/validate/result?" + controller.toValidateParams().toString())
                         e?.currentTarget.blur()
@@ -90,12 +94,11 @@ function BuilderFooter({
             <div className="dropdown dropdown-top dropdown-end h-full text-center items-center">
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Export</div></div>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                    <li><ShareLink constraints={constraints} name={listName} total={total} units={units} eraId={controller.getEraId()} factionId={controller.getFactionId()} className='btn text-center w-full btn-sm' /></li>
+                    <li><ShareLink constraints={constraints} name={displayName} total={total} units={units} eraId={controller.getEraId()} factionId={controller.getFactionId()} className='btn text-center w-full btn-sm' /></li>
                     <li><Link href="/tts/" target="_blank" className="btn text-center w-full btn-sm" onClick={e => controller.exportExternal(listName, "tts")}>TTS</Link></li>
                 </ul>
             </div>
-            {loadDlg}
-            {saveDlg}
+            {nameDlg}
             {cmbDlg}
         </div>
     )
@@ -128,7 +131,9 @@ function Lines({ save, controller }: { save: Save, controller: ListBuilderContro
 
 export default function ListBuilder({ children }: { children: React.ReactNode }) {
     const controller: ListBuilderController = useBuilderContext()
-    const [name, setName] = useState(LOCAL_STORAGE_NAME_AUTOSAVE)
+    const identity = loadBuilderIdentity()
+    const [name, setName] = useState(identity.name)
+    const [serverKey, setServerKey] = useState<string | null>(identity.serverKey)
     const [save, setSave] = useState<Save>(controller.getSave())
     const [total, setTotal] = useState(totalPV(save.units))
     const [storedLists, setStoredLists] = useState(controller.getStoredLists())
@@ -138,6 +143,7 @@ export default function ListBuilder({ children }: { children: React.ReactNode })
         setName,
         setTotal,
         setStoredLists,
+        setServerKey,
     )
 
     const count = save.units.length
@@ -151,7 +157,17 @@ export default function ListBuilder({ children }: { children: React.ReactNode })
                     </BuilderHeader>
                     <div className="flex-none w-full flex px-2">
                         <span className="mr-1 flex-none">Name: </span>
-                        <input className="inline flex-1 h-5 p-0 overflow-hidden" type='text' onChange={e => setName(e.target.value)} value={name} />
+                        <input
+                            className="inline flex-1 h-5 p-0 overflow-hidden bg-transparent"
+                            type='text'
+                            readOnly={serverKey == null}
+                            aria-readonly={serverKey == null}
+                            value={serverKey == null ? WORK_IN_PROGRESS_NAME : name}
+                            onChange={e => {
+                                setName(e.target.value)
+                                controller.rename(e.target.value)
+                            }}
+                        />
                     </div>
                     <Lines save={save} controller={controller} />
                     <div className="flex-none w-full bg-inherit grid grid-cols-1">
@@ -160,6 +176,7 @@ export default function ListBuilder({ children }: { children: React.ReactNode })
                             total={total}
                             constraints={controller.getConstraints()}
                             listName={name}
+                            serverKey={serverKey}
                             controller={controller} />
                     </div>
                 </div>

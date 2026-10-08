@@ -1,5 +1,6 @@
 import { compareSelectedUnits } from "@/api/shareApi";
-import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, exportTTSString, formatDamageBrackets, loadByName, loadLists, removeByName, saveByName, saveLists, totalPV } from "@/api/unitListApi"
+import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, WORK_IN_PROGRESS_NAME, defaultBuilderIdentity, exportTTSString, formatDamageBrackets, loadBuilderIdentity, loadByName, loadLists, removeByName, saveBuilderIdentity, saveByName, saveLists, totalPV, validateStoredListName } from "@/api/unitListApi"
+import { saveList, updateList } from "@/app/api/dao/lists"
 import { IUnit } from "@/api/unitListApi";
 import { searchParamsFromIds } from "@/app/data";
 import { LIST_PARAMETER } from "@/app/(utilities)/validate/result/validation";
@@ -18,8 +19,11 @@ export class ListBuilderController {
     private eraId: number | null;
     private factionId: number | null;
     private storedLists: string[];
+    private listName: string;
+    private serverKey: string | null;
     private setSave?: ChangeListener<Save>;
     private setName?: ChangeListener<string>;
+    private setServerKey?: ChangeListener<string | null>;
     private setTotal?: ChangeListener<number>;
     private setStoredLists?: ChangeListener<string[]>;
     private summaryObserver?: ChangeListener<string>;
@@ -34,6 +38,9 @@ export class ListBuilderController {
         this.constraints = searchConstraints
         this.eraId = numberOrNull(eraId)
         this.factionId = numberOrNull(factionId)
+        const identity = loadBuilderIdentity()
+        this.listName = identity.name
+        this.serverKey = identity.serverKey
         if (typeof window !== 'undefined') {
             this.save = loadByName(autosaveName)
             this.storedLists = loadLists()
@@ -46,6 +53,14 @@ export class ListBuilderController {
             }
             this.storedLists = []
         }
+    }
+
+    private adoptIdentity(name: string, serverKey: string | null) {
+        this.listName = name
+        this.serverKey = serverKey
+        saveBuilderIdentity(serverKey ? { name, serverKey } : defaultBuilderIdentity())
+        this.setName?.(this.listName)
+        this.setServerKey?.(this.serverKey)
     }
 
     private searchSave(units: ISelectedUnit[]): Save {
@@ -67,12 +82,13 @@ export class ListBuilderController {
         setName: ChangeListener<string>,
         setTotal: ChangeListener<number>,
         setStoredLists: ChangeListener<string[]>,
-
+        setServerKey: ChangeListener<string | null>,
     ) {
         this.setSave = setSave
         this.setName = setName
         this.setTotal = setTotal
         this.setStoredLists = setStoredLists
+        this.setServerKey = setServerKey
     }
 
     public registerSummaryObserver(
@@ -162,44 +178,94 @@ export class ListBuilderController {
             return 
         this.save = this.searchSave([])
         this.setSave(this.save)
+        this.adoptIdentity(WORK_IN_PROGRESS_NAME, null)
         this.updateTotal()
     }
 
+    public rename(name: string) {
+        if (!this.serverKey) return
+        this.listName = name
+        saveBuilderIdentity({ name, serverKey: this.serverKey })
+        this.setName?.(name)
+    }
+
+    public getListName() {
+        return this.serverKey ? this.listName : WORK_IN_PROGRESS_NAME
+    }
+
+    public getServerKey() {
+        return this.serverKey
+    }
+
+    public remember(name: string): string | null {
+        const nameError = validateStoredListName(name)
+        if (nameError) return nameError
+        if (this.save.units.length === 0) return 'Add units before remembering a list.'
+        this.store(name.trim())
+        return null
+    }
+
+    public async overwrite(): Promise<string | null> {
+        if (!this.serverKey) return 'This list is not saved yet.'
+        const nameError = validateStoredListName(this.listName)
+        if (nameError) return nameError
+        if (this.save.units.length === 0) return 'Add units before saving.'
+        try {
+            const error = await updateList(this.serverKey, this.listName.trim(), this.save)
+            if (!error) this.adoptIdentity(this.listName.trim(), this.serverKey)
+            return error
+        } catch (e) {
+            console.error(e)
+            return 'Could not save the list.'
+        }
+    }
+
+    public async saveAs(name: string): Promise<string | null> {
+        const nameError = validateStoredListName(name)
+        if (nameError) return nameError
+        if (this.save.units.length === 0) return 'Add units before saving.'
+        try {
+            const result = await saveList(name.trim(), this.save)
+            if ('error' in result) return result.error
+            this.adoptIdentity(name.trim(), result.key)
+            return null
+        } catch (e) {
+            console.error(e)
+            return 'Could not save the list.'
+        }
+    }
+
     public store(name: string) {
-        if (!this.setStoredLists) 
-            return
-        const listPosition = this.storedLists.indexOf(name)
+        const trimmed = name.trim()
+        const listPosition = this.storedLists.indexOf(trimmed)
         if (this.save.units.length > 0) {
-            saveByName(this.save, name)
+            saveByName(this.save, trimmed)
             if (listPosition == -1) {
-                this.storedLists = [...this.storedLists, name]
+                this.storedLists = [...this.storedLists, trimmed]
             }
         } else {
             if (listPosition != -1) {
-                this.storedLists = this.storedLists.filter(item => item != name)
+                this.storedLists = this.storedLists.filter(item => item != trimmed)
             }
-            removeByName(name)
+            removeByName(trimmed)
         }
-        this.setStoredLists(this.storedLists)
+        this.setStoredLists?.(this.storedLists)
         saveLists(this.storedLists)
     }
 
     public load(loadName: string) {
-        if (!this.setName || !this.setSave)
+        if (!this.setSave)
             return
         const load = loadByName(loadName)
         if (load.units.length === 0) {
             console.log("Loaded empty list... " + loadName)
             return
         }
-        const apply = (save: Save) => {
-            this.save = save
-            this.setSave?.(save)
-            this.setName?.(loadName)
-            this.updateTotal()
-            this.constraintsObserver?.(save)
-        }
-        apply(load)
+        this.save = load
+        this.setSave(load)
+        this.adoptIdentity(WORK_IN_PROGRESS_NAME, null)
+        this.updateTotal()
+        this.constraintsObserver?.(load)
     }
 
     public exportExternal(name: string, format: string) {
