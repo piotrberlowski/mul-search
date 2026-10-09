@@ -1,10 +1,10 @@
 'use client'
-import ShareLink from '@/app/(utilities)/share/shareLink';
+import { copyShareLink, shareHref } from '@/api/shareApi';
 import { useCombinations } from '@/components/combinations';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { ISelectedUnit, Save, WORK_IN_PROGRESS_NAME, groupByLance, loadBuilderIdentity, totalPV } from '../../../api/unitListApi';
+import { ISelectedUnit, Save, WORK_IN_PROGRESS_NAME, groupByLance, loadBuilderIdentity, stageList, totalPV } from '../../../api/unitListApi';
 import PlayLink from '../../../components/playLink';
 import { ListLine } from './ListLine';
 import { ListBuilderController, useBuilderContext } from './listBuilderController';
@@ -33,14 +33,12 @@ function BuilderHeader({ controller, children }: { controller: ListBuilderContro
 function BuilderFooter({
     units,
     total,
-    constraints,
     listName,
     serverKey,
     controller,
 }: {
     units: ISelectedUnit[],
     total: number,
-    constraints: string,
     listName: string,
     serverKey: string | null,
     controller: ListBuilderController,
@@ -51,6 +49,36 @@ function BuilderFooter({
     const loggedIn = session?.externalAccount != undefined || status === "authenticated"
     const savedOnServer = serverKey != null
     const displayName = savedOnServer ? listName : WORK_IN_PROGRESS_NAME
+    const [linkNotice, setLinkNotice] = useState<string | null>(null)
+
+    function currentSnapshot(): Save {
+        const save = controller.getSave()
+        return {
+            units: save.units,
+            constraints: controller.getConstraints(),
+            eraId: controller.getEraId(),
+            factionId: controller.getFactionId(),
+        }
+    }
+
+    function onPrint(event: React.MouseEvent<HTMLButtonElement>) {
+        event.currentTarget.blur()
+        stageList(currentSnapshot(), displayName, serverKey)
+        router.push('/share')
+    }
+
+    function onShare(event: React.MouseEvent<HTMLButtonElement>) {
+        event.currentTarget.blur()
+        const save = currentSnapshot()
+        copyShareLink(shareHref({
+            name: displayName,
+            total,
+            units: save.units,
+            constraints: save.constraints,
+            eraId: save.eraId,
+            factionId: save.factionId,
+        })).then(error => setLinkNotice(error ?? 'Link copied.'))
+    }
 
     const [cmbBtn, cmbDlg] = useCombinations(units, <>Sub-lists</>, 'btn text-center w-full btn-sm')
     const [saveAsBtn, saveAsDlg] = useNameDialog({
@@ -68,13 +96,16 @@ function BuilderFooter({
         onConfirm: (name) => controller.remember(name),
     })
 
-    async function onSave(event: React.MouseEvent<HTMLButtonElement>) {
+    function onSave(event: React.MouseEvent<HTMLButtonElement>) {
         event.currentTarget.blur()
-        const error = await controller.overwrite()
-        if (error) alert(error)
+        controller.overwrite().then(error => {
+            if (error) alert(error)
+        })
     }
 
     return (
+        <>
+        {linkNotice ? <div role="status" className="text-center text-xs pb-1">{linkNotice}</div> : null}
         <div className="bg-inherit grid grid-cols-3 items-center text-center w-full text-xs md:text-sm lg:text-base h-12 md:h-8">
             <div className="dropdown dropdown-top dropdown-start h-full text-center items-center">
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Play</div></div>
@@ -103,7 +134,8 @@ function BuilderFooter({
             <div className="dropdown dropdown-top dropdown-end h-full text-center items-center">
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Export</div></div>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                    <li><ShareLink constraints={constraints} name={displayName} total={total} units={units} eraId={controller.getEraId()} factionId={controller.getFactionId()} className='btn text-center w-full btn-sm' /></li>
+                    <li><button type="button" className="btn text-center w-full btn-sm" onClick={onPrint}>Print</button></li>
+                    <li><button type="button" className="btn text-center w-full btn-sm" onClick={onShare}>Share</button></li>
                     <li><Link href="/tts/" target="_blank" className="btn text-center w-full btn-sm" onClick={e => controller.exportExternal(listName, "tts")}>TTS</Link></li>
                 </ul>
             </div>
@@ -111,6 +143,7 @@ function BuilderFooter({
             {rememberDlg}
             {cmbDlg}
         </div>
+        </>
     )
 }
 
@@ -146,17 +179,13 @@ export default function ListBuilder({ children }: { children: React.ReactNode })
     const [serverKey, setServerKey] = useState<string | null>(identity.serverKey)
     const [save, setSave] = useState<Save>(controller.getSave())
     const [total, setTotal] = useState(totalPV(save.units))
-    const [storedLists, setStoredLists] = useState(controller.getStoredLists())
 
     controller.registerBuilder(
         setSave,
         setName,
         setTotal,
-        setStoredLists,
         setServerKey,
     )
-
-    const count = save.units.length
 
     return (
         <>
@@ -184,7 +213,6 @@ export default function ListBuilder({ children }: { children: React.ReactNode })
                         <BuilderFooter
                             units={save.units}
                             total={total}
-                            constraints={controller.getConstraints()}
                             listName={name}
                             serverKey={serverKey}
                             controller={controller} />
