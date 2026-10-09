@@ -18,6 +18,7 @@ import {
     saveLists,
     totalPV,
 } from "@/api/unitListApi"
+import { PencilSquareIcon, PlayIcon, PrinterIcon, TrashIcon } from "@heroicons/react/24/outline"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -71,10 +72,47 @@ function openInBuilder(save: Save, name: string, serverKey: string | null) {
     saveBuilderIdentity(serverKey ? { name, serverKey } : { name: WORK_IN_PROGRESS_NAME, serverKey: null })
 }
 
-const actionClass = "btn btn-outline btn-xs"
+function ListAction({
+    label,
+    icon,
+    disabled,
+    onClick,
+}: {
+    label: string
+    icon: React.ReactNode
+    disabled?: boolean
+    onClick: () => void
+}) {
+    return (
+        <button type="button" className="list-action btn btn-outline btn-xs" aria-label={label} disabled={disabled} onClick={onClick}>
+            {icon}
+            <span className="list-action-label">{label}</span>
+        </button>
+    )
+}
 
-function Actions({ children }: { children: React.ReactNode }) {
-    return <div className="flex flex-col gap-1">{children}</div>
+function RowActions({
+    disabled,
+    onDelete,
+    onEdit,
+    onPrint,
+    onPlay,
+}: {
+    disabled?: boolean
+    onDelete: () => void
+    onEdit: () => void
+    onPrint: () => void
+    onPlay: () => void
+}) {
+    const icon = "h-3.5 w-3.5 shrink-0"
+    return (
+        <div className="list-actions">
+            <ListAction label="Delete" icon={<TrashIcon className={icon} />} disabled={disabled} onClick={onDelete} />
+            <ListAction label="Edit" icon={<PencilSquareIcon className={icon} />} disabled={disabled} onClick={onEdit} />
+            <ListAction label="Print" icon={<PrinterIcon className={icon} />} onClick={onPrint} />
+            <ListAction label="Play" icon={<PlayIcon className={icon} />} disabled={disabled} onClick={onPlay} />
+        </div>
+    )
 }
 
 export default function ListsView({
@@ -182,7 +220,7 @@ export default function ListsView({
                 <h2 className="text-base font-semibold mb-2">Memories</h2>
                 {memories.length === 0 ? <p className="text-sm">No lists remembered on this device.</p> : (
                     <div className="overflow-x-auto">
-                        <table className="table">
+                        <table className="table lists-table">
                             <thead>
                                 <tr>
                                     <th>Name</th>
@@ -198,12 +236,12 @@ export default function ListsView({
                                         <td>{row.total}</td>
                                         <td>{row.constraints}</td>
                                         <td>
-                                            <Actions>
-                                                <button type="button" className={actionClass} onClick={() => deleteMemory(row.name)}>Delete</button>
-                                                <button type="button" className={actionClass} onClick={() => editMemory(row)}>Edit</button>
-                                                <button type="button" className={actionClass} onClick={() => router.push(memoryPrintHref(row))}>Print</button>
-                                                <button type="button" className={actionClass} onClick={() => playSave(row.save)}>Play</button>
-                                            </Actions>
+                                            <RowActions
+                                                onDelete={() => deleteMemory(row.name)}
+                                                onEdit={() => editMemory(row)}
+                                                onPrint={() => router.push(memoryPrintHref(row))}
+                                                onPlay={() => playSave(row.save)}
+                                            />
                                         </td>
                                     </tr>
                                 ))}
@@ -217,7 +255,7 @@ export default function ListsView({
                     <h2 className="text-base font-semibold mb-2">Saved lists</h2>
                     {savedLists.length === 0 ? <p className="text-sm">No lists saved yet.</p> : (
                         <div className="overflow-x-auto">
-                            <table className="table">
+                            <table className="table lists-table">
                                 <thead>
                                     <tr>
                                         <th>Name</th>
@@ -233,12 +271,13 @@ export default function ListsView({
                                             <td>{list.total}</td>
                                             <td>{list.constraints}</td>
                                             <td>
-                                                <Actions>
-                                                    <button type="button" className={actionClass} disabled={busy === list.key} onClick={() => deleteSaved(list.key)}>Delete</button>
-                                                    <button type="button" className={actionClass} disabled={busy === list.key} onClick={() => editSaved(list)}>Edit</button>
-                                                    <button type="button" className={actionClass} onClick={() => router.push(`/share?key=${list.key}`)}>Print</button>
-                                                    <button type="button" className={actionClass} disabled={busy === list.key} onClick={() => playSaved(list)}>Play</button>
-                                                </Actions>
+                                                <RowActions
+                                                    disabled={busy === list.key}
+                                                    onDelete={() => deleteSaved(list.key)}
+                                                    onEdit={() => editSaved(list)}
+                                                    onPrint={() => router.push(`/share?key=${list.key}`)}
+                                                    onPlay={() => playSaved(list)}
+                                                />
                                             </td>
                                         </tr>
                                     ))}
