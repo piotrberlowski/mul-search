@@ -79,6 +79,34 @@ button {
   width: 100%;
 }
 
+.list-actions {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.list-actions .list-action {
+  width: auto;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 639px) {
+  .list-action-label {
+    display: none;
+  }
+
+  .lists-table :is(th, td) {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+}
+
 .button-link {
   color: rgb(var(--input-foreground-rgb));
   background-color: rgb(var(--input-background-rgb));

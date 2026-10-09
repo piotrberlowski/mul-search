@@ -1,4 +1,5 @@
 import { ConstrainedList, parseShare } from "@/api/shareApi"
+import { printListHeading } from "@/api/unitListApi"
 import { parametersDao } from "@/app/api/dao/parametersDao"
 import { Suspense } from "react"
 import VisualList from "./visualList"
@@ -58,7 +59,7 @@ export default async function SharedList({ searchParams }: { searchParams: Share
     return (
         <main className="relative items-center align-top bg-inherit">
             <Head>
-                <meta property="og:title" content={`AS List: ${list.name}`}/>
+                <meta property="og:title" content={`AS List: ${printListHeading(list.constraints, list.name)}`}/>
                 <meta property="og:description" content={`Army List for ${list.constraints}`}/>
             </Head>
             <Suspense fallback={<ListFallback />}>

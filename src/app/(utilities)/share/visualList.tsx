@@ -5,30 +5,14 @@ import Head from 'next/head'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from "react"
 import { ConstrainedList, MulUnit } from '@/api/shareApi'
-import { ISelectedUnit, IUnit, LOCAL_STORAGE_NAME_AUTOSAVE, loadLists, saveByName, saveLists } from '../../../api/unitListApi'
-import { EMPTY_UNIT } from '@/app/(builder)/builder/unitLine'
+import { materializeUnits } from '@/api/materializeUnits'
+import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, loadLists, printListHeading, saveBuilderIdentity, saveByName, saveLists, validateStoredListName, WORK_IN_PROGRESS_NAME } from '../../../api/unitListApi'
 import { Faction, Factions, searchParamsFromIds } from '@/app/data'
 import { FactionsContext } from "@/app/factionsContext"
 import CardGallery from './cardGallery'
 import SummaryTable from './summaryTable'
-import { list } from 'postcss'
-import { resolveUnits } from '@/app/api/dao/units'
-
-
-function selectUnit(mulUnit: MulUnit, units: IUnit[]): ISelectedUnit {
-    const data = units.find(u => u.Id == mulUnit.id || u.Name.trim().toLowerCase() === mulUnit.name.trim().toLowerCase()) || EMPTY_UNIT
-    return {
-        ordinal: mulUnit.ordinal,
-        skill: mulUnit.skill,
-        lance: mulUnit.lance,
-        ...data
-    }
-}
-
 async function fetchFromMul(queries: MulUnit[]) {
-    const resolved = await resolveUnits(queries.flatMap((unit) => [unit.id, unit.name]))
-    const units = Object.values(resolved)
-    return queries.map((unit) => selectUnit(unit, units))
+    return materializeUnits(queries)
 }
 
 function ReadyList({ units, constraints, name, total, eraId, factionId }: { units: ISelectedUnit[], constraints: string, name: string, total: number, eraId?: number | null, factionId?: number | null }) {
@@ -44,15 +28,21 @@ function ReadyList({ units, constraints, name, total, eraId, factionId }: { unit
             }
             if (tweak) {
                 saveByName(save, LOCAL_STORAGE_NAME_AUTOSAVE)
+                saveBuilderIdentity({ name: WORK_IN_PROGRESS_NAME, serverKey: null })
                 if (nextEra != null && nextFaction != null) {
                     router.push("/builder?" + searchParamsFromIds(nextEra, nextFaction).toString())
                 }
                 return
             }
+            const memoryName = validateStoredListName(name) ? constraints : name
+            if (validateStoredListName(memoryName)) {
+                alert('Name this list in the builder before remembering it.')
+                return
+            }
             const lists = loadLists()
-            saveByName(save, name)
-            if (!lists.find(item => item == name)) {
-                lists.push(name)
+            saveByName(save, memoryName)
+            if (!lists.find(item => item == memoryName)) {
+                lists.push(memoryName)
                 saveLists(lists)
             }
         }
@@ -63,7 +53,7 @@ function ReadyList({ units, constraints, name, total, eraId, factionId }: { unit
         <>
             <div className="w-full mx-auto flex print:hidden">
                 <button className="flex-1 w-1/2" onClick={(e) => saveList(true)}>Tweak Now</button>
-                <button className="flex-1 w-1/2" onClick={(e) => saveList(false)}>Save to Local Storage</button>
+                <button className="flex-1 w-1/2" onClick={(e) => saveList(false)}>Remember for later</button>
             </div>
             <div className='text-center w-full print:hidden'>
                 <button className="w-full" onClick={(e) => window.print()}>Print</button>
@@ -106,12 +96,12 @@ export default function VisualList({ list, factions }: { list: ConstrainedList, 
     return (
         <FactionsContext.Provider value={new Factions(factions)}>
             <Head>
-                <title>{`AS: ${list.name}`}</title>
-                <meta property="og:title" content={`AS: ${list.name}`} key="title" />
+                <title>{`AS: ${printListHeading(list.constraints, list.name)}`}</title>
+                <meta property="og:title" content={`AS: ${printListHeading(list.constraints, list.name)}`} key="title" />
                 <meta property="og:description" content={`Alpha Strike list shared via AS Builder`} key="description" />
             </Head>
             <div className='text-center w-full'>
-                <div>{list.constraints} : {list.name}</div>
+                <div>{printListHeading(list.constraints, list.name)}</div>
             </div>
             {visualisation}
         </FactionsContext.Provider>

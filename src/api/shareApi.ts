@@ -50,6 +50,22 @@ export function compareSelectedUnits(a: ISelectedUnit, b: ISelectedUnit): number
     return val
 }
 
+export function shareQuery({ name, total, units, constraints, eraId, factionId }: {
+    name: string,
+    total: number,
+    units: ISelectedUnit[],
+    constraints: string,
+    eraId?: number | null,
+    factionId?: number | null,
+}) {
+    const params = new URLSearchParams()
+    params.set('list', exportShare(name, total, units))
+    params.set('constraints', constraints)
+    if (eraId != null) params.set('era', String(eraId))
+    if (factionId != null) params.set('specific', String(factionId))
+    return params
+}
+
 export function exportShare(name: string, total: number, units: ISelectedUnit[]) {
     const unitsString = [...units].sort(compareSelectedUnits).map(u => [u.Id, u.skill, u.Name, u.lance || ''].join(':')).join(',')
     return `${name};${total};${unitsString}`
