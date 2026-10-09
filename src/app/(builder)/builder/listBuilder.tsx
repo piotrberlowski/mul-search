@@ -53,6 +53,7 @@ function BuilderFooter({
 
     function currentSnapshot(): Save {
         const save = controller.getSave()
+        if (save.units.length > 0) return save
         return {
             units: save.units,
             constraints: controller.getConstraints(),
