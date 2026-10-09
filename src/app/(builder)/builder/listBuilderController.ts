@@ -1,31 +1,23 @@
+import { isFailure } from "@/api/result";
 import { compareSelectedUnits } from "@/api/shareApi";
-import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, WORK_IN_PROGRESS_NAME, defaultBuilderIdentity, exportTTSString, formatDamageBrackets, loadBuilderIdentity, loadByName, loadLists, removeByName, saveBuilderIdentity, saveByName, saveLists, totalPV, validateStoredListName } from "@/api/unitListApi"
+import { ISelectedUnit, IUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, WORK_IN_PROGRESS_NAME, defaultBuilderIdentity, exportTTSString, formatDamageBrackets, loadBuilderIdentity, loadByName, parseId, rememberSave, saveBuilderIdentity, saveByName, totalPV, validateStoredListName } from "@/api/unitListApi"
 import { saveList, updateList } from "@/app/api/dao/lists"
-import { IUnit } from "@/api/unitListApi";
 import { searchParamsFromIds } from "@/app/data";
 import { LIST_PARAMETER } from "@/app/(utilities)/validate/result/validation";
 import { ChangeListener } from "@/api/commons";
 import { createContext, useContext } from "react";
-
-function numberOrNull(value: string | null): number | null {
-    if (value == null || value === '') return null
-    const n = Number(value)
-    return Number.isFinite(n) ? n : null
-}
 
 export class ListBuilderController {
     private save: Save;
     private constraints: string;
     private eraId: number | null;
     private factionId: number | null;
-    private storedLists: string[];
     private listName: string;
     private serverKey: string | null;
     private setSave?: ChangeListener<Save>;
     private setName?: ChangeListener<string>;
     private setServerKey?: ChangeListener<string | null>;
     private setTotal?: ChangeListener<number>;
-    private setStoredLists?: ChangeListener<string[]>;
     private summaryObserver?: ChangeListener<string>;
     public constraintsObserver?: ChangeListener<Save>;
 
@@ -36,14 +28,13 @@ export class ListBuilderController {
         factionId: string | null,
     ) {
         this.constraints = searchConstraints
-        this.eraId = numberOrNull(eraId)
-        this.factionId = numberOrNull(factionId)
+        this.eraId = parseId(eraId)
+        this.factionId = parseId(factionId)
         const identity = loadBuilderIdentity()
         this.listName = identity.name
         this.serverKey = identity.serverKey
         if (typeof window !== 'undefined') {
             this.save = loadByName(autosaveName)
-            this.storedLists = loadLists()
         } else {
             this.save = {
                 units: [],
@@ -51,7 +42,6 @@ export class ListBuilderController {
                 eraId: null,
                 factionId: null,
             }
-            this.storedLists = []
         }
     }
 
@@ -81,13 +71,11 @@ export class ListBuilderController {
         setSave: ChangeListener<Save>,
         setName: ChangeListener<string>,
         setTotal: ChangeListener<number>,
-        setStoredLists: ChangeListener<string[]>,
         setServerKey: ChangeListener<string | null>,
     ) {
         this.setSave = setSave
         this.setName = setName
         this.setTotal = setTotal
-        this.setStoredLists = setStoredLists
         this.setServerKey = setServerKey
     }
 
@@ -198,84 +186,50 @@ export class ListBuilderController {
     }
 
     public remember(name: string): string | null {
-        const nameError = validateStoredListName(name)
-        if (nameError) return nameError
-        if (this.save.units.length === 0) return 'Add units before remembering a list.'
-        this.store(name.trim())
-        return null
+        return rememberSave(this.save, name)
     }
 
-    public async overwrite(): Promise<string | null> {
-        if (!this.serverKey) return 'This list is not saved yet.'
+    public overwrite(): Promise<string | null> {
+        if (!this.serverKey) return Promise.resolve('This list is not saved yet.')
         const nameError = validateStoredListName(this.listName)
-        if (nameError) return nameError
-        if (this.save.units.length === 0) return 'Add units before saving.'
-        try {
-            const error = await updateList(this.serverKey, this.listName.trim(), this.save)
-            if (!error) this.adoptIdentity(this.listName.trim(), this.serverKey)
-            return error
-        } catch (e) {
-            console.error(e)
-            return 'Could not save the list.'
-        }
+        if (nameError) return Promise.resolve(nameError)
+        if (this.save.units.length === 0) return Promise.resolve('Add units before saving.')
+        const name = this.listName.trim()
+        return updateList(this.serverKey, name, this.save).then(
+            result => {
+                if (isFailure(result)) return result.error
+                this.adoptIdentity(name, this.serverKey)
+                return null
+            },
+            error => {
+                console.error(error)
+                return 'Could not save the list.'
+            },
+        )
     }
 
-    public async saveAs(name: string): Promise<string | null> {
+    public saveAs(name: string): Promise<string | null> {
         const nameError = validateStoredListName(name)
-        if (nameError) return nameError
-        if (this.save.units.length === 0) return 'Add units before saving.'
-        try {
-            const result = await saveList(name.trim(), this.save)
-            if ('error' in result) return result.error
-            this.adoptIdentity(name.trim(), result.key)
-            return null
-        } catch (e) {
-            console.error(e)
-            return 'Could not save the list.'
-        }
-    }
-
-    public store(name: string) {
+        if (nameError) return Promise.resolve(nameError)
+        if (this.save.units.length === 0) return Promise.resolve('Add units before saving.')
         const trimmed = name.trim()
-        const listPosition = this.storedLists.indexOf(trimmed)
-        if (this.save.units.length > 0) {
-            saveByName(this.save, trimmed)
-            if (listPosition == -1) {
-                this.storedLists = [...this.storedLists, trimmed]
-            }
-        } else {
-            if (listPosition != -1) {
-                this.storedLists = this.storedLists.filter(item => item != trimmed)
-            }
-            removeByName(trimmed)
-        }
-        this.setStoredLists?.(this.storedLists)
-        saveLists(this.storedLists)
-    }
-
-    public load(loadName: string) {
-        if (!this.setSave)
-            return
-        const load = loadByName(loadName)
-        if (load.units.length === 0) {
-            console.log("Loaded empty list... " + loadName)
-            return
-        }
-        this.save = load
-        this.setSave(load)
-        this.adoptIdentity(WORK_IN_PROGRESS_NAME, null)
-        this.updateTotal()
-        this.constraintsObserver?.(load)
+        return saveList(trimmed, this.save).then(
+            result => {
+                if (isFailure(result)) return result.error
+                this.adoptIdentity(trimmed, result.value)
+                return null
+            },
+            error => {
+                console.error(error)
+                return 'Could not save the list.'
+            },
+        )
     }
 
     public exportExternal(name: string, format: string) {
         if (format === "tts") {
             exportTTSString(name, this.save.units)
         }
-    }
-
-    public getStoredLists() {
-        return this.storedLists
     }
 
     public toValidateParams(): URLSearchParams {

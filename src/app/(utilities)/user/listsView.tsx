@@ -1,7 +1,8 @@
 'use client'
 
 import { materializeUnits } from "@/api/materializeUnits"
-import { ConstrainedList, shareQuery } from "@/api/shareApi"
+import { isFailure } from "@/api/result"
+import { ConstrainedList, copyShareLink, savedListHref, shareHref } from "@/api/shareApi"
 import { storeUnitsForPlay } from "@/components/playLink"
 import { builderHref } from "@/app/data"
 import { deleteListByKey, findListByKey } from "@/app/api/dao/lists"
@@ -13,12 +14,11 @@ import {
     loadByName,
     loadLists,
     removeByName,
-    saveBuilderIdentity,
-    saveByName,
     saveLists,
+    stageList,
     totalPV,
 } from "@/api/unitListApi"
-import { PencilSquareIcon, PlayIcon, PrinterIcon, TrashIcon } from "@heroicons/react/24/outline"
+import { PencilSquareIcon, PlayIcon, PrinterIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -34,6 +34,24 @@ type MemoryRow = {
     total: number
     constraints: string
     save: Save
+}
+
+type Notice = {
+    tone: 'error' | 'success'
+    text: string
+}
+
+type RowModel = {
+    id: string
+    name: string
+    total: number
+    constraints: string
+    busy?: boolean
+    onDelete: () => void
+    onEdit: () => void
+    onPrint: () => void
+    onShare: () => void
+    onPlay: () => void
 }
 
 function readMemories(): MemoryRow[] {
@@ -55,21 +73,13 @@ function readMemories(): MemoryRow[] {
     }
 }
 
-function memoryPrintHref(row: MemoryRow) {
-    const params = shareQuery({
-        name: row.name,
-        total: row.total,
-        units: row.save.units,
-        constraints: row.save.constraints,
-        eraId: row.save.eraId,
-        factionId: row.save.factionId,
-    })
-    return `/share?${params.toString()}`
-}
-
-function openInBuilder(save: Save, name: string, serverKey: string | null) {
-    saveByName(save, LOCAL_STORAGE_NAME_AUTOSAVE)
-    saveBuilderIdentity(serverKey ? { name, serverKey } : { name: WORK_IN_PROGRESS_NAME, serverKey: null })
+function savedUnits(list: ConstrainedList): Save {
+    return {
+        units: [],
+        constraints: list.constraints,
+        eraId: list.eraId ?? null,
+        factionId: list.factionId ?? null,
+    }
 }
 
 function ListAction({
@@ -91,26 +101,44 @@ function ListAction({
     )
 }
 
-function RowActions({
-    disabled,
-    onDelete,
-    onEdit,
-    onPrint,
-    onPlay,
-}: {
-    disabled?: boolean
-    onDelete: () => void
-    onEdit: () => void
-    onPrint: () => void
-    onPlay: () => void
-}) {
+function RowActions({ row }: { row: RowModel }) {
     const icon = "h-3.5 w-3.5 shrink-0"
     return (
         <div className="list-actions">
-            <ListAction label="Delete" icon={<TrashIcon className={icon} />} disabled={disabled} onClick={onDelete} />
-            <ListAction label="Edit" icon={<PencilSquareIcon className={icon} />} disabled={disabled} onClick={onEdit} />
-            <ListAction label="Print" icon={<PrinterIcon className={icon} />} onClick={onPrint} />
-            <ListAction label="Play" icon={<PlayIcon className={icon} />} disabled={disabled} onClick={onPlay} />
+            <ListAction label="Delete" icon={<TrashIcon className={icon} />} disabled={row.busy} onClick={row.onDelete} />
+            <ListAction label="Edit" icon={<PencilSquareIcon className={icon} />} disabled={row.busy} onClick={row.onEdit} />
+            <ListAction label="Print" icon={<PrinterIcon className={icon} />} disabled={row.busy} onClick={row.onPrint} />
+            <ListAction label="Share" icon={<ShareIcon className={icon} />} onClick={row.onShare} />
+            <ListAction label="Play" icon={<PlayIcon className={icon} />} disabled={row.busy} onClick={row.onPlay} />
+        </div>
+    )
+}
+
+function ListsTable({ rows }: { rows: RowModel[] }) {
+    return (
+        <div className="overflow-x-auto">
+            <table className="table lists-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Total PV</th>
+                        <th>Constraints</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map((row) => (
+                        <tr key={row.id}>
+                            <th>{row.name}</th>
+                            <td>{row.total}</td>
+                            <td>{row.constraints}</td>
+                            <td>
+                                <RowActions row={row} />
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     )
 }
@@ -127,11 +155,15 @@ export default function ListsView({
     const router = useRouter()
     const [memories, setMemories] = useState<MemoryRow[]>([])
     const [busy, setBusy] = useState<string | null>(null)
-    const [notice, setNotice] = useState<string | null>(savedError)
+    const [notice, setNotice] = useState<Notice | null>(savedError ? { tone: 'error', text: savedError } : null)
 
     useEffect(() => {
         setMemories(readMemories())
     }, [])
+
+    function reportCopy(error: string | null) {
+        setNotice(error ? { tone: 'error', text: error } : { tone: 'success', text: 'Link copied.' })
+    }
 
     function deleteMemory(name: string) {
         const lists = loadLists().filter((item) => item !== name)
@@ -141,8 +173,24 @@ export default function ListsView({
     }
 
     function editMemory(row: MemoryRow) {
-        openInBuilder(row.save, WORK_IN_PROGRESS_NAME, null)
+        stageList(row.save, WORK_IN_PROGRESS_NAME, null)
         router.push(builderHref(row.save.eraId, row.save.factionId))
+    }
+
+    function printMemory(row: MemoryRow) {
+        stageList(row.save, row.name, null)
+        router.push('/share')
+    }
+
+    function shareMemory(row: MemoryRow) {
+        copyShareLink(shareHref({
+            name: row.name,
+            total: row.total,
+            units: row.save.units,
+            constraints: row.save.constraints,
+            eraId: row.save.eraId,
+            factionId: row.save.factionId,
+        })).then(reportCopy)
     }
 
     function playSave(save: Save) {
@@ -150,141 +198,118 @@ export default function ListsView({
         router.push('/play')
     }
 
-    function unavailableMessage(list: ConstrainedList) {
-        if (list.constraints === 'List not found' || list.constraints === 'Server Error!' || list.name === 'Error loading list!') {
-            return list.constraints || 'Could not open that list.'
-        }
-        return 'That list has no units.'
-    }
-
-    async function withSavedList(key: string, action: (list: ConstrainedList) => Promise<void>) {
+    function withSavedList(key: string, action: (list: ConstrainedList) => Promise<unknown> | void) {
         setBusy(key)
         setNotice(null)
-        try {
-            const list = await findListByKey(key)
-            if (!list.units.length) {
-                setNotice(unavailableMessage(list))
+        return findListByKey(key).then(result => {
+            if (isFailure(result)) {
+                setNotice({ tone: 'error', text: result.error })
                 return
             }
-            await action(list)
-        } catch (error) {
+            if (!result.value.units.length) {
+                setNotice({ tone: 'error', text: 'That list has no units.' })
+                return
+            }
+            return action(result.value)
+        }).catch(error => {
             console.error(error)
-            setNotice('Could not open that list.')
-        } finally {
-            setBusy(null)
-        }
+            setNotice({ tone: 'error', text: 'Could not open that list.' })
+        }).finally(() => setBusy(null))
+    }
+
+    function stageSaved(list: ConstrainedList, name: string, serverKey: string | null) {
+        return materializeUnits(list.units).then(units => {
+            const save: Save = { ...savedUnits(list), units }
+            stageList(save, name, serverKey)
+            return save
+        })
     }
 
     function editSaved(summary: SavedListSummary) {
-        return withSavedList(summary.key, async (list) => {
-            const units = await materializeUnits(list.units)
-            const save: Save = {
-                units,
-                constraints: list.constraints,
-                eraId: list.eraId ?? null,
-                factionId: list.factionId ?? null,
-            }
-            openInBuilder(save, list.name || summary.name, summary.key)
-            router.push(builderHref(save.eraId, save.factionId))
-        })
+        return withSavedList(summary.key, list =>
+            stageSaved(list, list.name || summary.name, summary.key).then(save => {
+                router.push(builderHref(save.eraId, save.factionId))
+            })
+        )
+    }
+
+    function printSaved(summary: SavedListSummary) {
+        return withSavedList(summary.key, list =>
+            stageSaved(list, list.name || summary.name, summary.key).then(() => {
+                router.push('/share')
+            })
+        )
     }
 
     function playSaved(summary: SavedListSummary) {
-        return withSavedList(summary.key, async (list) => {
-            const units = await materializeUnits(list.units)
-            storeUnitsForPlay(units)
-            router.push('/play')
-        })
+        return withSavedList(summary.key, list =>
+            materializeUnits(list.units).then(units => {
+                storeUnitsForPlay(units)
+                router.push('/play')
+            })
+        )
     }
 
-    async function deleteSaved(key: string) {
+    function shareSaved(summary: SavedListSummary) {
+        copyShareLink(savedListHref(summary.key)).then(reportCopy)
+    }
+
+    function deleteSaved(key: string) {
         setBusy(key)
         setNotice(null)
-        try {
-            await deleteListByKey(key)
-            detachBuilderIdentity(key)
-            router.refresh()
-        } catch (error) {
-            console.error(error)
-            setNotice('Could not delete that list.')
-        } finally {
-            setBusy(null)
-        }
+        deleteListByKey(key).then(
+            result => {
+                if (isFailure(result)) {
+                    setNotice({ tone: 'error', text: result.error })
+                    return
+                }
+                detachBuilderIdentity(key)
+                router.refresh()
+            },
+            error => {
+                console.error(error)
+                setNotice({ tone: 'error', text: 'Could not delete that list.' })
+            },
+        ).finally(() => setBusy(null))
     }
+
+    const memoryRows: RowModel[] = memories.map((row) => ({
+        id: row.name,
+        name: row.name,
+        total: row.total,
+        constraints: row.constraints,
+        onDelete: () => deleteMemory(row.name),
+        onEdit: () => editMemory(row),
+        onPrint: () => printMemory(row),
+        onShare: () => shareMemory(row),
+        onPlay: () => playSave(row.save),
+    }))
+
+    const savedRows: RowModel[] = savedLists.map((list) => ({
+        id: list.key,
+        name: list.name,
+        total: list.total,
+        constraints: list.constraints,
+        busy: busy === list.key,
+        onDelete: () => deleteSaved(list.key),
+        onEdit: () => editSaved(list),
+        onPrint: () => printSaved(list),
+        onShare: () => shareSaved(list),
+        onPlay: () => playSaved(list),
+    }))
 
     return (
         <div className="w-full max-w-screen-lg mx-auto my-4 flex flex-col gap-6">
             <h1 className="text-lg">Lists</h1>
-            {notice ? <div role="alert" className="alert alert-error">{notice}</div> : null}
+            {notice ? <div role="status" className={`alert ${notice.tone === 'error' ? 'alert-error' : 'alert-success'}`}>{notice.text}</div> : null}
             <section>
                 <h2 className="text-base font-semibold mb-2">Memories</h2>
-                {memories.length === 0 ? <p className="text-sm">No lists remembered on this device.</p> : (
-                    <div className="overflow-x-auto">
-                        <table className="table lists-table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Total PV</th>
-                                    <th>Constraints</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {memories.map((row) => (
-                                    <tr key={row.name}>
-                                        <th>{row.name}</th>
-                                        <td>{row.total}</td>
-                                        <td>{row.constraints}</td>
-                                        <td>
-                                            <RowActions
-                                                onDelete={() => deleteMemory(row.name)}
-                                                onEdit={() => editMemory(row)}
-                                                onPrint={() => router.push(memoryPrintHref(row))}
-                                                onPlay={() => playSave(row.save)}
-                                            />
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                {memoryRows.length === 0 ? <p className="text-sm">No lists remembered on this device.</p> : <ListsTable rows={memoryRows} />}
             </section>
             {loggedIn ? (
                 <section>
                     <h2 className="text-base font-semibold mb-2">Saved lists</h2>
-                    {savedLists.length === 0 ? <p className="text-sm">No lists saved yet.</p> : (
-                        <div className="overflow-x-auto">
-                            <table className="table lists-table">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Total PV</th>
-                                        <th>Constraints</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {savedLists.map((list) => (
-                                        <tr key={list.key}>
-                                            <th>{list.name}</th>
-                                            <td>{list.total}</td>
-                                            <td>{list.constraints}</td>
-                                            <td>
-                                                <RowActions
-                                                    disabled={busy === list.key}
-                                                    onDelete={() => deleteSaved(list.key)}
-                                                    onEdit={() => editSaved(list)}
-                                                    onPrint={() => router.push(`/share?key=${list.key}`)}
-                                                    onPlay={() => playSaved(list)}
-                                                />
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                    {savedRows.length === 0 ? <p className="text-sm">No lists saved yet.</p> : <ListsTable rows={savedRows} />}
                 </section>
             ) : null}
         </div>
