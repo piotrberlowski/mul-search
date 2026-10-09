@@ -8,7 +8,7 @@ import { ISelectedUnit, Save, WORK_IN_PROGRESS_NAME, groupByLance, loadBuilderId
 import PlayLink from '../../../components/playLink';
 import { ListLine } from './ListLine';
 import { ListBuilderController, useBuilderContext } from './listBuilderController';
-import useNameDialog, { rememberOrSaveAs } from './saveDialog';
+import useNameDialog from './saveDialog';
 import { useSession } from 'next-auth/react';
 
 function BuilderHeader({ controller, children }: { controller: ListBuilderController, children: React.ReactNode }) {
@@ -53,11 +53,19 @@ function BuilderFooter({
     const displayName = savedOnServer ? listName : WORK_IN_PROGRESS_NAME
 
     const [cmbBtn, cmbDlg] = useCombinations(units, <>Sub-lists</>, 'btn text-center w-full btn-sm')
-    const [nameBtn, nameDlg] = useNameDialog({
-        label: loggedIn ? 'Save as' : 'Remember for later',
-        confirmLabel: loggedIn ? 'Save as' : 'Remember for later',
-        initialName: loggedIn && savedOnServer ? listName : '',
-        onConfirm: rememberOrSaveAs(controller, loggedIn),
+    const [saveAsBtn, saveAsDlg] = useNameDialog({
+        id: 'dlg-save-as',
+        label: 'Save as',
+        confirmLabel: 'Save as',
+        initialName: savedOnServer ? listName : '',
+        onConfirm: (name) => controller.saveAs(name),
+    })
+    const [rememberBtn, rememberDlg] = useNameDialog({
+        id: 'dlg-remember',
+        label: 'Remember for later',
+        confirmLabel: 'Remember for later',
+        initialName: savedOnServer ? listName : '',
+        onConfirm: (name) => controller.remember(name),
     })
 
     async function onSave(event: React.MouseEvent<HTMLButtonElement>) {
@@ -83,7 +91,8 @@ function BuilderFooter({
                         e?.currentTarget.blur()
                     }}>Clear</button></li>
                     {loggedIn && savedOnServer ? <li><button className="btn text-center w-full btn-sm" onClick={onSave}>Save</button></li> : null}
-                    <li>{nameBtn}</li>
+                    {loggedIn ? <li>{saveAsBtn}</li> : null}
+                    <li>{rememberBtn}</li>
                     <li><Link href="/user" className="btn text-center w-full btn-sm">Load</Link></li>
                     <li><button className="btn text-center w-full btn-sm" onClick={e => {
                         router.push("/validate/result?" + controller.toValidateParams().toString())
@@ -98,7 +107,8 @@ function BuilderFooter({
                     <li><Link href="/tts/" target="_blank" className="btn text-center w-full btn-sm" onClick={e => controller.exportExternal(listName, "tts")}>TTS</Link></li>
                 </ul>
             </div>
-            {nameDlg}
+            {saveAsDlg}
+            {rememberDlg}
             {cmbDlg}
         </div>
     )
