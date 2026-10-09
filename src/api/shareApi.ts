@@ -50,6 +50,19 @@ export function compareSelectedUnits(a: ISelectedUnit, b: ISelectedUnit): number
     return val
 }
 
+function shareParams(name: string, total: number, body: string, constraints: string, eraId?: number | null, factionId?: number | null) {
+    const params = new URLSearchParams()
+    params.set('list', `${name};${total};${body}`)
+    params.set('constraints', constraints)
+    if (eraId != null) params.set('era', String(eraId))
+    if (factionId != null) params.set('specific', String(factionId))
+    return params
+}
+
+function unitBody(units: { id: string | number, skill: number, name: string, lance?: string | null }[]) {
+    return units.map(unit => [unit.id, unit.skill, unit.name, unit.lance || ''].join(':')).join(',')
+}
+
 export function shareQuery({ name, total, units, constraints, eraId, factionId }: {
     name: string,
     total: number,
@@ -58,17 +71,43 @@ export function shareQuery({ name, total, units, constraints, eraId, factionId }
     eraId?: number | null,
     factionId?: number | null,
 }) {
-    const params = new URLSearchParams()
-    params.set('list', exportShare(name, total, units))
-    params.set('constraints', constraints)
-    if (eraId != null) params.set('era', String(eraId))
-    if (factionId != null) params.set('specific', String(factionId))
-    return params
+    const body = unitBody([...units].sort(compareSelectedUnits).map(unit => ({
+        id: unit.Id,
+        skill: unit.skill,
+        name: unit.Name,
+        lance: unit.lance,
+    })))
+    return shareParams(name, total, body, constraints, eraId, factionId)
 }
 
-export function exportShare(name: string, total: number, units: ISelectedUnit[]) {
-    const unitsString = [...units].sort(compareSelectedUnits).map(u => [u.Id, u.skill, u.Name, u.lance || ''].join(':')).join(',')
-    return `${name};${total};${unitsString}`
+export function shareHref(input: {
+    name: string,
+    total: number,
+    units: ISelectedUnit[],
+    constraints: string,
+    eraId?: number | null,
+    factionId?: number | null,
+}) {
+    return `/share?${shareQuery(input).toString()}`
+}
+
+export function shareHrefFromMul(list: ConstrainedList) {
+    return `/share?${shareParams(list.name, list.total, unitBody(list.units), list.constraints, list.eraId, list.factionId).toString()}`
+}
+
+export function savedListHref(key: string) {
+    return `/share?key=${encodeURIComponent(key)}`
+}
+
+export function copyShareLink(href: string): Promise<string | null> {
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+        return Promise.resolve('Could not copy the link.')
+    }
+    const url = typeof window === 'undefined' ? href : new URL(href, window.location.origin).toString()
+    return navigator.clipboard.writeText(url).then(
+        () => null,
+        () => 'Could not copy the link.',
+    )
 }
 
 export function parseShare(importString: string): MulList {

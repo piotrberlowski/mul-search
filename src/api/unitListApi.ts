@@ -77,6 +77,12 @@ export function validateStoredListName(name: string): string | null {
     return null
 }
 
+export function parseId(value: string | null | undefined): number | null {
+    if (value == null || value === '') return null
+    const n = Number(value)
+    return Number.isFinite(n) ? n : null
+}
+
 export function defaultBuilderIdentity(): BuilderIdentity {
     return { name: '', serverKey: null }
 }
@@ -88,7 +94,6 @@ export function loadBuilderIdentity(): BuilderIdentity {
         if (!raw) return defaultBuilderIdentity()
         const parsed = JSON.parse(raw) as Partial<BuilderIdentity>
         const serverKey = typeof parsed.serverKey === 'string' && parsed.serverKey ? parsed.serverKey : null
-        if (!serverKey) return defaultBuilderIdentity()
         const name = typeof parsed.name === 'string' ? parsed.name : ''
         return { name, serverKey }
     } catch {
@@ -104,6 +109,33 @@ export function saveBuilderIdentity(identity: BuilderIdentity) {
 export function detachBuilderIdentity(serverKey: string) {
     const current = loadBuilderIdentity()
     if (current.serverKey === serverKey) saveBuilderIdentity(defaultBuilderIdentity())
+}
+
+export function stageList(save: Save, name: string, serverKey: string | null) {
+    saveByName(save, LOCAL_STORAGE_NAME_AUTOSAVE)
+    saveBuilderIdentity({ name: name.trim(), serverKey })
+}
+
+export function loadStagedList(): { save: Save, name: string, serverKey: string | null } {
+    const identity = loadBuilderIdentity()
+    return { save: loadByName(LOCAL_STORAGE_NAME_AUTOSAVE), name: identity.name, serverKey: identity.serverKey }
+}
+
+export function rememberSave(save: Save, name: string): string | null {
+    const trimmed = name.trim()
+    const nameError = validateStoredListName(trimmed)
+    if (nameError) return nameError
+    if (save.units.length === 0) return 'Add units before remembering a list.'
+    try {
+        const lists = loadLists().filter(item => item)
+        saveByName(save, trimmed)
+        if (!lists.includes(trimmed)) lists.push(trimmed)
+        saveLists(lists)
+        return null
+    } catch (error) {
+        console.error(error)
+        return 'Could not remember that list.'
+    }
 }
 
 export function damageBracket(text: string | null | undefined, value: number) {
@@ -163,10 +195,7 @@ function updateDefaultLance(units: ISelectedUnit[]) {
 }
 
 function readStoredId(key: string): number | null {
-    const raw = localStorage.getItem(key)
-    if (raw == null || raw === '') return null
-    const n = Number(raw)
-    return Number.isFinite(n) ? n : null
+    return parseId(localStorage.getItem(key))
 }
 
 function writeStoredId(key: string, id: number | null) {
