@@ -3,11 +3,11 @@ import { ReadonlyURLSearchParams, useSearchParams } from "next/navigation";
 import { Faction, Factions, MULSearchParams } from '@/app/data'
 import React, { useEffect, useState } from "react";
 import { IUnit } from "@/api/unitListApi";
-import { IResult, LIST_CHECKS, ValidateUnit, judge, testUnit } from "./results";
+import { IResult, LIST_CHECKS, NOT_AVAILABLE_ERROR, ValidateUnit, judge, testUnit } from "./results";
 import { resolveUnitsAvailability } from '@/app/api/dao/units'
 
 export const LIST_PARAMETER = "list";
-export const NOT_AVAILABLE_ERROR = "Not Available"
+export { NOT_AVAILABLE_ERROR }
 
 function looksLikeUnitId(value: string) {
     return /^\d+$/.test(value) || (/^[A-Za-z0-9]+$/.test(value) && /\d/.test(value))

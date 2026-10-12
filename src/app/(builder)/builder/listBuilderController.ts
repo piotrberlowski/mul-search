@@ -57,9 +57,10 @@ export class ListBuilderController {
         }
     }
 
-    private matchesSearch() {
-        if (this.save.units.length === 0) return true
-        return this.save.eraId === this.eraId && this.save.factionId === this.factionId
+    public setSearch(constraints: string, eraId: string | null, factionId: string | null) {
+        this.constraints = constraints
+        this.eraId = numberOrNull(eraId)
+        this.factionId = numberOrNull(factionId)
     }
 
     public registerBuilder(
@@ -101,20 +102,7 @@ export class ListBuilderController {
         return this.save.units
     }
 
-    public guardedAddUnit(unit: IUnit) {
-        if (!this.setSave) 
-            return
-        if (!this.matchesSearch()) {
-            const target = this.save.eraId == null || this.save.factionId == null
-                ? 'This list has no era or faction. Clear the list first.'
-                : `Please clear the list or set your search to:\n${this.save.constraints}`
-            alert(`Cannot add unit. ${target}`)
-            return
-        }
-        this.addUnit(unit)
-    }
-
-    private addUnit(unit: IUnit) {
+    public addUnit(unit: IUnit) {
         if (!this.setSave) 
             return 
         const isEmpty = this.save.units.length == 0
