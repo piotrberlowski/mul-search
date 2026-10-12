@@ -8,11 +8,13 @@ import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, groupByLance, totalPV
 import PlayLink from '../../../components/playLink';
 import { ListLine } from './ListLine';
 import { ListBuilderController, useBuilderContext } from './listBuilderController';
+import { useListValidation } from './useListValidation';
 import useLoadDialog from './loadDialog';
 import useSaveDialog from './saveDialog';
 import { SessionProvider, useSession } from 'next-auth/react';
+import { ValidationWarning } from './validationWarning';
 
-function BuilderHeader({ controller, children }: { controller: ListBuilderController, children: React.ReactNode }) {
+function BuilderHeader({ controller, messages, children }: { controller: ListBuilderController, messages: string[], children: React.ReactNode }) {
     const units = controller.getUnits()
     const constraints = controller.getConstraints()
     return (
@@ -22,9 +24,12 @@ function BuilderHeader({ controller, children }: { controller: ListBuilderContro
                 {children}
             </div>
             <div className="w-full flex-0 flex">
-                <div className="w-full flex max-h-fit">
+                <div className="relative z-30 w-full flex max-h-fit items-center">
                     <div className="text-center flex-1 max-h-fit">Units: {units.length}</div>
-                    <div className="text-center flex-1 max-h-fit">PV: {totalPV(units)}</div>
+                    <div className="text-center flex-1 max-h-fit inline-flex items-center justify-center gap-1">
+                        <span>PV: {totalPV(units)}</span>
+                        <ValidationWarning messages={messages} />
+                    </div>
                 </div>
             </div>
         </>
@@ -111,7 +116,7 @@ function UnitsHeader({ lid, units }: { lid: string, units: ISelectedUnit[] }) {
     )
 }
 
-function Lines({ save, controller }: { save: Save, controller: ListBuilderController }) {
+function Lines({ save, controller, errorsByOrdinal }: { save: Save, controller: ListBuilderController, errorsByOrdinal: Record<number, string[]> }) {
     const lances = groupByLance(save.units)
 
     return (
@@ -119,7 +124,7 @@ function Lines({ save, controller }: { save: Save, controller: ListBuilderContro
             {
                 Array.from(lances).flatMap(([lid, units]) => [
                     <UnitsHeader key={`lance-header-${lid}`} lid={`Lance: ${lid || 'default'}`} units={units} />,
-                    ...units.map(u => <ListLine key={u.ordinal} unit={u} controller={controller} />)
+                    ...units.map(u => <ListLine key={u.ordinal} unit={u} controller={controller} errors={errorsByOrdinal[u.ordinal]} />)
                 ])
             }
         </div>
@@ -140,20 +145,20 @@ export default function ListBuilder({ children }: { children: React.ReactNode })
         setStoredLists,
     )
 
-    const count = save.units.length
+    const validation = useListValidation(save.units)
 
     return (
         <>
             <div className="flex-1 flex flex-col h-full pb-5 px-1">
                 <div className="flex-1 border border-red-500 flex flex-col bg-white dark:bg-base-200 flex flex-col h-full">
-                    <BuilderHeader controller={controller} >
+                    <BuilderHeader controller={controller} messages={validation.messages}>
                         {children}
                     </BuilderHeader>
                     <div className="flex-none w-full flex px-2">
                         <span className="mr-1 flex-none">Name: </span>
                         <input className="inline flex-1 h-5 p-0 overflow-hidden" type='text' onChange={e => setName(e.target.value)} value={name} />
                     </div>
-                    <Lines save={save} controller={controller} />
+                    <Lines save={save} controller={controller} errorsByOrdinal={validation.errorsByOrdinal} />
                     <div className="flex-none w-full bg-inherit grid grid-cols-1">
                         <BuilderFooter
                             units={save.units}

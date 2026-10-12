@@ -115,7 +115,7 @@ export default function UnitLine({ unit, idx, mech }: { unit: IUnit, idx: number
 
     const onAddClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault()
-        controller.guardedAddUnit(unit)
+        controller.addUnit(unit)
     }
     const dmgString = formatDamageString(unit, mech)
     return (

@@ -1,4 +1,6 @@
-import { currentPV, IUnit, totalPV } from "@/api/unitListApi"
+import { currentPV, IUnit } from "@/api/unitListApi"
+
+export const NOT_AVAILABLE_ERROR = "Not Available"
 
 
 const BF_TYPE_CV = "CV"
@@ -23,6 +25,8 @@ export interface IResult extends ValidateUnit {
 export interface ICheckResult {
     valid: boolean
     message?: string
+    /** Indexes into the validated list for units that cause this failure. */
+    offenders?: number[]
 }
 
 export interface IListCheck {
@@ -45,10 +49,11 @@ const VALID: ICheckResult = {
     valid: true    
 }
 
-function invalid(msg: string): ICheckResult {
+function invalid(msg: string, offenders?: number[]): ICheckResult {
     return {
         valid: false,
         message: msg,
+        offenders,
     }
 }
 
@@ -61,13 +66,14 @@ Omnimech)
 - 5 of any Infantry Type (includes Battlearmor)
 */
 function unitCountCheck(list: IResult[]) {
-    return (list.length<=16) ? VALID : invalid("Too many units!")
+    return (list.length<=16) ? VALID : invalid("Too many units!", list.map((_, i) => i))
 }
 
 function typeCountCheckFactory(types: string[], maxCount: number) {
     return (list: IResult[]) => {
-        const typeCount = list.filter(r => r.found).filter(r => types.includes(r?.unit?.Type.Name || "INVALID")).length
-        return (typeCount <= maxCount) ? VALID : invalid(`Too many units of type ${types} (${typeCount})`)
+        const offenders = list.map((r, i) => ({ r, i })).filter(({ r }) => r.found && types.includes(r?.unit?.Type.Name || "INVALID")).map(({ i }) => i)
+        const typeCount = offenders.length
+        return (typeCount <= maxCount) ? VALID : invalid(`Too many units of type ${types} (${typeCount})`, offenders)
     }
 }
 
@@ -76,19 +82,16 @@ An army can only have a JMPS combined value
 of 2. Either 2 units with JMPS1, or one unit with
 JMPS2
 */
+function jmpsValue(abilities?: string) {
+    if (!abilities) return 0
+    const match = /JMPS(\d+)/.exec(abilities)
+    return match ? +match[1] : 0
+}
+
 function jmpsCheck(list: IResult[]) {
-    const re = /JMPS(\d+)/
-    const jmpsTotal = list.filter(r => r.found).map(r => r.unit?.BFAbilities).map(ab => {
-        if (!ab) {
-            return 0
-        }
-        const match = re.exec(ab)
-        if (!match) {
-            return 0
-        }
-        return +match[1]
-    }).reduce((total, jmps) => total + jmps)
-    return (jmpsTotal <= 2) ? VALID : invalid(`Total JMPS too high: ${jmpsTotal}`)
+    const contributors = list.map((r, i) => ({ i, jmps: r.found ? jmpsValue(r.unit?.BFAbilities) : 0 })).filter(c => c.jmps > 0)
+    const jmpsTotal = contributors.reduce((total, c) => total + c.jmps, 0)
+    return (jmpsTotal <= 2) ? VALID : invalid(`Total JMPS too high: ${jmpsTotal}`, contributors.map(c => c.i))
 }
 
 /*
@@ -102,12 +105,12 @@ Examples:
 3. One Unit at Skill 2 and One Unit at Skill 6
 */
 function pilotSkillCheck(list: IResult[]) {
-    const totalSkill26 = list.map(r => +r.skill).filter(s => (s == 2 || s == 6)).length
-    if (totalSkill26 > 2) {
-        return invalid(`Too many units on skill 2 or 6: ${totalSkill26}`)
+    const skill26 = list.map((r, i) => ({ i, s: +r.skill })).filter(({ s }) => (s == 2 || s == 6))
+    if (skill26.length > 2) {
+        return invalid(`Too many units on skill 2 or 6: ${skill26.length}`, skill26.map(({ i }) => i))
     }
-    const totalSkill17 = list.map(r => +r.skill).filter(s => (s < 2 || s > 6)).length
-    return (totalSkill17 == 0) ? VALID : invalid(`Units of skill <=1 or >=7: ${totalSkill17}`)
+    const skill17 = list.map((r, i) => ({ i, s: +r.skill })).filter(({ s }) => (s < 2 || s > 6))
+    return (skill17.length == 0) ? VALID : invalid(`Units of skill <=1 or >=7: ${skill17.length}`, skill17.map(({ i }) => i))
 }
 
 function canHaveRepeatedVariant(u?: IUnit) {
@@ -123,36 +126,39 @@ function canHaveRepeatedVariant(u?: IUnit) {
 }
 
 function variantCheck(list: IResult[]) {
-    const repeatedVariants = Array.from((list.filter(r => canHaveRepeatedVariant(r.unit))).reduce( (acc, r) => {
-        if (r.unit) {
-            acc.set(r.unit.Name, (acc.get(r.unit.Name)||0)+1)
-        }
-        return acc
-    }, new Map<String, number>())).filter(([_, c]) => c>1)
-    const variantsText = repeatedVariants.map(([n,c]) => `${n}: ${c}`).join(",")
-    return (repeatedVariants.length == 0) ? VALID : invalid(`More than one unit of the same variant: ${variantsText}`)
+    const indexesByName = new Map<string, number[]>()
+    list.forEach((r, i) => {
+        if (!canHaveRepeatedVariant(r.unit) || !r.unit) return
+        const indexes = indexesByName.get(r.unit.Name) ?? []
+        indexes.push(i)
+        indexesByName.set(r.unit.Name, indexes)
+    })
+    const repeatedVariants = Array.from(indexesByName.entries()).filter(([_, indexes]) => indexes.length > 1)
+    const variantsText = repeatedVariants.map(([n, indexes]) => `${n}: ${indexes.length}`).join(",")
+    return (repeatedVariants.length == 0) ? VALID : invalid(`More than one unit of the same variant: ${variantsText}`, repeatedVariants.flatMap(([_, indexes]) => indexes))
 }
 
 function chassisCheck(list: IResult[]) {
-    const chassisCount = Array.from(list.reduce( (acc, r) => {
-        if (r.unit) {
-            acc.set(r.unit.Class, (acc.get(r.unit.Class)||0)+1)
-        }
-        return acc
-    }, new Map<String, number>()))
-    const tripleChassis = chassisCount.filter(([_,c]) => c>2)
+    const indexesByChassis = new Map<string, number[]>()
+    list.forEach((r, i) => {
+        if (!r.unit) return
+        const indexes = indexesByChassis.get(r.unit.Class) ?? []
+        indexes.push(i)
+        indexesByChassis.set(r.unit.Class, indexes)
+    })
+    const tripleChassis = Array.from(indexesByChassis.entries()).filter(([_, indexes]) => indexes.length > 2)
     if (tripleChassis.length > 0) {
-        const tripleChassisText = tripleChassis.map(([n,c]) => `${n}: ${c}`).join(",")
-        return invalid(`Chassis repeated more than twice: ${tripleChassisText}}`)
+        const tripleChassisText = tripleChassis.map(([n, indexes]) => `${n}: ${indexes.length}`).join(",")
+        return invalid(`Chassis repeated more than twice: ${tripleChassisText}`, tripleChassis.flatMap(([_, indexes]) => indexes))
     }
     return VALID
 }
 
 function maxOneUnique(list: IResult[]) {
-    const uniques = list.filter(res => res.error === 'unique')
+    const uniques = list.map((res, i) => ({ res, i })).filter(({ res }) => res.error === 'unique')
     if (uniques.length > 1) {
-        const uniquesText = uniques.map(v => v.unit?.Name).join(",")
-        return invalid(`More than one unique unit: [${uniquesText}]`)
+        const uniquesText = uniques.map(v => v.res.unit?.Name).join(",")
+        return invalid(`More than one unique unit: [${uniquesText}]`, uniques.map(({ i }) => i))
     }
     return VALID
 }

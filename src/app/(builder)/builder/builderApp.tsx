@@ -5,7 +5,7 @@ import { EraCatalogContext, FactionsContext } from "@/app/factionsContext";
 import { XCircleIcon } from "@heroicons/react/16/solid";
 import dynamic from "next/dynamic";
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useRef } from 'react';
 import { LIST_DRAWER_ID } from "./constants";
 import { ListBuilderContext, ListBuilderController } from "./listBuilderController";
 import SearchResults from './searchResults';
@@ -44,12 +44,18 @@ export default function BuilderApp({
     const listConstraints = (factionName && eraName)
         ? `[${factionName} during ${eraName}]`
         : "[Unknown]"
+    const controllerRef = useRef<ListBuilderController | null>(null)
+    if (!controllerRef.current) {
+        controllerRef.current = new ListBuilderController(listConstraints, LOCAL_STORAGE_NAME_AUTOSAVE, mulSP.era, mulSP.specific)
+    } else {
+        controllerRef.current.setSearch(listConstraints, mulSP.era, mulSP.specific)
+    }
 
     return <>
         <div className="">
             <FactionsContext.Provider value={factionData}>
                 <EraCatalogContext.Provider value={{ eras, factionsByEra }}>
-                <ListBuilderContext.Provider value={new ListBuilderController(listConstraints, LOCAL_STORAGE_NAME_AUTOSAVE, mulSP.era, mulSP.specific)}>
+                <ListBuilderContext.Provider value={controllerRef.current}>
                     <div className="drawer auto-cols-fr xl:drawer-open bg-inherit mx-auto w-full">
                         <input id={LIST_DRAWER_ID} type="checkbox" className="drawer-toggle" />
                         <div className="drawer-content col-start-1 bg-inherit mt-8" >
