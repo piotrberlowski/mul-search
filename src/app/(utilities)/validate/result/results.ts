@@ -1,14 +1,10 @@
-import { currentPV, IUnit } from "@/api/unitListApi"
+import { currentPV, IUnit, totalPV } from "@/api/unitListApi"
 
 export const NOT_AVAILABLE_ERROR = "Not Available"
+const PV_LIMIT = 350
 
-
-const BF_TYPE_CV = "CV"
-const BF_TYPE_CI = "CI"
-const BF_TYPE_BA = "BA"
-const BF_TYPE_PM = "PM"
-
-const ITN_RE = /^IT([0-9]{1,2})$/
+const MECH_TYPES = ["BattleMech", "IndustrialMech"]
+const VEHICLE_TYPES = ["Combat Vehicle", "OmniVehicle"]
 
 
 export interface ValidateUnit {
@@ -36,12 +32,15 @@ export interface IListCheck {
 export type Check = {
     name: string
     check: IListCheck
+    /** Mark the offending units, not only the list header. */
+    highlightUnits?: boolean
 }
 
-function check(name: string, check: IListCheck) {
+function check(name: string, check: IListCheck, highlightUnits = false) {
     return {
         name: name,
         check: check,
+        highlightUnits,
     }
 }
 
@@ -113,35 +112,50 @@ function pilotSkillCheck(list: IResult[]) {
     return (skill17.length == 0) ? VALID : invalid(`Units of skill <=1 or >=7: ${skill17.length}`, skill17.map(({ i }) => i))
 }
 
-function canHaveRepeatedVariant(u?: IUnit) {
-    if (!u || !u.BFType) return false
-    const canHaveVariants = [BF_TYPE_BA, BF_TYPE_CI, BF_TYPE_PM].includes(u.BFType)
-    if (canHaveVariants) return canHaveVariants
-    if (BF_TYPE_CV === u.BFType) {
-        // CVs with IT3+ can have repeated variant
-        const itTotal = u.BFAbilities.split(",").map(a => ITN_RE.exec(a)).map(m => m ? +m[1] : 0).reduce((t,c)=>t+c)
-        return itTotal < 3
+function transportRating(abilities?: string) {
+    if (!abilities) return 0
+    let rating = 0
+    for (const match of abilities.matchAll(/IT\s*(\d+)/g)) {
+        rating = Math.max(rating, Number(match[1]))
     }
-    return false;
+    return rating
+}
+
+function isVehicle(unit: IUnit) {
+    return VEHICLE_TYPES.includes(unit.Type?.Name)
+}
+
+function exemptFromChassisVariantRules(unit: IUnit) {
+    return isVehicle(unit) && transportRating(unit.BFAbilities) >= 3
+}
+
+function limitedByVariant(unit: IUnit) {
+    if (exemptFromChassisVariantRules(unit)) return false
+    return MECH_TYPES.includes(unit.Type?.Name) || isVehicle(unit)
+}
+
+function variantKey(unit: IUnit) {
+    return `${unit.Class}\0${unit.Variant}`
 }
 
 function variantCheck(list: IResult[]) {
-    const indexesByName = new Map<string, number[]>()
+    const indexesByVariant = new Map<string, { label: string, indexes: number[] }>()
     list.forEach((r, i) => {
-        if (!canHaveRepeatedVariant(r.unit) || !r.unit) return
-        const indexes = indexesByName.get(r.unit.Name) ?? []
-        indexes.push(i)
-        indexesByName.set(r.unit.Name, indexes)
+        if (!r.unit || !limitedByVariant(r.unit)) return
+        const key = variantKey(r.unit)
+        const entry = indexesByVariant.get(key) ?? { label: r.unit.Name, indexes: [] }
+        entry.indexes.push(i)
+        indexesByVariant.set(key, entry)
     })
-    const repeatedVariants = Array.from(indexesByName.entries()).filter(([_, indexes]) => indexes.length > 1)
-    const variantsText = repeatedVariants.map(([n, indexes]) => `${n}: ${indexes.length}`).join(",")
-    return (repeatedVariants.length == 0) ? VALID : invalid(`More than one unit of the same variant: ${variantsText}`, repeatedVariants.flatMap(([_, indexes]) => indexes))
+    const repeatedVariants = Array.from(indexesByVariant.values()).filter(entry => entry.indexes.length > 1)
+    const variantsText = repeatedVariants.map(entry => `${entry.label}: ${entry.indexes.length}`).join(",")
+    return (repeatedVariants.length == 0) ? VALID : invalid(`More than one unit of the same variant: ${variantsText}`, repeatedVariants.flatMap(entry => entry.indexes))
 }
 
 function chassisCheck(list: IResult[]) {
     const indexesByChassis = new Map<string, number[]>()
     list.forEach((r, i) => {
-        if (!r.unit) return
+        if (!r.unit || exemptFromChassisVariantRules(r.unit) || !r.unit.Class) return
         const indexes = indexesByChassis.get(r.unit.Class) ?? []
         indexes.push(i)
         indexesByChassis.set(r.unit.Class, indexes)
@@ -152,6 +166,14 @@ function chassisCheck(list: IResult[]) {
         return invalid(`Chassis repeated more than twice: ${tripleChassisText}`, tripleChassis.flatMap(([_, indexes]) => indexes))
     }
     return VALID
+}
+
+function pointsCheck(list: IResult[]) {
+    const total = totalPV(list.filter(r => r.unit).map(r => ({
+        skill: +r.skill,
+        BFPointValue: r.unit!.BFPointValue,
+    })))
+    return total <= PV_LIMIT ? VALID : invalid(`PV total ${total} exceeds ${PV_LIMIT}`)
 }
 
 function maxOneUnique(list: IResult[]) {
@@ -165,12 +187,13 @@ function maxOneUnique(list: IResult[]) {
 
 
 export const LIST_CHECKS: Check[] = [
+    check("PV total <= 350", pointsCheck),
     check("Unit Count <=16", unitCountCheck),
     check("Max 12 Mechs", typeCountCheckFactory(["BattleMech", "IndustrialMech"], 12)),
     check("Max 6 Combat Vehicles", typeCountCheckFactory(["Combat Vehicle"], 6)),
     check("Max 5 Infantry", typeCountCheckFactory(["Infantry"], 5)),
     check("JMPS total <= 2", jmpsCheck),
-    check("Unit Variant check", variantCheck),
+    check("Unit Variant check", variantCheck, true),
     check("Chassis Rule of 2", chassisCheck),
     check("Pilot Skills (at most 2 of skill 2/6)", pilotSkillCheck),
     check("Max one Unique", maxOneUnique),

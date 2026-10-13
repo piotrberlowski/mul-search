@@ -14,9 +14,10 @@ import useSaveDialog from './saveDialog';
 import { SessionProvider, useSession } from 'next-auth/react';
 import { ValidationWarning } from './validationWarning';
 
-function BuilderHeader({ controller, messages, children }: { controller: ListBuilderController, messages: string[], children: React.ReactNode }) {
+function BuilderHeader({ controller, messages, listFailed, children }: { controller: ListBuilderController, messages: string[], listFailed: boolean, children: React.ReactNode }) {
     const units = controller.getUnits()
     const constraints = controller.getConstraints()
+    const summaryClass = listFailed ? "!bg-error !text-error-content" : ""
     return (
         <>
             <div className="w-full flex max-h-fit">
@@ -24,7 +25,7 @@ function BuilderHeader({ controller, messages, children }: { controller: ListBui
                 {children}
             </div>
             <div className="w-full flex-0 flex">
-                <div className="relative z-30 w-full flex max-h-fit items-center">
+                <div className={`relative z-30 w-full flex max-h-fit items-center ${summaryClass}`}>
                     <div className="text-center flex-1 max-h-fit">Units: {units.length}</div>
                     <div className="text-center flex-1 max-h-fit inline-flex items-center justify-center gap-1">
                         <span>PV: {totalPV(units)}</span>
@@ -151,7 +152,7 @@ export default function ListBuilder({ children }: { children: React.ReactNode })
         <>
             <div className="flex-1 flex flex-col h-full pb-5 px-1">
                 <div className="flex-1 border border-red-500 flex flex-col bg-white dark:bg-base-200 flex flex-col h-full">
-                    <BuilderHeader controller={controller} messages={validation.messages}>
+                    <BuilderHeader controller={controller} messages={validation.messages} listFailed={validation.listMessages.length > 0}>
                         {children}
                     </BuilderHeader>
                     <div className="flex-none w-full flex px-2">
