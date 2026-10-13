@@ -7,12 +7,14 @@ const LOOKUP_ERROR = "Could not verify availability"
 export type BuilderValidation = {
     valid: boolean
     messages: string[]
+    listMessages: string[]
     errorsByOrdinal: Record<number, string[]>
 }
 
 export const EMPTY_VALIDATION: BuilderValidation = {
     valid: true,
     messages: [],
+    listMessages: [],
     errorsByOrdinal: {},
 }
 
@@ -89,29 +91,31 @@ function assemble(units: ISelectedUnit[], availability?: Availability[]): Builde
         errorsByOrdinal[unit.ordinal] = [...perUnit[index]]
     })
 
-    const messages: string[] = []
+    const listMessages: string[] = []
     if (!availability) {
-        messages.push("Select a faction and era to validate availability")
+        listMessages.push("Select a faction and era to validate availability")
     }
 
-    LIST_CHECKS.forEach(({ check }) => {
+    LIST_CHECKS.forEach(({ check, highlightUnits }) => {
         const outcome = check(results)
         if (outcome.valid || !outcome.message) return
-        messages.push(outcome.message)
+        listMessages.push(outcome.message)
+        if (!highlightUnits) return
         outcome.offenders?.forEach(index => {
-            const ordinal = units[index].ordinal
-            errorsByOrdinal[ordinal].push(outcome.message as string)
+            errorsByOrdinal[units[index].ordinal].push(outcome.message as string)
         })
     })
 
-    units.forEach((unit, index) => {
-        perUnit[index].forEach(message => messages.push(`${unit.Name}: ${message}`))
+    const namedUnitMessages = units.flatMap((unit, index) => perUnit[index].map(message => `${unit.Name}: ${message}`))
+    units.forEach(unit => {
         errorsByOrdinal[unit.ordinal] = Array.from(new Set(errorsByOrdinal[unit.ordinal]))
     })
+    const messages = [...listMessages, ...namedUnitMessages]
 
     return {
         valid: messages.length === 0,
         messages,
+        listMessages,
         errorsByOrdinal,
     }
 }
