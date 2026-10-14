@@ -2,17 +2,16 @@
 
 import { IUnit } from '@/api/unitListApi'
 import { useEffect, useMemo, useState } from 'react'
-import { MULSearchParams, searchParamsFromIds } from '@/app/data'
-import { useFactionsContext, useEraCatalog } from "@/app/factionsContext"
+import { useMetadata } from "@/app/metadataContext"
 import FilteredTable from './filteredTable'
 import { useBuilderContext } from './listBuilderController'
 import './unitLine'
 import dynamic from 'next/dynamic'
 import useEraDialog from './eraDialog'
-import { useRouter, useSearchParams } from 'next/navigation'
 import { getUnitsForSearch } from '@/app/api/dao/units'
+import { useBuilderQuery } from './searchQuery'
 import UnitTypeFilter from './unitTypeFilter'
-import { arrangeUnitTypes, defaultSelectedIds, selectionIncludesHeat, UnitTypeOption } from './unitTypes'
+import { arrangeUnitTypes, defaultSelectedIds, selectionIncludesHeat } from './unitTypes'
 
 export function useSearch(factionId: string | null, eraId: string | null, typeIds: number[]): IUnit[] | string {
     const typeKey = typeIds.join(',')
@@ -64,26 +63,23 @@ function ConstraintsLabel({children}:{children: React.ReactNode}) {
     )
 }
 
-export default function ResultGrid({ unitTypes }: { unitTypes: UnitTypeOption[] }) {
-    const factions = useFactionsContext()
-    const { eras } = useEraCatalog()
+export default function ResultGrid() {
+    const { factions, eras, unitTypes } = useMetadata()
     const controller = useBuilderContext()
-    const router = useRouter()
-    const searchParams = useSearchParams()
-    const params = new MULSearchParams(searchParams)
-    const eraName = eras.find((era) => `${era.value}` === (searchParams.get('era') ?? ''))?.label
-    const factionName = factions.getFactionName(searchParams.get('specific') ?? '')
+    const { query, setQuery } = useBuilderQuery()
+    const eraName = eras.find((era) => `${era.value}` === (query.era ?? ''))?.label
+    const factionName = factions.getFactionName(query.specific ?? '')
     const constraintLabel = (factionName && eraName) ? `[${factionName} during ${eraName}]` : "[Unknown]"
     const arranged = useMemo(() => arrangeUnitTypes(unitTypes), [unitTypes])
     const [selected, setSelected] = useState(() => new Set(defaultSelectedIds(unitTypes)))
     const [expanded, setExpanded] = useState(false)
     const selectedIds = useMemo(() => [...selected].sort((a, b) => a - b), [selected])
-    const data = useSearch(params.specific, params.era, selectedIds)
+    const data = useSearch(query.specific, query.era, selectedIds)
     const mech = selectionIncludesHeat(arranged.all, selected)
 
     controller.registerConstraintsObserver((save) => {
         if (save.eraId == null || save.factionId == null) return
-        router.push("/builder?" + searchParamsFromIds(save.eraId, save.factionId).toString())
+        setQuery({ era: String(save.eraId), specific: String(save.factionId) })
     })
 
     function toggleType(id: number) {
@@ -118,7 +114,7 @@ export default function ResultGrid({ unitTypes }: { unitTypes: UnitTypeOption[] 
                 ) : typeof data === 'string' ? (
                     data
                 ) : (
-                    <FilteredTable key={`${params.specific}-${params.era}`} data={data} mech={mech} />
+                    <FilteredTable key={`${query.specific}-${query.era}`} data={data} mech={mech} era={query.era ?? ""} />
                 )}
             </div>
         </>
