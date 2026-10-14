@@ -1,15 +1,15 @@
 'use client'
 import { LOCAL_STORAGE_NAME_AUTOSAVE } from "@/api/unitListApi";
-import { Faction, Factions, MULSearchParams } from '@/app/data';
+import { Faction, Factions } from '@/app/data';
 import { MetadataContext } from "@/app/metadataContext";
 import { XCircleIcon } from "@heroicons/react/16/solid";
 import dynamic from "next/dynamic";
-import { ReadonlyURLSearchParams, useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { LIST_DRAWER_ID } from "./constants";
 import { ListBuilderContext, ListBuilderController } from "./listBuilderController";
 import SearchResults from './searchResults';
-import { BuilderQuery, BuilderQueryContext } from './searchQuery';
+import { BuilderQuery, BuilderQueryContext, readBuilderQuery, writeBuilderQuery } from './searchQuery';
 import { UnitTypeOption } from './unitTypes';
 
 function Loading({ name }: { name: string }) {
@@ -42,14 +42,13 @@ export default function BuilderApp({
         era: params.get('era'),
         specific: params.get('specific'),
     }))
-    const skipUrlWrite = useRef(true)
-    const fromHistory = useRef(false)
-    const mulSP = useMemo(() => {
-        const next = new URLSearchParams()
-        if (query.era) next.set('era', query.era)
-        if (query.specific) next.set('specific', query.specific)
-        return new MULSearchParams(next as unknown as ReadonlyURLSearchParams)
-    }, [query.era, query.specific])
+    const setQuery = useCallback((next: BuilderQuery) => {
+        setQueryState((current) => (
+            current.era === next.era && current.specific === next.specific
+        ) ? current : next)
+        writeBuilderQuery(next)
+    }, [])
+    const queryValue = useMemo(() => ({ query, setQuery }), [query, setQuery])
     const factionData = useMemo(() => new Factions(factions), [factions])
     const metadata = useMemo(() => ({
         factions: factionData,
@@ -59,42 +58,9 @@ export default function BuilderApp({
     }), [factionData, eras, factionsByEra, unitTypes])
     const [controller] = useState(() => new ListBuilderController(LOCAL_STORAGE_NAME_AUTOSAVE))
 
-    const setQuery = useCallback((next: BuilderQuery) => {
-        setQueryState((current) => (
-            current.era === next.era && current.specific === next.specific
-        ) ? current : next)
-    }, [])
-    const queryValue = useMemo(() => ({ query, setQuery }), [query, setQuery])
-
-    useEffect(() => {
-        if (skipUrlWrite.current) {
-            skipUrlWrite.current = false
-            return
-        }
-        if (fromHistory.current) {
-            fromHistory.current = false
-            return
-        }
-        const next = new URLSearchParams(window.location.search)
-        if (query.era) next.set('era', query.era)
-        else next.delete('era')
-        if (query.specific) next.set('specific', query.specific)
-        else next.delete('specific')
-        const nextUrl = `${window.location.pathname}?${next.toString()}`
-        const currentUrl = `${window.location.pathname}${window.location.search}`
-        if (nextUrl !== currentUrl) {
-            window.history.pushState(null, '', nextUrl)
-        }
-    }, [query.era, query.specific])
-
     useEffect(() => {
         function onPopState() {
-            const next = new URLSearchParams(window.location.search)
-            fromHistory.current = true
-            setQueryState({
-                era: next.get('era'),
-                specific: next.get('specific'),
-            })
+            setQueryState(readBuilderQuery())
         }
         window.addEventListener('popstate', onPopState)
         return () => window.removeEventListener('popstate', onPopState)
@@ -109,7 +75,7 @@ export default function BuilderApp({
                         <input id={LIST_DRAWER_ID} type="checkbox" className="drawer-toggle" />
                         <div className="drawer-content col-start-1 bg-inherit mt-8" >
                             <Suspense fallback={<Loading name="Search Results" />}>
-                                <SearchResults search={mulSP} />
+                                <SearchResults />
                             </Suspense>
                         </div>
                         <div className="drawer-side z-20 col-start-2 h-dvh w-full flex bg-inherit">

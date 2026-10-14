@@ -8,6 +8,27 @@ export type BuilderQuery = {
     specific: string | null
 }
 
+export function readBuilderQuery(): BuilderQuery {
+    const params = new URLSearchParams(window.location.search)
+    return {
+        era: params.get('era'),
+        specific: params.get('specific'),
+    }
+}
+
+export function writeBuilderQuery(query: BuilderQuery) {
+    const params = new URLSearchParams(window.location.search)
+    if (query.era) params.set('era', query.era)
+    else params.delete('era')
+    if (query.specific) params.set('specific', query.specific)
+    else params.delete('specific')
+    const nextUrl = `${window.location.pathname}?${params.toString()}`
+    const currentUrl = `${window.location.pathname}${window.location.search}`
+    if (nextUrl !== currentUrl) {
+        window.history.pushState(null, '', nextUrl)
+    }
+}
+
 export type ListSearch = {
     constraints: string
     eraId: number | null

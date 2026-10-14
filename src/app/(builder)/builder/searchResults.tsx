@@ -3,11 +3,12 @@
 import ResultGrid from './resultGrid'
 import React from 'react'
 import Link from 'next/link'
-import { MULSearchParams } from '@/app/data'
+import { useBuilderQuery } from './searchQuery'
 
-export default function SearchResults({ search }: { search: MULSearchParams }) {
+export default function SearchResults() {
+    const { query } = useBuilderQuery()
 
-    if (!search.canSearch) {
+    if (!query.era || !query.specific) {
         return (
             <div className="w-full text-center items-center my-2 z-10">
                 <Link href="/">Please select the search parameters here!</Link>
