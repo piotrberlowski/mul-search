@@ -13,10 +13,11 @@ import useLoadDialog from './loadDialog';
 import useSaveDialog from './saveDialog';
 import { SessionProvider, useSession } from 'next-auth/react';
 import { ValidationWarning } from './validationWarning';
+import { useListSearch } from './searchQuery';
 
 function BuilderHeader({ controller, messages, listFailed, children }: { controller: ListBuilderController, messages: string[], listFailed: boolean, children: React.ReactNode }) {
     const units = controller.getUnits()
-    const constraints = controller.getConstraints()
+    const { constraints } = useListSearch()
     const summaryClass = listFailed ? "!bg-error !text-error-content" : ""
     return (
         <>
@@ -40,16 +41,15 @@ function BuilderHeader({ controller, messages, listFailed, children }: { control
 function BuilderFooter({
     units,
     total,
-    constraints,
     listName,
     controller,
 }: {
     units: ISelectedUnit[],
     total: number,
-    constraints: string,
     listName: string,
     controller: ListBuilderController,
 }) {
+    const { constraints, eraId, factionId } = useListSearch()
     const {data: session, status} = useSession()
     const router = useRouter()
 
@@ -82,13 +82,13 @@ function BuilderFooter({
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Edit</div></div>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
                     <li><button className="btn text-center w-full btn-sm" onClick={e => {
-                        controller.clear()
+                        controller.clear({ constraints, eraId, factionId })
                         e?.currentTarget.blur()
                     }}>Clear</button></li>
                     <li>{saveBtn}</li>
                     <li>{loadBtn}</li>
                     <li><button className="btn text-center w-full btn-sm" onClick={e => {
-                        router.push("/validate/result?" + controller.toValidateParams().toString())
+                        router.push("/validate/result?" + controller.toValidateParams(eraId, factionId).toString())
                         e?.currentTarget.blur()
                     }}>Validate</button></li>
                 </ul>
@@ -96,7 +96,7 @@ function BuilderFooter({
             <div className="dropdown dropdown-top dropdown-end h-full text-center items-center">
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Export</div></div>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                    <li><ShareLink constraints={constraints} name={listName} total={total} units={units} eraId={controller.getEraId()} factionId={controller.getFactionId()} className='btn text-center w-full btn-sm' /></li>
+                    <li><ShareLink constraints={constraints} name={listName} total={total} units={units} eraId={eraId} factionId={factionId} className='btn text-center w-full btn-sm' /></li>
                     <li><Link href="/tts/" target="_blank" className="btn text-center w-full btn-sm" onClick={e => controller.exportExternal(listName, "tts")}>TTS</Link></li>
                 </ul>
             </div>
@@ -164,7 +164,6 @@ export default function ListBuilder({ children }: { children: React.ReactNode })
                         <BuilderFooter
                             units={save.units}
                             total={total}
-                            constraints={controller.getConstraints()}
                             listName={name}
                             controller={controller} />
                     </div>

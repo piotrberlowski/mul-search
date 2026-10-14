@@ -4,6 +4,7 @@ import { PlusIcon } from "@heroicons/react/24/outline"
 import { useState } from "react"
 import { Sort } from "./filteredTable"
 import { ListBuilderController, formatDamageString, useBuilderContext } from "./listBuilderController"
+import { useListSearch } from "./searchQuery"
 
 export const EMPTY_UNIT = {
     Id: "",
@@ -112,10 +113,11 @@ export function UnitHeader({ initial, onSort, mech }: { initial: Sort, onSort: (
 export default function UnitLine({ unit, idx, mech }: { unit: IUnit, idx: number, mech: boolean }) {
 
     const controller: ListBuilderController = useBuilderContext()
+    const search = useListSearch()
 
     const onAddClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault()
-        controller.addUnit(unit)
+        controller.addUnit(unit, search)
     }
     const dmgString = formatDamageString(unit, mech)
     return (
