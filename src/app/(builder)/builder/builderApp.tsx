@@ -38,14 +38,9 @@ export default function BuilderApp({
 }) {
 
     const params = useSearchParams()
-    const [query, setQueryState] = useState<BuilderQuery>(() => ({
-        era: params.get('era'),
-        specific: params.get('specific'),
-    }))
+    const [query, setQueryState] = useState(() => BuilderQuery.fromParams(params))
     const setQuery = useCallback((next: BuilderQuery) => {
-        setQueryState((current) => (
-            current.era === next.era && current.specific === next.specific
-        ) ? current : next)
+        setQueryState((current) => current.same(next) ? current : next)
         writeBuilderQuery(next)
     }, [])
     const queryValue = useMemo(() => ({ query, setQuery }), [query, setQuery])

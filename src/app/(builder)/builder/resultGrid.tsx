@@ -9,7 +9,7 @@ import './unitLine'
 import dynamic from 'next/dynamic'
 import useEraDialog from './eraDialog'
 import { getUnitsForSearch } from '@/app/api/dao/units'
-import { useBuilderQuery } from './searchQuery'
+import { BuilderQuery, useBuilderQuery, useListSearch } from './searchQuery'
 import UnitTypeFilter from './unitTypeFilter'
 import { arrangeUnitTypes, defaultSelectedIds, selectionIncludesHeat } from './unitTypes'
 
@@ -64,12 +64,10 @@ function ConstraintsLabel({children}:{children: React.ReactNode}) {
 }
 
 export default function ResultGrid() {
-    const { factions, eras, unitTypes } = useMetadata()
+    const { unitTypes } = useMetadata()
     const controller = useBuilderContext()
     const { query, setQuery } = useBuilderQuery()
-    const eraName = eras.find((era) => `${era.value}` === (query.era ?? ''))?.label
-    const factionName = factions.getFactionName(query.specific ?? '')
-    const constraintLabel = (factionName && eraName) ? `[${factionName} during ${eraName}]` : "[Unknown]"
+    const { constraints } = useListSearch()
     const arranged = useMemo(() => arrangeUnitTypes(unitTypes), [unitTypes])
     const [selected, setSelected] = useState(() => new Set(defaultSelectedIds(unitTypes)))
     const [expanded, setExpanded] = useState(false)
@@ -79,7 +77,7 @@ export default function ResultGrid() {
 
     controller.registerConstraintsObserver((save) => {
         if (save.eraId == null || save.factionId == null) return
-        setQuery({ era: String(save.eraId), specific: String(save.factionId) })
+        setQuery(BuilderQuery.of(save.eraId, save.factionId))
     })
 
     function toggleType(id: number) {
@@ -95,7 +93,7 @@ export default function ResultGrid() {
         <>
             <div className="flex w-full">
                 <ConstraintsLabel>
-                    {constraintLabel}
+                    {constraints}
                 </ConstraintsLabel>
                 <BuilderLabelDynamic />
             </div>
@@ -114,7 +112,7 @@ export default function ResultGrid() {
                 ) : typeof data === 'string' ? (
                     data
                 ) : (
-                    <FilteredTable key={`${query.specific}-${query.era}`} data={data} mech={mech} era={query.era ?? ""} />
+                    <FilteredTable key={`${query.factionText}-${query.eraText}`} data={data} mech={mech} era={query.eraText} />
                 )}
             </div>
         </>

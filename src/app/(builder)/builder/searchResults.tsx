@@ -8,7 +8,7 @@ import { useBuilderQuery } from './searchQuery'
 export default function SearchResults() {
     const { query } = useBuilderQuery()
 
-    if (!query.era || !query.specific) {
+    if (!query.canSearch) {
         return (
             <div className="w-full text-center items-center my-2 z-10">
                 <Link href="/">Please select the search parameters here!</Link>

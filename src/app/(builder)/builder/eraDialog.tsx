@@ -8,21 +8,21 @@ interface EraParams {}
 const RefEraPanel = React.forwardRef<HTMLDialogElement, EraParams>(({}, ref) => {
     const { query, setQuery } = useBuilderQuery()
     const { eras, factionsByEra } = useMetadata()
-    const factionId = query.specific
+    const factionId = query.factionText
     const erasForFaction = eras.filter((era) =>
         factionsByEra.some((entry) =>
             `${entry.eraId}` === `${era.value}` &&
             entry.factions.some((faction) => `${faction.value}` === factionId)
         )
     )
-    const [era, setEra] = useState(query.era || "")
+    const [era, setEra] = useState(query.eraText)
 
     useEffect(() => {
-        setEra(query.era || "")
-    }, [query.era])
+        setEra(query.eraText)
+    }, [query.eraText])
 
     function navigate() {
-        setQuery({ era, specific: query.specific })
+        setQuery(query.withEra(era))
     }
 
     return (

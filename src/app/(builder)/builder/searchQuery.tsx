@@ -3,17 +3,51 @@
 import { createContext, useContext } from "react"
 import { useMetadata } from "@/app/metadataContext"
 
-export type BuilderQuery = {
-    era: string | null
-    specific: string | null
+export class BuilderQuery {
+    constructor(
+        readonly era: string | null,
+        readonly specific: string | null,
+    ) {}
+
+    static fromParams(params: { get(name: string): string | null }) {
+        return new BuilderQuery(params.get('era'), params.get('specific'))
+    }
+
+    static of(eraId: number, factionId: number) {
+        return new BuilderQuery(String(eraId), String(factionId))
+    }
+
+    get eraText() {
+        return this.era ?? ''
+    }
+
+    get factionText() {
+        return this.specific ?? ''
+    }
+
+    get eraId() {
+        return idOrNull(this.era)
+    }
+
+    get factionId() {
+        return idOrNull(this.specific)
+    }
+
+    get canSearch() {
+        return this.eraId != null && this.factionId != null
+    }
+
+    same(other: BuilderQuery) {
+        return this.era === other.era && this.specific === other.specific
+    }
+
+    withEra(era: string) {
+        return new BuilderQuery(era || null, this.specific)
+    }
 }
 
 export function readBuilderQuery(): BuilderQuery {
-    const params = new URLSearchParams(window.location.search)
-    return {
-        era: params.get('era'),
-        specific: params.get('specific'),
-    }
+    return BuilderQuery.fromParams(new URLSearchParams(window.location.search))
 }
 
 export function writeBuilderQuery(query: BuilderQuery) {
@@ -44,12 +78,12 @@ function idOrNull(value: string | null) {
 export function useListSearch(): ListSearch {
     const { query } = useBuilderQuery()
     const { factions, eras } = useMetadata()
-    const eraName = eras.find((era) => `${era.value}` === (query.era ?? ''))?.label
-    const factionName = factions.getFactionName(query.specific ?? '')
+    const eraName = eras.find((era) => `${era.value}` === query.eraText)?.label
+    const factionName = factions.getFactionName(query.factionText)
     return {
         constraints: (factionName && eraName) ? `[${factionName} during ${eraName}]` : "[Unknown]",
-        eraId: idOrNull(query.era),
-        factionId: idOrNull(query.specific),
+        eraId: query.eraId,
+        factionId: query.factionId,
     }
 }
 
