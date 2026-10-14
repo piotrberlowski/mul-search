@@ -3,12 +3,13 @@ import Combinations from '@/components/combinations'
 import PlayLink from '@/components/playLink'
 import Head from 'next/head'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { ConstrainedList, MulUnit } from '@/api/shareApi'
 import { ISelectedUnit, IUnit, LOCAL_STORAGE_NAME_AUTOSAVE, loadLists, saveByName, saveLists } from '../../../api/unitListApi'
 import { EMPTY_UNIT } from '@/app/(builder)/builder/unitLine'
 import { Faction, Factions, searchParamsFromIds } from '@/app/data'
-import { FactionsContext } from "@/app/factionsContext"
+import { MetadataContext, type EraFactionList } from "@/app/metadataContext"
+import type { UnitTypeOption } from '@/app/(builder)/builder/unitTypes'
 import CardGallery from './cardGallery'
 import SummaryTable from './summaryTable'
 import { list } from 'postcss'
@@ -86,7 +87,13 @@ function ReadyList({ units, constraints, name, total, eraId, factionId }: { unit
 
 }
 
-export default function VisualList({ list, factions }: { list: ConstrainedList, factions: Faction[] }) {
+export default function VisualList({ list, factions, eras, factionsByEra, unitTypes }: { list: ConstrainedList, factions: Faction[], eras: Faction[], factionsByEra: EraFactionList[], unitTypes: UnitTypeOption[] }) {
+    const metadata = useMemo(() => ({
+        factions: new Factions(factions),
+        eras,
+        factionsByEra,
+        unitTypes,
+    }), [factions, eras, factionsByEra, unitTypes])
     const [units, setUnits] = useState<ISelectedUnit[]>(new Array<ISelectedUnit>())
 
     useEffect(
@@ -104,7 +111,7 @@ export default function VisualList({ list, factions }: { list: ConstrainedList, 
     }
 
     return (
-        <FactionsContext.Provider value={new Factions(factions)}>
+        <MetadataContext.Provider value={metadata}>
             <Head>
                 <title>{`AS: ${list.name}`}</title>
                 <meta property="og:title" content={`AS: ${list.name}`} key="title" />
@@ -114,6 +121,6 @@ export default function VisualList({ list, factions }: { list: ConstrainedList, 
                 <div>{list.constraints} : {list.name}</div>
             </div>
             {visualisation}
-        </FactionsContext.Provider>
+        </MetadataContext.Provider>
     )
 }

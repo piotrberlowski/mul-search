@@ -1,29 +1,28 @@
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { useRouter, useSearchParams } from "next/navigation";
-import React, { ReactNode, useRef, useState } from "react";
-import { useEraCatalog } from "@/app/factionsContext";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
+import { useMetadata } from "@/app/metadataContext";
+import { useBuilderQuery } from "./searchQuery";
 
 interface EraParams {}
 
 const RefEraPanel = React.forwardRef<HTMLDialogElement, EraParams>(({}, ref) => {
-    const router = useRouter()
-    const params = useSearchParams()
-    const { eras, factionsByEra } = useEraCatalog()
-    const factionId = params.get("specific")
+    const { query, setQuery } = useBuilderQuery()
+    const { eras, factionsByEra } = useMetadata()
+    const factionId = query.specific
     const erasForFaction = eras.filter((era) =>
         factionsByEra.some((entry) =>
             `${entry.eraId}` === `${era.value}` &&
             entry.factions.some((faction) => `${faction.value}` === factionId)
         )
     )
-    const [era, setEra] = useState(params.get("era")||"")
+    const [era, setEra] = useState(query.era || "")
+
+    useEffect(() => {
+        setEra(query.era || "")
+    }, [query.era])
 
     function navigate() {
-        const newParams = new URLSearchParams(params)
-        newParams.set('era', era)
-        router.push(
-            '/builder?' + newParams.toString(),
-        )
+        setQuery({ era, specific: query.specific })
     }
 
     return (

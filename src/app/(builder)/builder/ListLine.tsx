@@ -1,60 +1,23 @@
 'use client';
 import { ExclamationCircleIcon, MinusIcon } from '@heroicons/react/24/outline';
-import { useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useState } from 'react';
 import { ISelectedUnit, currentPV } from '../../../api/unitListApi';
 import { formatDamageString, ListBuilderController } from './listBuilderController';
 
 function UnitErrorSign({ errors }: { errors: string[] }) {
-    const anchor = useRef<HTMLDivElement>(null)
-    const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-    const [position, setPosition] = useState<{ top: number, left: number, above: boolean } | null>(null)
-
-    function open() {
-        clearTimeout(closeTimer.current)
-        const rect = anchor.current?.getBoundingClientRect()
-        if (!rect) return
-        const width = 224
-        const left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8))
-        const above = rect.bottom + 140 > window.innerHeight
-        setPosition({ top: above ? rect.top - 6 : rect.bottom + 6, left, above })
-    }
-
-    function scheduleClose() {
-        closeTimer.current = setTimeout(() => setPosition(null), 120)
-    }
-
     return (
-        <>
-            <div
-                ref={anchor}
-                tabIndex={0}
-                role="button"
-                aria-label="Unit failed validation"
-                className="inline-flex flex-none cursor-pointer"
-                onMouseEnter={open}
-                onMouseLeave={scheduleClose}
-                onFocus={open}
-                onBlur={scheduleClose}
-            >
+        <div className="dropdown dropdown-hover dropdown-top dropdown-end flex-none">
+            <div tabIndex={0} role="button" aria-label="Unit failed validation" className="inline-flex cursor-pointer">
                 <ExclamationCircleIcon className="h-4 w-4" />
             </div>
-            {position && createPortal(
-                <div
-                    className="fixed z-[80] w-56 max-h-48 overflow-auto rounded-md border border-error bg-base-100 p-2 text-left shadow-lg"
-                    style={{ top: position.top, left: position.left, transform: position.above ? "translateY(-100%)" : undefined }}
-                    onMouseEnter={open}
-                    onMouseLeave={scheduleClose}
-                >
-                    <ul className="list-disc space-y-1 pl-4 text-xs text-error">
-                        {errors.map((error, index) => (
-                            <li key={index} className="whitespace-normal">{error}</li>
-                        ))}
-                    </ul>
-                </div>,
-                document.body,
-            )}
-        </>
+            <div tabIndex={0} className="dropdown-content z-50 mb-1 w-56 max-h-48 overflow-auto rounded-box border border-error bg-base-100 p-2 text-left shadow">
+                <ul className="list-disc space-y-1 pl-4 text-xs text-error">
+                    {errors.map((error, index) => (
+                        <li key={index} className="whitespace-normal">{error}</li>
+                    ))}
+                </ul>
+            </div>
+        </div>
     )
 }
 

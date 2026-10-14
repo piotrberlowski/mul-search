@@ -2,13 +2,13 @@
 
 import { ISelectedUnit } from "@/api/unitListApi"
 import { BuilderValidation, EMPTY_VALIDATION, validateAgainstAvailability, validateLocal } from "@/app/(utilities)/validate/result/builderValidation"
-import { useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
+import { useBuilderQuery } from "./searchQuery"
 
 export function useListValidation(units: ISelectedUnit[]): BuilderValidation {
-    const params = useSearchParams()
-    const era = params.get("era")
-    const specific = params.get("specific")
+    const { query } = useBuilderQuery()
+    const era = query.era
+    const specific = query.specific
     const unitKey = units.map(unit => `${unit.ordinal}:${unit.Id}:${unit.skill}:${unit.Name}`).join(";")
     const unitsRef = useRef(units)
     unitsRef.current = units

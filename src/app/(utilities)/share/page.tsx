@@ -52,8 +52,13 @@ function processParameters(searchParams: ShareSearchParams): Promise<Constrained
 
 export default async function SharedList({ searchParams }: { searchParams: ShareSearchParams }) {
 
-    const factions = await parametersDao.getFactions()
-    const list = await processParameters(searchParams)
+    const [factions, eras, factionsByEra, unitTypes, list] = await Promise.all([
+        parametersDao.getFactions(),
+        parametersDao.getEras(),
+        parametersDao.getFactionsByEra(),
+        parametersDao.getUnitTypes(),
+        processParameters(searchParams),
+    ])
 
     return (
         <main className="relative items-center align-top bg-inherit">
@@ -62,7 +67,7 @@ export default async function SharedList({ searchParams }: { searchParams: Share
                 <meta property="og:description" content={`Army List for ${list.constraints}`}/>
             </Head>
             <Suspense fallback={<ListFallback />}>
-                <VisualList list={list} factions={factions}/>
+                <VisualList list={list} factions={factions} eras={eras} factionsByEra={factionsByEra} unitTypes={unitTypes}/>
             </Suspense>
         </main>
     )

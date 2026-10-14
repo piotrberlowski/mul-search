@@ -5,7 +5,6 @@ import { IUnit } from '@/api/unitListApi';
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
 import UnitLine, { UnitComparators, UnitHeader } from './unitLine';
-import { useSearchParams } from 'next/navigation';
 
 const moveRex = /^(\d+)?(:)?(\d+)?([fwhvjt])?$/
 const rangeRex = /^(\d+)?(:)?(\d+)?$/
@@ -215,8 +214,7 @@ function QuickFilter({ label, className, filterCallback, tooltip }: FilterParams
     )
 }
 
-export default function FilteredTable({ data, mech}: { data: IUnit[], mech: boolean }) {
-    const params = useSearchParams()
+export default function FilteredTable({ data, mech, era = "" }: { data: IUnit[], mech: boolean, era?: string }) {
     const [units, setUnits] = useState(data)
     useEffect(() => { setUnits(data) }, [data])
     const [filter, setFilter] = useState(new Filter())
@@ -289,7 +287,7 @@ export default function FilteredTable({ data, mech}: { data: IUnit[], mech: bool
                     sortAndFilter(units).map(
                         (entry, idx) => {
                             return (
-                                <UnitLine key={(params.get('era')||"") +entry.Id} unit={entry} idx={idx} mech={mech} />
+                                <UnitLine key={era + entry.Id} unit={entry} idx={idx} mech={mech} />
                             )
                         }
                     )
