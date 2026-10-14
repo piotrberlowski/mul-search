@@ -1,10 +1,35 @@
 'use client'
 
 import { createContext, useContext } from "react"
+import { useMetadata } from "@/app/metadataContext"
 
 export type BuilderQuery = {
     era: string | null
     specific: string | null
+}
+
+export type ListSearch = {
+    constraints: string
+    eraId: number | null
+    factionId: number | null
+}
+
+function idOrNull(value: string | null) {
+    if (value == null || value === '') return null
+    const n = Number(value)
+    return Number.isFinite(n) ? n : null
+}
+
+export function useListSearch(): ListSearch {
+    const { query } = useBuilderQuery()
+    const { factions, eras } = useMetadata()
+    const eraName = eras.find((era) => `${era.value}` === (query.era ?? ''))?.label
+    const factionName = factions.getFactionName(query.specific ?? '')
+    return {
+        constraints: (factionName && eraName) ? `[${factionName} during ${eraName}]` : "[Unknown]",
+        eraId: idOrNull(query.era),
+        factionId: idOrNull(query.specific),
+    }
 }
 
 type BuilderQueryValue = {

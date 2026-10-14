@@ -5,18 +5,10 @@ import { searchParamsFromIds } from "@/app/data";
 import { LIST_PARAMETER } from "@/app/(utilities)/validate/result/validation";
 import { ChangeListener } from "@/api/commons";
 import { createContext, useContext } from "react";
-
-function numberOrNull(value: string | null): number | null {
-    if (value == null || value === '') return null
-    const n = Number(value)
-    return Number.isFinite(n) ? n : null
-}
+import type { ListSearch } from "./searchQuery";
 
 export class ListBuilderController {
     private save: Save;
-    private constraints: string;
-    private eraId: number | null;
-    private factionId: number | null;
     private storedLists: string[];
     private setSave?: ChangeListener<Save>;
     private setName?: ChangeListener<string>;
@@ -26,14 +18,8 @@ export class ListBuilderController {
     public constraintsObserver?: ChangeListener<Save>;
 
     constructor(
-        searchConstraints: string,
         autosaveName: string,
-        eraId: string | null,
-        factionId: string | null,
     ) {
-        this.constraints = searchConstraints
-        this.eraId = numberOrNull(eraId)
-        this.factionId = numberOrNull(factionId)
         if (typeof window !== 'undefined') {
             this.save = loadByName(autosaveName)
             this.storedLists = loadLists()
@@ -48,19 +34,13 @@ export class ListBuilderController {
         }
     }
 
-    private searchSave(units: ISelectedUnit[]): Save {
+    private withSearch(units: ISelectedUnit[], search: ListSearch): Save {
         return {
             units,
-            constraints: this.constraints,
-            eraId: this.eraId,
-            factionId: this.factionId,
+            constraints: search.constraints,
+            eraId: search.eraId,
+            factionId: search.factionId,
         }
-    }
-
-    public setSearch(constraints: string, eraId: string | null, factionId: string | null) {
-        this.constraints = constraints
-        this.eraId = numberOrNull(eraId)
-        this.factionId = numberOrNull(factionId)
     }
 
     public registerBuilder(
@@ -86,23 +66,11 @@ export class ListBuilderController {
         this.constraintsObserver = setConstraints
     }
 
-    public getConstraints() {
-        return this.constraints
-    }
-
-    public getEraId() {
-        return this.eraId
-    }
-
-    public getFactionId() {
-        return this.factionId
-    }
-
     public getUnits() {
         return this.save.units
     }
 
-    public addUnit(unit: IUnit) {
+    public addUnit(unit: IUnit, search: ListSearch) {
         if (!this.setSave) 
             return 
         const isEmpty = this.save.units.length == 0
@@ -113,7 +81,7 @@ export class ListBuilderController {
             lance: '',
             ...unit
         }
-        this.save = this.searchSave([...this.save.units, selected].sort(compareSelectedUnits))
+        this.save = this.withSearch([...this.save.units, selected].sort(compareSelectedUnits), search)
         this.setSave(this.save)
         this.updateTotal()
     }
@@ -145,10 +113,10 @@ export class ListBuilderController {
             this.summaryObserver(formatListSummary(this.save.units.length, total))
     }
 
-    public clear() {
+    public clear(search: ListSearch) {
         if (!this.setSave) 
             return 
-        this.save = this.searchSave([])
+        this.save = this.withSearch([], search)
         this.setSave(this.save)
         this.updateTotal()
     }
@@ -200,8 +168,8 @@ export class ListBuilderController {
         return this.storedLists
     }
 
-    public toValidateParams(): URLSearchParams {
-        const params = searchParamsFromIds(this.eraId, this.factionId)
+    public toValidateParams(eraId: number | null, factionId: number | null): URLSearchParams {
+        const params = searchParamsFromIds(eraId, factionId)
         const unitString = this.save.units.map(su => `${su.skill}:${su.Id}`).join(";")
         params.append(LIST_PARAMETER, unitString)
         return params
@@ -223,7 +191,7 @@ function formatListSummary(count: number, totalPV: number) {
 }
 
 export const ListBuilderContext = createContext<ListBuilderController>(
-    new ListBuilderController('none', LOCAL_STORAGE_NAME_AUTOSAVE, null, null)
+    new ListBuilderController(LOCAL_STORAGE_NAME_AUTOSAVE)
 )
 
 export function useBuilderContext() {
