@@ -32,6 +32,28 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+### MUL production backfill
+
+```bash
+pnpm mul:backfill:prod
+```
+
+That command does the full backfill. It reads the production database from `.env.production.local`, connects directly (`DB_URL_NON_POOLING`), refreshes the MUL data bundle when the manifest has changed, then scrapes every unit page that is missing stats or older than the sitemap. It waits 10 seconds between page requests and prints the database host before it writes.
+
+`pnpm mul:backfill` is the same job against the local database in `.env.local`.
+
+Overrides are optional. Pass them after `--`:
+
+```bash
+pnpm mul:backfill:prod -- --scrape-limit 5
+pnpm mul:backfill:prod -- --delay-ms 10000
+pnpm mul:backfill:prod -- --skip-scrape
+```
+
+- `--scrape-limit` caps how many pages this run fetches. The default is every stale page.
+- `--delay-ms` sets the pause between pages. The default is 10000.
+- `--skip-scrape` (or `--lookups-only`) loads the bundle and skips page scraping.
+
 This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
 ### Learn More

@@ -17,6 +17,7 @@
     "seedLocal": "dotenv -e .env.local -- prisma db seed",
     "test": "tsx --test lib/mul/*.test.ts",
     "mul:backfill": "dotenv -e .env.local -- tsx scripts/mul-backfill.ts",
+    "mul:backfill:prod": "dotenv -e .env.production.local --override -- env MUL_USE_DIRECT=1 tsx scripts/mul-backfill.ts",
     "mul:legacy": "dotenv -e .env.local -- tsx scripts/build-legacy-map.ts"
   },
   "dependencies": {

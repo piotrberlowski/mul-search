@@ -13,10 +13,24 @@ function hasFlag(name: string): boolean {
   return process.argv.includes(`--${name}`)
 }
 
+function databaseTarget(): string {
+  const connectionString = process.env.MUL_USE_DIRECT === '1'
+    ? process.env.DB_URL_NON_POOLING
+    : process.env.DB_PRISMA_URL
+  if (!connectionString) return 'missing database url'
+  const url = new URL(connectionString)
+  const port = url.port ? `:${url.port}` : ''
+  const database = url.pathname.replace(/^\//, '')
+  const mode = process.env.MUL_USE_DIRECT === '1' ? 'direct' : 'pooled'
+  return `${url.hostname}${port}/${database} (${mode})`
+}
+
 async function main() {
   const skipScrape = hasFlag('lookups-only') || hasFlag('skip-scrape')
   const scrapeLimit = arg('scrape-limit') ? Number(arg('scrape-limit')) : undefined
   const scrapeDelayMs = arg('delay-ms') ? Number(arg('delay-ms')) : 10_000
+
+  console.log(`[backfill] writing to ${databaseTarget()}`)
 
   const result = await syncMul({
     skipScrape,
