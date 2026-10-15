@@ -12,7 +12,7 @@ function Intro() {
     <div className="w-full flex items-center justify-center">
       <div className="mb-5 mx-auto flex-0">
         <p className="my-1">
-          This is a validator for lists in <a href="https://wolfsdragoons.com/alpha-strike-core-tournament-rules-2/">Wolf Net Alpha Strike 350 format</a>.
+          Import a Master Unit List force file into the builder. The list is checked there as units, skills, era, or faction change.
         </p>
         <div className="flex items-center">
           <ChevronDoubleRightIcon className="h-5 w-5 my-2 flex-none"/> Please select the following list attributes:
@@ -23,7 +23,7 @@ function Intro() {
         </ul>
         <ChevronDownIcon className="h-5 w-5 my-1"/>
         <p className="ml-5">
-          Upload the Master Unit List PDF.
+          Upload the force file downloaded from the Master Unit List.
         </p>
       </div>
     </div>

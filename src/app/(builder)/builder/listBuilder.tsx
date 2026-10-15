@@ -2,7 +2,6 @@
 import ShareLink from '@/app/(utilities)/share/shareLink';
 import { useCombinations } from '@/components/combinations';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, groupByLance, totalPV } from '../../../api/unitListApi';
 import PlayLink from '../../../components/playLink';
@@ -14,6 +13,7 @@ import useSaveDialog from './saveDialog';
 import { SessionProvider, useSession } from 'next-auth/react';
 import { ValidationWarning } from './validationWarning';
 import { useListSearch } from './searchQuery';
+import { downloadAsCards, downloadForceFile } from '@/app/(utilities)/validate/mulExport';
 
 function BuilderHeader({ controller, messages, listFailed, children }: { controller: ListBuilderController, messages: string[], listFailed: boolean, children: React.ReactNode }) {
     const units = controller.getUnits()
@@ -51,12 +51,12 @@ function BuilderFooter({
 }) {
     const { constraints, eraId, factionId } = useListSearch()
     const {data: session, status} = useSession()
-    const router = useRouter()
 
     console.log(`Status: ${status}`)
 
     const loggedIn = session?.externalAccount != undefined || status === "authenticated"
 
+    const [exportingCards, setExportingCards] = useState(false)
     const [cmbBtn, cmbDlg] = useCombinations(units, <>Sub-lists</>, 'btn text-center w-full btn-sm')
     const [loadBtn, loadDlg] = useLoadDialog({
         name: listName, 
@@ -87,16 +87,28 @@ function BuilderFooter({
                     }}>Clear</button></li>
                     <li>{saveBtn}</li>
                     <li>{loadBtn}</li>
-                    <li><button className="btn text-center w-full btn-sm" onClick={e => {
-                        router.push("/validate/result?" + controller.toValidateParams(eraId, factionId).toString())
-                        e?.currentTarget.blur()
-                    }}>Validate</button></li>
                 </ul>
             </div>
             <div className="dropdown dropdown-top dropdown-end h-full text-center items-center">
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Export</div></div>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
                     <li><ShareLink constraints={constraints} name={listName} total={total} units={units} eraId={eraId} factionId={factionId} className='btn text-center w-full btn-sm' /></li>
+                    <li><button className="btn text-center w-full btn-sm" onClick={e => {
+                        if (units.length === 0) return
+                        downloadForceFile(units, listName)
+                        e.currentTarget.blur()
+                    }}>MUL Force</button></li>
+                    <li><button className="btn text-center w-full btn-sm" disabled={exportingCards} onClick={e => {
+                        if (units.length === 0 || exportingCards) return
+                        const button = e.currentTarget
+                        setExportingCards(true)
+                        downloadAsCards(units, listName)
+                            .catch((err: unknown) => window.alert(err instanceof Error ? err.message : "Card export failed."))
+                            .finally(() => {
+                                setExportingCards(false)
+                                button.blur()
+                            })
+                    }}>{exportingCards ? "Cards..." : "AS Cards"}</button></li>
                     <li><Link href="/tts/" target="_blank" className="btn text-center w-full btn-sm" onClick={e => controller.exportExternal(listName, "tts")}>TTS</Link></li>
                 </ul>
             </div>

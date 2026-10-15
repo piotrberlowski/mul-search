@@ -14,7 +14,6 @@ export default function Navigation({ className }: { className?: string }) {
                     </div>
                     <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
                         <li><Link href="/">Search/Builder</Link></li>
-                        <li><Link href="/validate">AS350 Validator</Link></li>
                         <li><Link href="/library">List Library</Link></li>
                     </ul>
                 </div>
@@ -23,7 +22,6 @@ export default function Navigation({ className }: { className?: string }) {
             <div className="flex-1 hidden lg:flex">
                 <ul className="menu menu-horizontal px-1">
                     <li><Link href="/">Search/Builder</Link></li>
-                    <li><Link href="/validate">AS350 Validator</Link></li>
                     <li><Link href="/library">List Library</Link></li>
                 </ul>
             </div>

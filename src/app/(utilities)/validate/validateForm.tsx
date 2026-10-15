@@ -1,8 +1,10 @@
 'use client'
-import { Faction } from "@/app/data";
+import { Faction, searchParamsFromIds } from "@/app/data";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from 'react';
-import { parsePdf } from "./pdf/parsePdf";
+import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, saveByName } from "@/api/unitListApi";
+import { resolveUnits } from "@/app/api/dao/units";
+import { parseForceFile } from "./forceFile";
 
 function renderOptions(factions: Faction[]) {
     return factions
@@ -11,6 +13,19 @@ function renderOptions(factions: Faction[]) {
                 <option key={fa.value} value={fa.value || ""}>{fa.label}</option>
             )
         })
+}
+
+function constraintsLabel(
+    eraId: string,
+    factionId: string,
+    eras: Faction[],
+    factionsByEra: { eraId: number, factions: Faction[] }[],
+) {
+    const eraName = eras.find((era) => `${era.value}` === eraId)?.label
+    const factionName = factionsByEra
+        .find((entry) => `${entry.eraId}` === eraId)
+        ?.factions.find((faction) => `${faction.value}` === factionId)?.label
+    return (factionName && eraName) ? `[${factionName} during ${eraName}]` : "[Unknown]"
 }
 
 export default function ValidateForm({
@@ -28,7 +43,8 @@ export default function ValidateForm({
     const [spec, setSpec] = useState(params.get('specific')?.toString())
     const [era, setEra] = useState(params.get('era')?.toString())
     const [error, setError] = useState<string>()
-    const [pdf, setFile] = useState<File>()
+    const [forceFile, setFile] = useState<File>()
+    const [busy, setBusy] = useState(false)
     const factionsForEra = factionsByEra.find((entry) => `${entry.eraId}` === era)?.factions ?? []
 
     function onEra(value: string) {
@@ -39,33 +55,43 @@ export default function ValidateForm({
         }
     }
 
-    function submit(serializedList: string) {
-        const params = new URLSearchParams()
-        params.append("era", `${era}`)
-        params.append("specific", `${spec}`)
-        params.append("list", serializedList)
-        router.push(`/validate/result?${params.toString()}`)
-    }
-
-    function validate(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+    async function openInBuilder(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
         e.preventDefault()
-        if (!pdf) {
+        if (!forceFile || !era || !spec || busy) {
             return
         }
-        parsePdf(pdf)
-            .then(parseResult => {
-                if (!parseResult.success) {
-                    console.log(`Server Error: ${parseResult.error}`)
-                    setError(error)
-                } else if (parseResult.serializedList === undefined || !parseResult.serializedList) {
-                    console.log("Empty List!")
-                    setError("Empty List!")
-                } else {
-                    submit(parseResult.serializedList)
-                }
-            }).catch(e => {
-                setError(`Failed to parse the PDF: ${e}`)
-            })
+        setBusy(true)
+        setError(undefined)
+        try {
+            const parseResult = parseForceFile(await forceFile.text())
+            if (!parseResult.success || !parseResult.entries?.length) {
+                setError(parseResult.error || "That force file has no units.")
+                return
+            }
+            const resolved = await resolveUnits(parseResult.entries.map((entry) => entry.id))
+            const missing = [...new Set(parseResult.entries.map((entry) => entry.id).filter((id) => !resolved[id]))]
+            if (missing.length) {
+                setError(`Could not match: ${missing.join(", ")}`)
+                return
+            }
+            const units: ISelectedUnit[] = parseResult.entries.map((entry, ordinal) => ({
+                ...resolved[entry.id],
+                ordinal,
+                skill: entry.skill,
+                lance: '',
+            }))
+            saveByName({
+                units,
+                constraints: constraintsLabel(era, spec, eras, factionsByEra),
+                eraId: Number(era),
+                factionId: Number(spec),
+            }, LOCAL_STORAGE_NAME_AUTOSAVE)
+            router.push(`/builder?${searchParamsFromIds(Number(era), Number(spec))}`)
+        } catch (err) {
+            setError(`Failed to import the force file: ${err}`)
+        } finally {
+            setBusy(false)
+        }
     }
 
     return (
@@ -91,14 +117,17 @@ export default function ValidateForm({
 
             <label className="form-control bg-inherit w-3/4 mx-auto">
                 <div className="label">
-                    <span className="label-text">MUL PDF</span>
+                    <span className="label-text">MUL force file</span>
                 </div>
-                <input type="file" className="file-input file-input-bordered file-input-sm bg-inherit w-full" onChange={e => setFile(e.target.files?.[0])} accept="application/pdf" />
+                <input type="file" className="file-input file-input-bordered file-input-sm bg-inherit w-full" onChange={e => setFile(e.target.files?.[0])} accept=".json,application/json" />
             </label>
             <div className="flex-1 text-center mt-3">
-                <button className="btn w-3/4 btn-sm" onClick={e => validate(e)} disabled={!(era && spec && pdf)}>Validate</button>
+                <button className="btn w-3/4 btn-sm" onClick={e => openInBuilder(e)} disabled={!(era && spec && forceFile) || busy}>
+                    {busy ? "Opening..." : "Open in builder"}
+                </button>
             </div>
-            <div role="alert" className={`alert alert-error ${error ? "" : "invisible"}`}><span>{error}</span></div>
+            <p className="text-center text-xs mt-2">This replaces the list currently open in the builder.</p>
+            {error ? <div role="alert" className="alert alert-error"><span>{error}</span></div> : null}
         </form>
     )
 }
