@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { unstable_cache } from 'next/cache'
+import { Prisma } from '@/generated/prisma/client'
 import prisma from '../../../../lib/prisma'
 import { MUL_ORIGIN } from '../../../../lib/mul/types'
 
@@ -170,7 +171,7 @@ export class UnitsDao {
       }
     }
 
-    const [legacy, byId, byName] = await Promise.all([
+    const [legacy, byId] = await Promise.all([
       numeric.length
         ? prisma.legacyUnitId.findMany({
             where: { legacyId: { in: numeric } },
@@ -183,32 +184,61 @@ export class UnitsDao {
             include: unitInclude,
           })
         : Promise.resolve([]),
-      strings.length
-        ? prisma.unitMetadata.findMany({
-            where: {
-              OR: strings.map((name) => ({
-                name: { equals: name, mode: 'insensitive' as const },
-              })),
-            },
-            include: unitInclude,
-          })
-        : Promise.resolve([]),
     ])
+    const foundIds = new Set(byId.map((unit) => unit.id))
+    const byDisplay = await findByDisplayName(strings.filter((name) => !foundIds.has(name)))
 
-    const resolved = new Map<string, ListedUnit>()
+    const index = new Map<string, ListedUnit>()
+    const remember = (unit: ListedUnit, aliases: string[]) => {
+      for (const alias of aliases) {
+        const key = normalizeDisplayName(alias)
+        if (key && !index.has(key)) index.set(key, unit)
+      }
+    }
     for (const row of legacy) {
-      resolved.set(String(row.legacyId), toListedUnit(row.unit))
+      remember(toListedUnit(row.unit), [String(row.legacyId)])
     }
     for (const unit of byId) {
-      resolved.set(unit.id, toListedUnit(unit))
+      remember(toListedUnit(unit), [unit.id])
     }
-    for (const unit of byName) {
-      const key = [unit.name, unit.model].filter(Boolean).join(' ')
-      resolved.set(key, toListedUnit(unit))
-      resolved.set(unit.name, toListedUnit(unit))
+    const displayUnits = byDisplay
+      .map(toListedUnit)
+      .sort((a, b) => a.Id.localeCompare(b.Id))
+    for (const unit of displayUnits) {
+      remember(unit, [unit.Id])
+    }
+    for (const unit of displayUnits) {
+      remember(unit, [unit.Name])
+    }
+
+    const resolved = new Map<string, ListedUnit>()
+    for (const value of idsOrNames) {
+      const key = String(value)
+      const unit = index.get(normalizeDisplayName(key))
+      if (unit) resolved.set(key, unit)
     }
     return resolved
   }
+}
+
+function normalizeDisplayName(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+async function findByDisplayName(names: string[]) {
+  const keys = [...new Set(names.map(normalizeDisplayName).filter(Boolean))]
+  if (!keys.length) return []
+  const rows = await prisma.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+    SELECT "id"
+    FROM "UnitMetadata"
+    WHERE "removedAt" IS NULL
+      AND lower(btrim(regexp_replace(concat_ws(' ', "name", "model"), '\\s+', ' ', 'g'))) IN (${Prisma.join(keys)})
+  `)
+  if (!rows.length) return []
+  return prisma.unitMetadata.findMany({
+    where: { id: { in: rows.map((row) => row.id) } },
+    include: unitInclude,
+  })
 }
 
 export const unitsDao = new UnitsDao()

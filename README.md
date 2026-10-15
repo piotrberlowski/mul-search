@@ -10,7 +10,6 @@ The author found the above two behaviors to be difficult in the upstream MasterU
 
 # Credits
 
- * Tony Roberts for his [pdf2array functionality (published under MIT License)](https://github.com/tonyroberts/pdf2array)
  * ITVBBjorn for their [AS Play UI](https://github.com/itvbbjorn/itvbbjorn.github.io)
 
 ## Developing

@@ -1,8 +1,6 @@
 import { compareSelectedUnits } from "@/api/shareApi";
 import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, exportTTSString, formatDamageBrackets, loadByName, loadLists, removeByName, saveByName, saveLists, totalPV } from "@/api/unitListApi"
 import { IUnit } from "@/api/unitListApi";
-import { searchParamsFromIds } from "@/app/data";
-import { LIST_PARAMETER } from "@/app/(utilities)/validate/result/validation";
 import { ChangeListener } from "@/api/commons";
 import { createContext, useContext } from "react";
 import type { ListSearch } from "./searchQuery";
@@ -166,13 +164,6 @@ export class ListBuilderController {
 
     public getStoredLists() {
         return this.storedLists
-    }
-
-    public toValidateParams(eraId: number | null, factionId: number | null): URLSearchParams {
-        const params = searchParamsFromIds(eraId, factionId)
-        const unitString = this.save.units.map(su => `${su.skill}:${su.Id}`).join(";")
-        params.append(LIST_PARAMETER, unitString)
-        return params
     }
 
     public getSave() {

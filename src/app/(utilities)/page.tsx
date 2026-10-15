@@ -15,7 +15,7 @@ function Intro() {
           This tool supports the list building flow of the <a href="https://wolfsdragoons.com/alpha-strike-core-tournament-rules-2/">Wolf Net Alpha Strike 350 format</a>.
         </p>
         <p>
-          <Link href="/validate">Navigate here to validate lists from MasterUnitList</Link>
+          <Link href="/validate">Import a Master Unit List force file into the builder</Link>
         </p>
         <p>
           To start working on your list, please:
