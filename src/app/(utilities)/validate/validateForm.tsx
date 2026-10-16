@@ -64,20 +64,21 @@ export default function ValidateForm({
         setError(undefined)
         try {
             const parseResult = parseForceFile(await forceFile.text())
-            if (!parseResult.success || !parseResult.entries?.length) {
+            const forceUnits = parseResult.file?.state.units
+            if (!parseResult.success || !forceUnits?.length) {
                 setError(parseResult.error || "That force file has no units.")
                 return
             }
-            const resolved = await resolveUnits(parseResult.entries.map((entry) => entry.id))
-            const missing = [...new Set(parseResult.entries.map((entry) => entry.id).filter((id) => !resolved[id]))]
+            const resolved = await resolveUnits(forceUnits.map((unit) => unit.uid))
+            const missing = [...new Set(forceUnits.map((unit) => unit.uid).filter((id) => !resolved[id]))]
             if (missing.length) {
                 setError(`Could not match: ${missing.join(", ")}`)
                 return
             }
-            const units: ISelectedUnit[] = parseResult.entries.map((entry, ordinal) => ({
-                ...resolved[entry.id],
+            const units: ISelectedUnit[] = forceUnits.map((unit, ordinal) => ({
+                ...resolved[unit.uid],
                 ordinal,
-                skill: entry.skill,
+                skill: unit.gunnery,
                 lance: '',
             }))
             saveByName({
