@@ -12,9 +12,9 @@ test('named list print heading keeps the name', () => {
     assert.equal(printListHeading('[Clan Wolf during ilClan]', 'Work in Progress'), '[Clan Wolf during ilClan] : Work in Progress')
 })
 
-test('stored list names reject blanks and the autosave key', () => {
+test('stored list names reject blanks', () => {
     assert.equal(validateStoredListName('  '), 'Enter a name.')
-    assert.equal(validateStoredListName('autosave'), 'Choose a different name.')
+    assert.equal(validateStoredListName('autosave'), null)
     assert.equal(validateStoredListName('Work in Progress'), null)
     assert.equal(validateStoredListName('Raid'), null)
 })

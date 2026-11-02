@@ -1,4 +1,5 @@
-export const LOCAL_STORAGE_NAME_AUTOSAVE = 'autosave'
+export const LOCAL_STORAGE_NAME_AUTOSAVE = ''
+const LEGACY_AUTOSAVE_NAME = 'autosave'
 export const WORK_IN_PROGRESS_NAME = 'Work in Progress'
 const LOCAL_STORAGE_KEY = 'alphaStrikeLists'
 const BUILDER_IDENTITY_KEY = 'alphaStrikeBuilderIdentity'
@@ -73,7 +74,6 @@ export function printListHeading(constraints: string, name: string) {
 export function validateStoredListName(name: string): string | null {
     const trimmed = name.trim()
     if (!trimmed) return 'Enter a name.'
-    if (trimmed === LOCAL_STORAGE_NAME_AUTOSAVE) return 'Choose a different name.'
     return null
 }
 
@@ -177,7 +177,29 @@ function writeStoredId(key: string, id: number | null) {
     localStorage.setItem(key, String(id))
 }
 
+function migrateLegacyAutosave() {
+    if (typeof localStorage === 'undefined') return
+    const currentKey = LOCAL_STORAGE_LIST_KEY_PREFIX + LOCAL_STORAGE_NAME_AUTOSAVE
+    if (localStorage.getItem(currentKey) != null) return
+    const legacyKey = LOCAL_STORAGE_LIST_KEY_PREFIX + LEGACY_AUTOSAVE_NAME
+    if (localStorage.getItem(legacyKey) == null) return
+    for (const prefix of [
+        LOCAL_STORAGE_LIST_KEY_PREFIX,
+        LOCAL_STORAGE_CONSTRAINT_KEY_PREFIX,
+        LOCAL_STORAGE_ERA_KEY_PREFIX,
+        LOCAL_STORAGE_FACTION_KEY_PREFIX,
+    ]) {
+        const value = localStorage.getItem(prefix + LEGACY_AUTOSAVE_NAME)
+        if (value == null) localStorage.removeItem(prefix + LOCAL_STORAGE_NAME_AUTOSAVE)
+        else localStorage.setItem(prefix + LOCAL_STORAGE_NAME_AUTOSAVE, value)
+        localStorage.removeItem(prefix + LEGACY_AUTOSAVE_NAME)
+    }
+    const lists = loadLists().filter(name => name !== LEGACY_AUTOSAVE_NAME)
+    saveLists(lists)
+}
+
 export function loadByName(name: string): Save {
+    if (name === LOCAL_STORAGE_NAME_AUTOSAVE) migrateLegacyAutosave()
     const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
     const result = localStorage.getItem(listKey)
     const units = JSON.parse(result || "[]")
@@ -195,6 +217,7 @@ export function loadByName(name: string): Save {
 }
 
 export function saveByName(save: Save, name: string) {
+    if (name === LOCAL_STORAGE_NAME_AUTOSAVE) migrateLegacyAutosave()
     const listKey = LOCAL_STORAGE_LIST_KEY_PREFIX + name
     const constraintKey = LOCAL_STORAGE_CONSTRAINT_KEY_PREFIX + name
     const unitList = JSON.stringify(save.units)
