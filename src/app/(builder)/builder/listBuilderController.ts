@@ -1,5 +1,5 @@
 import { compareSelectedUnits } from "@/api/shareApi";
-import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, WORK_IN_PROGRESS_NAME, defaultBuilderIdentity, exportTTSString, formatDamageBrackets, loadBuilderIdentity, loadByName, loadLists, removeByName, saveBuilderIdentity, saveByName, saveLists, totalPV, validateStoredListName } from "@/api/unitListApi"
+import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, Save, defaultBuilderIdentity, exportTTSString, formatDamageBrackets, loadBuilderIdentity, loadByName, loadLists, removeByName, saveBuilderIdentity, saveByName, saveLists, totalPV, validateStoredListName } from "@/api/unitListApi"
 import { saveList, updateList } from "@/app/api/dao/lists"
 import { IUnit } from "@/api/unitListApi";
 import { ChangeListener } from "@/api/commons";
@@ -132,7 +132,7 @@ export class ListBuilderController {
             return 
         this.save = this.withSearch([], search)
         this.setSave(this.save)
-        this.adoptIdentity(WORK_IN_PROGRESS_NAME, null)
+        this.adoptIdentity('', null)
         this.updateTotal()
     }
 
@@ -144,7 +144,7 @@ export class ListBuilderController {
     }
 
     public getListName() {
-        return this.serverKey ? this.listName : WORK_IN_PROGRESS_NAME
+        return this.listName
     }
 
     public getServerKey() {
@@ -217,7 +217,7 @@ export class ListBuilderController {
         }
         this.save = load
         this.setSave(load)
-        this.adoptIdentity(WORK_IN_PROGRESS_NAME, null)
+        this.adoptIdentity('', null)
         this.updateTotal()
         this.constraintsObserver?.(load)
     }

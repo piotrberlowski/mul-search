@@ -57,7 +57,6 @@ function BuilderFooter({
 
     const loggedIn = session?.externalAccount != undefined || status === "authenticated"
     const savedOnServer = serverKey != null
-    const displayName = savedOnServer ? listName : WORK_IN_PROGRESS_NAME
 
     const [exportingCards, setExportingCards] = useState(false)
     const [cmbBtn, cmbDlg] = useCombinations(units, <>Sub-lists</>, 'btn text-center w-full btn-sm')
@@ -111,7 +110,7 @@ function BuilderFooter({
             <div className="dropdown dropdown-top dropdown-end h-full text-center items-center">
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Export</div></div>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                    <li><ShareLink constraints={constraints} name={displayName} total={total} units={units} eraId={eraId} factionId={factionId} className='btn text-center w-full btn-sm' /></li>
+                    <li><ShareLink constraints={constraints} name={listName} total={total} units={units} eraId={eraId} factionId={factionId} className='btn text-center w-full btn-sm' /></li>
                     <li><button className="btn text-center w-full btn-sm" onClick={e => {
                         if (units.length === 0) return
                         downloadForceFile(units, listName)
@@ -196,7 +195,8 @@ export default function ListBuilder({ children }: { children: React.ReactNode })
                             type='text'
                             readOnly={serverKey == null}
                             aria-readonly={serverKey == null}
-                            value={serverKey == null ? WORK_IN_PROGRESS_NAME : name}
+                            placeholder={WORK_IN_PROGRESS_NAME}
+                            value={serverKey == null ? '' : name}
                             onChange={e => {
                                 setName(e.target.value)
                                 controller.rename(e.target.value)
