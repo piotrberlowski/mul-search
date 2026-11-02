@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from "react"
 import { ConstrainedList, MulUnit } from '@/api/shareApi'
 import { materializeUnits } from '@/api/materializeUnits'
-import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, loadLists, printListHeading, saveBuilderIdentity, saveByName, saveLists, validateStoredListName, WORK_IN_PROGRESS_NAME } from '../../../api/unitListApi'
+import { ISelectedUnit, LOCAL_STORAGE_NAME_AUTOSAVE, defaultBuilderIdentity, loadLists, printListHeading, saveBuilderIdentity, saveByName, saveLists, validateStoredListName } from '../../../api/unitListApi'
 import { Faction, Factions, searchParamsFromIds } from '@/app/data'
 import { MetadataContext, type EraFactionList } from "@/app/metadataContext"
 import type { UnitTypeOption } from '@/app/(builder)/builder/unitTypes'
@@ -29,7 +29,7 @@ function ReadyList({ units, constraints, name, total, eraId, factionId }: { unit
             }
             if (tweak) {
                 saveByName(save, LOCAL_STORAGE_NAME_AUTOSAVE)
-                saveBuilderIdentity({ name: WORK_IN_PROGRESS_NAME, serverKey: null })
+                saveBuilderIdentity(defaultBuilderIdentity())
                 if (nextEra != null && nextFaction != null) {
                     router.push("/builder?" + searchParamsFromIds(nextEra, nextFaction).toString())
                 }

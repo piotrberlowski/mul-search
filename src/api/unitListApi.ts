@@ -65,25 +65,20 @@ export type BuilderIdentity = {
     serverKey: string | null
 }
 
-export function isWorkInProgressName(name: string) {
-    return name.trim() === WORK_IN_PROGRESS_NAME
-}
-
 export function printListHeading(constraints: string, name: string) {
-    if (!name.trim() || isWorkInProgressName(name)) return constraints
+    if (!name.trim()) return constraints
     return `${constraints} : ${name}`
 }
 
 export function validateStoredListName(name: string): string | null {
     const trimmed = name.trim()
     if (!trimmed) return 'Enter a name.'
-    if (isWorkInProgressName(trimmed)) return 'Choose a name other than Work in Progress.'
     if (trimmed === LOCAL_STORAGE_NAME_AUTOSAVE) return 'Choose a different name.'
     return null
 }
 
 export function defaultBuilderIdentity(): BuilderIdentity {
-    return { name: WORK_IN_PROGRESS_NAME, serverKey: null }
+    return { name: '', serverKey: null }
 }
 
 export function loadBuilderIdentity(): BuilderIdentity {
@@ -94,7 +89,7 @@ export function loadBuilderIdentity(): BuilderIdentity {
         const parsed = JSON.parse(raw) as Partial<BuilderIdentity>
         const serverKey = typeof parsed.serverKey === 'string' && parsed.serverKey ? parsed.serverKey : null
         if (!serverKey) return defaultBuilderIdentity()
-        const name = typeof parsed.name === 'string' && parsed.name.trim() ? parsed.name : WORK_IN_PROGRESS_NAME
+        const name = typeof parsed.name === 'string' ? parsed.name : ''
         return { name, serverKey }
     } catch {
         return defaultBuilderIdentity()

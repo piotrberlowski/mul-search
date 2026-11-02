@@ -8,7 +8,7 @@ import { deleteListByKey, findListByKey } from "@/app/api/dao/lists"
 import {
     LOCAL_STORAGE_NAME_AUTOSAVE,
     Save,
-    WORK_IN_PROGRESS_NAME,
+    defaultBuilderIdentity,
     detachBuilderIdentity,
     loadByName,
     loadLists,
@@ -69,7 +69,7 @@ function memoryPrintHref(row: MemoryRow) {
 
 function openInBuilder(save: Save, name: string, serverKey: string | null) {
     saveByName(save, LOCAL_STORAGE_NAME_AUTOSAVE)
-    saveBuilderIdentity(serverKey ? { name, serverKey } : { name: WORK_IN_PROGRESS_NAME, serverKey: null })
+    saveBuilderIdentity(serverKey ? { name, serverKey } : defaultBuilderIdentity())
 }
 
 function ListAction({
@@ -141,7 +141,7 @@ export default function ListsView({
     }
 
     function editMemory(row: MemoryRow) {
-        openInBuilder(row.save, WORK_IN_PROGRESS_NAME, null)
+        openInBuilder(row.save, '', null)
         router.push(builderHref(row.save.eraId, row.save.factionId))
     }
 
