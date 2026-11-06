@@ -57,7 +57,7 @@ function BuilderFooter({
     const router = useRouter()
     const loggedIn = session?.externalAccount != undefined || status === "authenticated"
     const savedOnServer = serverKey != null
-    const [linkNotice, setLinkNotice] = useState<string | null>(null)
+    const [linkNotice, setLinkNotice] = useState<{ tone: 'info' | 'error', text: string } | null>(null)
 
     function currentSnapshot(): Save {
         const save = controller.getSave()
@@ -86,7 +86,11 @@ function BuilderFooter({
             constraints: save.constraints,
             eraId: save.eraId,
             factionId: save.factionId,
-        })).then(error => setLinkNotice(error ?? 'Link copied.'))
+        })).then(error => setLinkNotice(
+            error
+                ? { tone: 'error', text: error }
+                : { tone: 'info', text: 'Link copied.' },
+        ))
     }
 
     const [exportingCards, setExportingCards] = useState(false)
@@ -115,7 +119,14 @@ function BuilderFooter({
 
     return (
         <>
-        {linkNotice ? <div role="status" className="text-center text-xs pb-1">{linkNotice}</div> : null}
+        {linkNotice ? (
+            <div
+                role={linkNotice.tone === 'error' ? 'alert' : 'status'}
+                className={`alert my-1 ${linkNotice.tone === 'error' ? 'alert-error' : 'alert-info'}`}
+            >
+                <span>{linkNotice.text}</span>
+            </div>
+        ) : null}
         <div className="bg-inherit grid grid-cols-3 items-center text-center w-full text-xs md:text-sm lg:text-base h-12 md:h-8">
             <div className="dropdown dropdown-top dropdown-start h-full text-center items-center">
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Play</div></div>

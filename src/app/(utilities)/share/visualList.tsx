@@ -58,9 +58,11 @@ function fromStorage(): ResolvedList {
     }
 }
 
+type CopyNotice = { tone: 'info' | 'error', text: string }
+
 function PrintBody({ list }: { list: ReadyList }) {
     const router = useRouter()
-    const [status, setStatus] = useState<string | null>(null)
+    const [status, setStatus] = useState<CopyNotice | null>(null)
     const heading = printListHeading(list.constraints, list.name)
 
     useEffect(() => {
@@ -80,7 +82,11 @@ function PrintBody({ list }: { list: ReadyList }) {
     }
 
     function share() {
-        copyShareLink(list.sharePath).then(error => setStatus(error ?? 'Link copied.'))
+        copyShareLink(list.sharePath).then(error => setStatus(
+            error
+                ? { tone: 'error', text: error }
+                : { tone: 'info', text: 'Link copied.' },
+        ))
     }
 
     if (!list.units.length) {
@@ -104,7 +110,14 @@ function PrintBody({ list }: { list: ReadyList }) {
             <div className="text-center w-full print:hidden">
                 <button type="button" className="w-full" onClick={() => window.print()}>Print</button>
             </div>
-            {status ? <p role="status" className="text-center print:hidden">{status}</p> : null}
+            {status ? (
+                <div
+                    role={status.tone === 'error' ? 'alert' : 'status'}
+                    className={`alert my-2 print:hidden ${status.tone === 'error' ? 'alert-error' : 'alert-info'}`}
+                >
+                    <span>{status.text}</span>
+                </div>
+            ) : null}
             <div className="print:mx-3">
                 <SummaryTable input={list.units} />
             </div>
