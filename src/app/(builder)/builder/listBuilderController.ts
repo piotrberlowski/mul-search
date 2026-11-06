@@ -159,34 +159,29 @@ export class ListBuilderController {
         return null
     }
 
-    public async overwrite(): Promise<string | null> {
-        if (!this.serverKey) return 'This list is not saved yet.'
+    public overwrite(): Promise<string | null> {
+        if (!this.serverKey) return Promise.resolve('This list is not saved yet.')
         const nameError = validateStoredListName(this.listName)
-        if (nameError) return nameError
-        if (this.save.units.length === 0) return 'Add units before saving.'
-        try {
-            const error = await updateList(this.serverKey, this.listName.trim(), this.save)
-            if (!error) this.adoptIdentity(this.listName.trim(), this.serverKey)
+        if (nameError) return Promise.resolve(nameError)
+        if (this.save.units.length === 0) return Promise.resolve('Add units before saving.')
+        const name = this.listName.trim()
+        const serverKey = this.serverKey
+        return updateList(serverKey, name, this.save).then(error => {
+            if (!error) this.adoptIdentity(name, serverKey)
             return error
-        } catch (e) {
-            console.error(e)
-            return 'Could not save the list.'
-        }
+        })
     }
 
-    public async saveAs(name: string): Promise<string | null> {
+    public saveAs(name: string): Promise<string | null> {
         const nameError = validateStoredListName(name)
-        if (nameError) return nameError
-        if (this.save.units.length === 0) return 'Add units before saving.'
-        try {
-            const result = await saveList(name.trim(), this.save)
+        if (nameError) return Promise.resolve(nameError)
+        if (this.save.units.length === 0) return Promise.resolve('Add units before saving.')
+        const trimmed = name.trim()
+        return saveList(trimmed, this.save).then(result => {
             if ('error' in result) return result.error
-            this.adoptIdentity(name.trim(), result.key)
+            this.adoptIdentity(trimmed, result.key)
             return null
-        } catch (e) {
-            console.error(e)
-            return 'Could not save the list.'
-        }
+        })
     }
 
     public store(name: string) {

@@ -44,19 +44,20 @@ function requestFromParams(searchParams: ShareSearchParams): Promise<PrintReques
 }
 
 export default async function SharedList({ searchParams }: { searchParams: ShareSearchParams }) {
-    const request = await requestFromParams(searchParams)
-    const heading = request.source === 'remote'
-        ? printListHeading(request.list.constraints, request.list.name)
-        : 'Alpha Strike list'
-    return (
-        <main className="relative items-center align-top bg-inherit">
-            <Head>
-                <meta property="og:title" content={`AS List: ${heading}`} />
-                <meta property="og:description" content={`Army List for ${heading}`} />
-            </Head>
-            <Suspense fallback={<ListFallback />}>
-                <VisualList request={request} />
-            </Suspense>
-        </main>
-    )
+    return requestFromParams(searchParams).then(request => {
+        const heading = request.source === 'remote'
+            ? printListHeading(request.list.constraints, request.list.name)
+            : 'Alpha Strike list'
+        return (
+            <main className="relative items-center align-top bg-inherit">
+                <Head>
+                    <meta property="og:title" content={`AS List: ${heading}`} />
+                    <meta property="og:description" content={`Army List for ${heading}`} />
+                </Head>
+                <Suspense fallback={<ListFallback />}>
+                    <VisualList request={request} />
+                </Suspense>
+            </main>
+        )
+    })
 }
