@@ -1,7 +1,6 @@
 'use client'
 
 import { materializeUnits } from "@/api/materializeUnits"
-import { isFailure } from "@/api/result"
 import { ConstrainedList, copyShareLink, savedListHref, shareHref } from "@/api/shareApi"
 import { storeUnitsForPlay } from "@/components/playLink"
 import { builderHref } from "@/app/data"
@@ -197,19 +196,22 @@ export default function ListsView({
         router.push('/play')
     }
 
+    function unavailableMessage(list: ConstrainedList) {
+        if (list.constraints === 'List not found' || list.constraints === 'Server Error!' || list.name === 'Error loading list!') {
+            return list.constraints || 'Could not open that list.'
+        }
+        return 'That list has no units.'
+    }
+
     function withSavedList(key: string, action: (list: ConstrainedList) => Promise<unknown> | void) {
         setBusy(key)
         setNotice(null)
-        return findListByKey(key).then(result => {
-            if (isFailure(result)) {
-                setNotice({ tone: 'error', text: result.error })
+        return findListByKey(key).then(list => {
+            if (!list.units.length) {
+                setNotice({ tone: 'error', text: unavailableMessage(list) })
                 return
             }
-            if (!result.value.units.length) {
-                setNotice({ tone: 'error', text: 'That list has no units.' })
-                return
-            }
-            return action(result.value)
+            return action(list)
         }).catch(error => {
             console.error(error)
             setNotice({ tone: 'error', text: 'Could not open that list.' })
@@ -257,11 +259,7 @@ export default function ListsView({
         setBusy(key)
         setNotice(null)
         deleteListByKey(key).then(
-            result => {
-                if (isFailure(result)) {
-                    setNotice({ tone: 'error', text: result.error })
-                    return
-                }
+            () => {
                 detachBuilderIdentity(key)
                 router.refresh()
             },

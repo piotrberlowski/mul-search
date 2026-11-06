@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict'
 import { after, beforeEach, test } from 'node:test'
-import { isFailure } from '../../src/api/result'
 import { savedListHref, shareHref, shareHrefFromMul } from '../../src/api/shareApi'
 import { ISelectedUnit, Save, loadByName, loadLists, loadStagedList, parseId, rememberSave, stageList } from '../../src/api/unitListApi'
 
@@ -72,8 +71,6 @@ test('share links keep a saved key separate from a snapshot', () => {
         units: [{ id: '42', skill: 4, name: 'Atlas', lance: '', ordinal: 0 }],
     })
     assert.match(mulHref, /list=Raid/)
-    assert.equal(isFailure({ error: 'List not found.' }), true)
-    assert.equal(isFailure({ value: 'key' }), false)
 })
 
 test('staging keeps a memory name without a server key', () => {
