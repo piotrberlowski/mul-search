@@ -2,7 +2,6 @@
 import ShareLink from '@/app/(utilities)/share/shareLink';
 import { useCombinations } from '@/components/combinations';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ISelectedUnit, Save, WORK_IN_PROGRESS_NAME, groupByLance, loadBuilderIdentity, totalPV } from '../../../api/unitListApi';
 import PlayLink from '../../../components/playLink';
@@ -53,7 +52,6 @@ function BuilderFooter({
 }) {
     const { constraints, eraId, factionId } = useListSearch()
     const {data: session, status} = useSession()
-    const router = useRouter()
 
     const loggedIn = session?.externalAccount != undefined || status === "authenticated"
     const savedOnServer = serverKey != null
@@ -101,10 +99,6 @@ function BuilderFooter({
                     {loggedIn ? <li>{saveAsBtn}</li> : null}
                     <li>{rememberBtn}</li>
                     <li><Link href="/user" className="btn text-center w-full btn-sm">Load</Link></li>
-                    <li><button className="btn text-center w-full btn-sm" onClick={e => {
-                        router.push("/validate/result?" + controller.toValidateParams(eraId, factionId).toString())
-                        e?.currentTarget.blur()
-                    }}>Validate</button></li>
                 </ul>
             </div>
             <div className="dropdown dropdown-top dropdown-end h-full text-center items-center">
