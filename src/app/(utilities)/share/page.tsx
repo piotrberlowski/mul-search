@@ -1,4 +1,3 @@
-import { isFailure } from "@/api/result"
 import { ConstrainedList, parseShare } from "@/api/shareApi"
 import { parseId, printListHeading } from "@/api/unitListApi"
 import { findListByKey } from "@/app/api/dao/lists"
@@ -32,11 +31,13 @@ function parseFromUrl(searchParams: ShareSearchParams): ConstrainedList {
 
 function requestFromParams(searchParams: ShareSearchParams): Promise<PrintRequest> {
     if (searchParams.key) {
-        return findListByKey(searchParams.key).then(result =>
-            isFailure(result)
-                ? { source: 'error', message: result.error }
-                : { source: 'remote', list: result.value, serverKey: searchParams.key ?? null }
-        )
+        return findListByKey(searchParams.key).then(list => {
+            if (list.units.length > 0) return { source: 'remote' as const, list, serverKey: searchParams.key ?? null }
+            const message = list.constraints === 'List not found' || list.constraints === 'Server Error!' || list.name === 'Error loading list!'
+                ? list.constraints || 'Could not open that list.'
+                : 'That list has no units.'
+            return { source: 'error' as const, message }
+        })
     }
     if (searchParams.list) return Promise.resolve({ source: 'remote', list: parseFromUrl(searchParams), serverKey: null })
     return Promise.resolve({ source: 'local' })
