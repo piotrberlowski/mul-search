@@ -47,14 +47,47 @@ test('a sub-list is orphaned once one of its units leaves the list or changes sk
 })
 
 test('stored selections keep their order and headers only', () => {
-    saveSubListSelections([
+    const raid = 'atlas:4'
+    saveSubListSelections(raid, [
         { key: 'b:4', header: 'Recon' },
         { key: 'a:4', header: '' },
     ])
-    assert.deepEqual(loadSubListSelections(), [
+    assert.deepEqual(loadSubListSelections(raid), [
         { key: 'b:4', header: 'Recon' },
         { key: 'a:4', header: '' },
     ])
     memory.set('alphaStrikeSubListSelections', 'not json')
-    assert.deepEqual(loadSubListSelections(), [])
+    assert.deepEqual(loadSubListSelections(raid), [])
+})
+
+test('each list keeps its own selections', () => {
+    saveSubListSelections('atlas:4', [{ key: 'atlas:4', header: 'Strike' }])
+    saveSubListSelections('locust:4', [{ key: 'locust:4', header: 'Recon' }])
+    assert.deepEqual(loadSubListSelections('atlas:4'), [{ key: 'atlas:4', header: 'Strike' }])
+    assert.deepEqual(loadSubListSelections('locust:4'), [{ key: 'locust:4', header: 'Recon' }])
+})
+
+test('only the twenty most recently saved lists of selections are kept', () => {
+    for (let i = 0; i < 20; i++) saveSubListSelections(`unit-${i}:4`, [{ key: `unit-${i}:4`, header: '' }])
+    saveSubListSelections('unit-0:4', [{ key: 'unit-0:4', header: 'Kept' }])
+    saveSubListSelections('unit-20:4', [{ key: 'unit-20:4', header: '' }])
+    assert.deepEqual(loadSubListSelections('unit-0:4'), [{ key: 'unit-0:4', header: 'Kept' }])
+    assert.deepEqual(loadSubListSelections('unit-1:4'), [])
+    assert.deepEqual(loadSubListSelections('unit-20:4'), [{ key: 'unit-20:4', header: '' }])
+})
+
+test('a selection book with broken entries keeps the valid ones', () => {
+    memory.set('alphaStrikeSubListSelections', JSON.stringify({
+        lists: [
+            { listKey: 'atlas:4', selections: [{ key: 'atlas:4', header: 'Strike' }, { key: 1 }, null] },
+            { selections: [] },
+            null,
+        ],
+    }))
+    assert.deepEqual(loadSubListSelections('atlas:4'), [{ key: 'atlas:4', header: 'Strike' }])
+})
+
+test('selections stored before they were scoped per list are ignored', () => {
+    memory.set('alphaStrikeSubListSelections', JSON.stringify([{ key: 'a:4', header: 'Old' }]))
+    assert.deepEqual(loadSubListSelections('a:4'), [])
 })

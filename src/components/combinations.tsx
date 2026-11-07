@@ -46,6 +46,7 @@ const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProp
     const [maxPV, setMaxPv] = useState(250)
     const [combinations, setCombinations] = useState<ISelectedUnit[][]|null>(null)
     const [selected, setSelected] = useState<SelectedSubList[]>([])
+    const listKey = represent(units)
 
     useEffect(
         () => {
@@ -55,21 +56,21 @@ const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProp
                 setSelected([])
                 return
             }
-            const restored = loadSubListSelections().flatMap(stored => {
+            const restored = loadSubListSelections(listKey).flatMap(stored => {
                 const line = restoreSubset(stored.key, units)
                 return line ? [{ ...stored, units: line }] : []
             })
-            saveSubListSelections(restored)
+            saveSubListSelections(listKey, restored)
             setSelected(restored)
         },
-        [units, open, minPV, maxPV]
+        [units, open, minPV, maxPV, listKey]
     )
 
     const selectedKeys = new Set(selected.map(s => s.key))
     const unselected = combinations?.filter(line => !selectedKeys.has(represent(line)))
 
     function updateSelected(next: SelectedSubList[]) {
-        saveSubListSelections(next)
+        saveSubListSelections(listKey, next)
         setSelected(next)
     }
 
