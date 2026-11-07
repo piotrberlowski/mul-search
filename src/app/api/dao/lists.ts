@@ -131,12 +131,15 @@ export async function updateList(key: string, name: string, save: Save): Promise
     })
 }
 
-export async function deleteListByKey(key: string) {
+export async function deleteListByKey(key: string): Promise<string | null> {
     const db = prismaOrError()
-    return findCurrentUserId().then(userId => db.list.delete({
-        where: {
-            ownerId: userId,
-            key: key,
-        },
-    }))
+    return findCurrentUserId().then(userId => {
+        if (!userId) return "403: Forbidden."
+        return db.list.deleteMany({
+            where: {
+                ownerId: userId,
+                key: key,
+            },
+        }).then(result => result.count === 0 ? "List not found." : null)
+    })
 }
