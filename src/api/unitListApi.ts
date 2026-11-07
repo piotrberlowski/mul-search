@@ -9,6 +9,7 @@ const LOCAL_STORAGE_ERA_KEY_PREFIX = 'alphaStrikeList_era_'
 const LOCAL_STORAGE_FACTION_KEY_PREFIX = 'alphaStrikeList_faction_'
 const LOCAL_STORAGE_TTS = 'alphaStrikeTTS'
 const LOCAL_STORAGE_PRINT_LISTS = 'alphaStrikePrintLists'
+const LOCAL_STORAGE_SUBLIST_SELECTIONS = 'alphaStrikeSubListSelections'
 
 export interface ILanced {
     lance?: string
@@ -144,6 +145,25 @@ export function stagePrintLists(printLists: PrintLists) {
             units: list.units,
         })),
     }))
+}
+
+export type StoredSubListSelection = {
+    key: string,
+    header: string,
+}
+
+export function loadSubListSelections(): StoredSubListSelection[] {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(LOCAL_STORAGE_SUBLIST_SELECTIONS) || '[]')
+        if (!Array.isArray(parsed)) return []
+        return parsed.filter(s => typeof s?.key === 'string' && typeof s?.header === 'string')
+    } catch {
+        return []
+    }
+}
+
+export function saveSubListSelections(selections: StoredSubListSelection[]) {
+    localStorage.setItem(LOCAL_STORAGE_SUBLIST_SELECTIONS, JSON.stringify(selections.map(({ key, header }) => ({ key, header }))))
 }
 
 export function loadPrintLists(): PrintLists {

@@ -21,7 +21,18 @@ export function generateSubsets(units: ISelectedUnit[], minPV: number, maxPV: nu
 }
 
 export function represent(units: ISelectedUnit[]): string {
-    return units.map(u => `${u.Id}:${u.skill}`).join()
+    return units.map(u => `${u.Id}:${u.skill}`).sort().join()
+}
+
+export function restoreSubset(key: string, units: ISelectedUnit[]): ISelectedUnit[] | null {
+    const pool = [...units]
+    const picked: ISelectedUnit[] = []
+    for (const token of key.split(',')) {
+        const idx = pool.findIndex(u => `${u.Id}:${u.skill}` === token)
+        if (idx < 0) return null
+        picked.push(...pool.splice(idx, 1))
+    }
+    return picked.sort(compareSelectedUnits)
 }
 
 function deDuplicate(lists: ISelectedUnit[][]): ISelectedUnit[][] {
