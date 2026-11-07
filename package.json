@@ -1,6 +1,6 @@
 {
   "name": "mul-search",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "private": true,
   "packageManager": "pnpm@11.28.2",
   "engines": {
