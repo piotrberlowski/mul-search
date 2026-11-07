@@ -99,12 +99,16 @@ export function savedListHref(key: string) {
     return `/share?key=${encodeURIComponent(key)}`
 }
 
+export function shareUrl(href: string): string {
+    if (typeof window === 'undefined') return href
+    return new URL(href, window.location.origin).toString()
+}
+
 export function copyShareLink(href: string): Promise<string | null> {
     if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
         return Promise.resolve('Could not copy the link.')
     }
-    const url = typeof window === 'undefined' ? href : new URL(href, window.location.origin).toString()
-    return navigator.clipboard.writeText(url).then(
+    return navigator.clipboard.writeText(shareUrl(href)).then(
         () => null,
         () => 'Could not copy the link.',
     )

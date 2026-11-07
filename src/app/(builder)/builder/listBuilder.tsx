@@ -1,6 +1,7 @@
 'use client'
-import { copyShareLink, shareHref } from '@/api/shareApi';
+import { shareHref } from '@/api/shareApi';
 import { useCombinations } from '@/components/combinations';
+import useCopiedLinkDialog from '@/components/copiedLinkDialog';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -57,7 +58,7 @@ function BuilderFooter({
     const router = useRouter()
     const loggedIn = session?.externalAccount != undefined || status === "authenticated"
     const savedOnServer = serverKey != null
-    const [linkNotice, setLinkNotice] = useState<{ tone: 'info' | 'error', text: string } | null>(null)
+    const [showCopiedLink, copiedLinkDlg] = useCopiedLinkDialog()
 
     function currentSnapshot(): Save {
         const save = controller.getSave()
@@ -79,18 +80,14 @@ function BuilderFooter({
     function onShare(event: React.MouseEvent<HTMLButtonElement>) {
         event.currentTarget.blur()
         const save = currentSnapshot()
-        copyShareLink(shareHref({
+        showCopiedLink(shareHref({
             name: listName,
             total,
             units: save.units,
             constraints: save.constraints,
             eraId: save.eraId,
             factionId: save.factionId,
-        })).then(error => setLinkNotice(
-            error
-                ? { tone: 'error', text: error }
-                : { tone: 'info', text: 'Link copied.' },
-        ))
+        }))
     }
 
     const [exportingCards, setExportingCards] = useState(false)
@@ -119,14 +116,6 @@ function BuilderFooter({
 
     return (
         <>
-        {linkNotice ? (
-            <div
-                role={linkNotice.tone === 'error' ? 'alert' : 'status'}
-                className={`alert my-1 ${linkNotice.tone === 'error' ? 'alert-error' : 'alert-info'}`}
-            >
-                <span>{linkNotice.text}</span>
-            </div>
-        ) : null}
         <div className="bg-inherit grid grid-cols-3 items-center text-center w-full text-xs md:text-sm lg:text-base h-12 md:h-8">
             <div className="dropdown dropdown-top dropdown-start h-full text-center items-center">
                 <div tabIndex={0} role="button" className="button-link w-full h-full text-center items-center align-middle flex"><div className='m-auto'>Play</div></div>
@@ -175,6 +164,7 @@ function BuilderFooter({
             {saveAsDlg}
             {rememberDlg}
             {cmbDlg}
+            {copiedLinkDlg}
         </div>
         </>
     )
