@@ -7,8 +7,9 @@ import { builderHref } from '@/app/data'
 import Combinations from '@/components/combinations'
 import PlayLink from '@/components/playLink'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import CardGallery from './cardGallery'
+import { LoadingDots, PrintActions, PrintNotice, PrintTitle, useLoadOnPageShow } from './printPage'
 import SummaryTable from './summaryTable'
 
 export type PrintRequest =
@@ -29,12 +30,6 @@ type ReadyList = {
 }
 
 type ResolvedList = ReadyList | { kind: 'error', message: string }
-
-function requestKey(request: PrintRequest) {
-    if (request.source !== 'remote') return request.source
-    const ids = request.list.units.map(unit => `${unit.id}:${unit.ordinal}`).join(',')
-    return `remote:${request.serverKey ?? ''}:${request.list.name}:${ids}`
-}
 
 function fromStorage(): ResolvedList {
     const staged = loadStagedList()
@@ -86,22 +81,19 @@ function PrintBody({ list }: { list: ReadyList }) {
 
     if (!list.units.length) {
         return (
-            <div className="text-center my-6">
-                <p>No list to print yet. Build a list, then choose Print.</p>
-                <button type="button" className="mt-3 print:hidden" onClick={tweak}>Tweak Now</button>
-            </div>
+            <PrintNotice action={{ label: 'Tweak Now', onClick: tweak }}>
+                No list to print yet. Build a list, then choose Print.
+            </PrintNotice>
         )
     }
 
     return (
         <>
-            <div className="text-center w-full">
-                <div>{heading}</div>
-            </div>
-            <div className="w-full mx-auto flex print:hidden">
+            <PrintTitle>{heading}</PrintTitle>
+            <PrintActions>
                 <button type="button" className="flex-1 w-1/2" onClick={tweak}>Tweak Now</button>
                 <button type="button" className="flex-1 w-1/2" onClick={share}>Share</button>
-            </div>
+            </PrintActions>
             <div className="text-center w-full print:hidden">
                 <button type="button" className="w-full" onClick={() => window.print()}>Print</button>
             </div>
@@ -124,60 +116,50 @@ function PrintBody({ list }: { list: ReadyList }) {
 }
 
 export default function VisualList({ request }: { request: PrintRequest }) {
-    const key = requestKey(request)
     const [resolved, setResolved] = useState<ResolvedList | null>(null)
 
-    useEffect(() => {
+    useLoadOnPageShow(useCallback((isCurrent: () => boolean) => {
         if (request.source === 'error') return
-        let cancelled = false
         const apply = (next: ResolvedList) => {
-            if (!cancelled) setResolved(next)
+            if (isCurrent()) setResolved(next)
         }
-        const load = () => {
-            if (request.source === 'local') {
-                try {
-                    apply(fromStorage())
-                } catch (error) {
-                    console.error(error)
-                    apply({ kind: 'error', message: 'Could not read the list on this device.' })
-                }
-                return
-            }
-            const list = request.list
-            const serverKey = request.serverKey
-            materializeUnits(list.units).then(units => {
-                apply({
-                    kind: 'ready',
-                    units,
-                    constraints: list.constraints,
-                    name: list.name,
-                    total: list.total,
-                    eraId: list.eraId ?? null,
-                    factionId: list.factionId ?? null,
-                    sharePath: serverKey ? savedListHref(serverKey) : shareHrefFromMul(list),
-                    fromStorage: false,
-                })
-            }).catch(error => {
+        if (request.source === 'local') {
+            try {
+                apply(fromStorage())
+            } catch (error) {
                 console.error(error)
-                apply({ kind: 'error', message: 'Could not load units.' })
+                apply({ kind: 'error', message: 'Could not read the list on this device.' })
+            }
+            return
+        }
+        const list = request.list
+        const serverKey = request.serverKey
+        materializeUnits(list.units).then(units => {
+            apply({
+                kind: 'ready',
+                units,
+                constraints: list.constraints,
+                name: list.name,
+                total: list.total,
+                eraId: list.eraId ?? null,
+                factionId: list.factionId ?? null,
+                sharePath: serverKey ? savedListHref(serverKey) : shareHrefFromMul(list),
+                fromStorage: false,
             })
-        }
-        load()
-        window.addEventListener('pageshow', load)
-        return () => {
-            cancelled = true
-            window.removeEventListener('pageshow', load)
-        }
-    }, [key, request])
+        }).catch(error => {
+            console.error(error)
+            apply({ kind: 'error', message: 'Could not load units.' })
+        })
+    }, [request]))
 
     if (request.source === 'error') {
-        return <p className="text-center my-6">{request.message}</p>
+        return <PrintNotice>{request.message}</PrintNotice>
     }
     if (resolved?.kind === 'error') {
-        return <p className="text-center my-6">{resolved.message}</p>
+        return <PrintNotice>{resolved.message}</PrintNotice>
     }
     if (resolved?.kind === 'ready') {
         return <PrintBody list={resolved} />
     }
-    return <div className="w-full h-full text-center items-center justify-items-center"><span className="loading loading-dots loading-lg"></span></div>
+    return <LoadingDots />
 }

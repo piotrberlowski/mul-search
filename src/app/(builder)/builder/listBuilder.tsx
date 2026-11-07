@@ -91,7 +91,12 @@ function BuilderFooter({
     }
 
     const [exportingCards, setExportingCards] = useState(false)
-    const [cmbBtn, cmbDlg] = useCombinations(units, <>Sub-lists</>, 'btn text-center w-full btn-sm', printListHeading(constraints, listName))
+    const [cmbBtn, cmbDlg] = useCombinations({
+        units,
+        title: printListHeading(constraints, listName),
+        className: 'btn text-center w-full btn-sm',
+        children: <>Sub-lists</>,
+    })
     const [saveAsBtn, saveAsDlg] = useNameDialog({
         id: 'dlg-save-as',
         label: 'Save as',

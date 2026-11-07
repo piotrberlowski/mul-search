@@ -2,19 +2,12 @@ import assert from 'node:assert/strict'
 import { after, beforeEach, test } from 'node:test'
 import { savedListHref, shareHref, shareHrefFromMul } from '../../src/api/shareApi'
 import { ISelectedUnit, Save, loadByName, loadLists, loadPrintLists, loadStagedList, parseId, rememberSave, stageList, stagePrintLists } from '../../src/api/unitListApi'
+import { installMemoryStorage } from './memoryStorage'
 
-const memory = new Map<string, string>()
-const localStorage = {
-    getItem: (key: string) => memory.get(key) ?? null,
-    setItem: (key: string, value: string) => { memory.set(key, value) },
-    removeItem: (key: string) => { memory.delete(key) },
-    clear: () => { memory.clear() },
-    key: (index: number) => [...memory.keys()][index] ?? null,
-    get length() { return memory.size },
-}
+const memory = installMemoryStorage()
 
 const previousWindow = globalThis.window
-Object.assign(globalThis, { window: globalThis, localStorage })
+Object.assign(globalThis, { window: globalThis })
 
 after(() => {
     Object.assign(globalThis, { window: previousWindow })
@@ -97,7 +90,7 @@ test('remember stores a named copy and rejects a blank name', () => {
 test('print lists keep each sub-list apart and leave the staged list alone', () => {
     stageList(sampleSave(), 'Raid', null)
     const atlas = sampleSave().units[0]
-    stagePrintLists({
+    const error = stagePrintLists({
         title: 'Raid',
         lists: [
             { header: '  Recon  ', units: [atlas] },
@@ -105,9 +98,20 @@ test('print lists keep each sub-list apart and leave the staged list alone', () 
             { header: 'Recon', units: [atlas] },
         ],
     })
+    assert.equal(error, null)
     const printLists = loadPrintLists()
     assert.equal(printLists.title, 'Raid')
     assert.deepEqual(printLists.lists.map(list => list.header), ['Recon', 'List 2', 'Recon'])
     assert.deepEqual(printLists.lists.map(list => list.units[0]?.Name), ['Atlas', 'Atlas', 'Atlas'])
     assert.equal(loadStagedList().save.units.length, 1)
+})
+
+test('broken print lists load as empty and malformed entries are skipped', () => {
+    memory.set('alphaStrikePrintLists', 'not json')
+    assert.deepEqual(loadPrintLists(), { title: '', lists: [] })
+    memory.set('alphaStrikePrintLists', JSON.stringify({
+        title: 7,
+        lists: [{ header: 'Recon', units: [] }, { header: 'No units' }, null],
+    }))
+    assert.deepEqual(loadPrintLists(), { title: '', lists: [{ header: 'Recon', units: [] }] })
 })
