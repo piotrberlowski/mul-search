@@ -4,7 +4,7 @@ import { useCombinations } from '@/components/combinations';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { ISelectedUnit, Save, WORK_IN_PROGRESS_NAME, groupByLance, loadBuilderIdentity, stageList, totalPV } from '../../../api/unitListApi';
+import { ISelectedUnit, Save, WORK_IN_PROGRESS_NAME, groupByLance, loadBuilderIdentity, printListHeading, stageList, totalPV } from '../../../api/unitListApi';
 import PlayLink from '../../../components/playLink';
 import { ListLine } from './ListLine';
 import { ListBuilderController, useBuilderContext } from './listBuilderController';
@@ -90,7 +90,7 @@ function BuilderFooter({
     }
 
     const [exportingCards, setExportingCards] = useState(false)
-    const [cmbBtn, cmbDlg] = useCombinations(units, <>Sub-lists</>, 'btn text-center w-full btn-sm')
+    const [cmbBtn, cmbDlg] = useCombinations(units, <>Sub-lists</>, 'btn text-center w-full btn-sm', printListHeading(constraints, listName))
     const [saveAsBtn, saveAsDlg] = useNameDialog({
         id: 'dlg-save-as',
         label: 'Save as',

@@ -111,7 +111,7 @@ function PrintBody({ list }: { list: ReadyList }) {
             <div className="w-full text-center my-2" style={{ pageBreakAfter: "always" }}>Total PV: {list.total}</div>
             <div className="bg-inherit w-full grid grid-cols-2 text-center print:hidden">
                 <div className="bg-inherit">
-                    <Combinations units={list.units}>Generate Sub-lists</Combinations>
+                    <Combinations units={list.units} title={heading}>Generate Sub-lists</Combinations>
                 </div>
                 <div>
                     <PlayLink units={list.units} className="w-full h-full button-link block">Play This!</PlayLink>

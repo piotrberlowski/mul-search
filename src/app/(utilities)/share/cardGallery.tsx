@@ -69,14 +69,16 @@ function MulListTable({ units }: { units: ISelectedUnit[] }) {
 }
 
 
-export default function CardGallery({ units }: { units: ISelectedUnit[] }) {
-    const byLance = groupByLance(units)
-    const showHeading = byLance.size > 1
+export type CardGroup = {
+    heading: string,
+    units: ISelectedUnit[],
+}
 
-    const items = Array.from(byLance).flatMap(([lanceId, lanceUnits]) => {
-        const heading = (showHeading) ? <div className='divider text-lg font-bold divider-accent'>Lance: {lanceId || 'default'}</div> : <></>
+export function GroupedCardGallery({ groups, showHeading }: { groups: CardGroup[], showHeading: boolean }) {
+    const items = groups.map(({ heading: text, units: lanceUnits }, groupIdx) => {
+        const heading = (showHeading) ? <div className='divider text-lg font-bold divider-accent'>{text}</div> : <></>
         return (
-            <React.Fragment key={lanceId}>
+            <React.Fragment key={groupIdx}>
                 {heading}
                 <div className='hidden print:block print:mx-3' style={{ pageBreakAfter: "always" }}>
                     <MulListTable units={lanceUnits} />
@@ -99,4 +101,13 @@ export default function CardGallery({ units }: { units: ISelectedUnit[] }) {
             {items}
         </>
     )
+}
+
+export default function CardGallery({ units }: { units: ISelectedUnit[] }) {
+    const byLance = groupByLance(units)
+    const groups = Array.from(byLance).map(([lanceId, lanceUnits]) => ({
+        heading: `Lance: ${lanceId || 'default'}`,
+        units: lanceUnits,
+    }))
+    return <GroupedCardGallery groups={groups} showHeading={byLance.size > 1} />
 }

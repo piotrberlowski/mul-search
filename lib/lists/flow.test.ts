@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { after, beforeEach, test } from 'node:test'
 import { savedListHref, shareHref, shareHrefFromMul } from '../../src/api/shareApi'
-import { ISelectedUnit, Save, loadByName, loadLists, loadStagedList, parseId, rememberSave, stageList } from '../../src/api/unitListApi'
+import { ISelectedUnit, Save, loadByName, loadLists, loadPrintLists, loadStagedList, parseId, rememberSave, stageList, stagePrintLists } from '../../src/api/unitListApi'
 
 const memory = new Map<string, string>()
 const localStorage = {
@@ -92,4 +92,22 @@ test('remember stores a named copy and rejects a blank name', () => {
     assert.equal(loadByName('Raid').units[0]?.Name, 'Atlas')
     assert.equal(rememberSave(save, 'Raid'), null)
     assert.deepEqual(loadLists(), ['Work in Progress', 'Raid'])
+})
+
+test('print lists keep each sub-list apart and leave the staged list alone', () => {
+    stageList(sampleSave(), 'Raid', null)
+    const atlas = sampleSave().units[0]
+    stagePrintLists({
+        title: 'Raid',
+        lists: [
+            { header: '  Recon  ', units: [atlas] },
+            { header: '', units: [atlas] },
+            { header: 'Recon', units: [atlas] },
+        ],
+    })
+    const printLists = loadPrintLists()
+    assert.equal(printLists.title, 'Raid')
+    assert.deepEqual(printLists.lists.map(list => list.header), ['Recon', 'List 2', 'Recon'])
+    assert.deepEqual(printLists.lists.map(list => list.units[0]?.Name), ['Atlas', 'Atlas', 'Atlas'])
+    assert.equal(loadStagedList().save.units.length, 1)
 })

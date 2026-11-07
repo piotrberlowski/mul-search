@@ -20,7 +20,7 @@ export function generateSubsets(units: ISelectedUnit[], minPV: number, maxPV: nu
     return deDuplicate(res)
 }
 
-function represent(units: ISelectedUnit[]): string {
+export function represent(units: ISelectedUnit[]): string {
     return units.map(u => `${u.Id}:${u.skill}`).join()
 }
 
