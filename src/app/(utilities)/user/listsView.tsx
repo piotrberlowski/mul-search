@@ -252,11 +252,7 @@ export default function ListsView({
         setBusy(key)
         setNotice(null)
         deleteListByKey(key).then(
-            error => {
-                if (error) {
-                    setNotice('Could not delete that list.')
-                    return
-                }
+            () => {
                 detachBuilderIdentity(key)
                 router.refresh()
             },
