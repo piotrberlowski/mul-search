@@ -184,13 +184,32 @@ function isStoredSubListSelection(value: unknown): value is StoredSubListSelecti
     return typeof selection?.key === 'string' && typeof selection.header === 'string'
 }
 
-export function loadSubListSelections(): StoredSubListSelection[] {
-    const parsed = readStoredJson(LOCAL_STORAGE_SUBLIST_SELECTIONS)
-    return Array.isArray(parsed) ? parsed.filter(isStoredSubListSelection) : []
+type StoredSubListSet = {
+    listKey: string,
+    selections: StoredSubListSelection[],
 }
 
-export function saveSubListSelections(selections: StoredSubListSelection[]) {
-    localStorage.setItem(LOCAL_STORAGE_SUBLIST_SELECTIONS, JSON.stringify(selections.map(({ key, header }) => ({ key, header }))))
+const SUBLIST_SELECTION_LIMIT = 20
+
+function readSubListSets(): StoredSubListSet[] {
+    const parsed = readStoredJson(LOCAL_STORAGE_SUBLIST_SELECTIONS) as { lists?: unknown } | null
+    if (!Array.isArray(parsed?.lists)) return []
+    return parsed.lists.flatMap(entry => {
+        const set = entry as Partial<StoredSubListSet> | null
+        if (typeof set?.listKey !== 'string' || !Array.isArray(set.selections)) return []
+        return [{ listKey: set.listKey, selections: set.selections.filter(isStoredSubListSelection) }]
+    })
+}
+
+export function loadSubListSelections(listKey: string): StoredSubListSelection[] {
+    return readSubListSets().find(set => set.listKey === listKey)?.selections ?? []
+}
+
+export function saveSubListSelections(listKey: string, selections: StoredSubListSelection[]) {
+    const others = readSubListSets().filter(set => set.listKey !== listKey)
+    const stored = selections.map(({ key, header }) => ({ key, header }))
+    const lists = [{ listKey, selections: stored }, ...others].slice(0, SUBLIST_SELECTION_LIMIT)
+    localStorage.setItem(LOCAL_STORAGE_SUBLIST_SELECTIONS, JSON.stringify({ lists }))
 }
 
 export function rememberSave(save: Save, name: string): string | null {
