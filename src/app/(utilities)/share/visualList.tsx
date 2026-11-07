@@ -1,5 +1,6 @@
 'use client'
-import { copyShareLink, savedListHref, shareHref, shareHrefFromMul, ConstrainedList } from '@/api/shareApi'
+import { savedListHref, shareHref, shareHrefFromMul, ConstrainedList } from '@/api/shareApi'
+import useCopiedLinkDialog from '@/components/copiedLinkDialog'
 import { materializeUnits } from '@/api/materializeUnits'
 import { ISelectedUnit, loadStagedList, printListHeading, stageList, totalPV } from '../../../api/unitListApi'
 import { builderHref } from '@/app/data'
@@ -58,11 +59,9 @@ function fromStorage(): ResolvedList {
     }
 }
 
-type CopyNotice = { tone: 'info' | 'error', text: string }
-
 function PrintBody({ list }: { list: ReadyList }) {
     const router = useRouter()
-    const [status, setStatus] = useState<CopyNotice | null>(null)
+    const [showCopiedLink, copiedLinkDlg] = useCopiedLinkDialog()
     const heading = printListHeading(list.constraints, list.name)
 
     useEffect(() => {
@@ -82,11 +81,7 @@ function PrintBody({ list }: { list: ReadyList }) {
     }
 
     function share() {
-        copyShareLink(list.sharePath).then(error => setStatus(
-            error
-                ? { tone: 'error', text: error }
-                : { tone: 'info', text: 'Link copied.' },
-        ))
+        showCopiedLink(list.sharePath)
     }
 
     if (!list.units.length) {
@@ -110,14 +105,7 @@ function PrintBody({ list }: { list: ReadyList }) {
             <div className="text-center w-full print:hidden">
                 <button type="button" className="w-full" onClick={() => window.print()}>Print</button>
             </div>
-            {status ? (
-                <div
-                    role={status.tone === 'error' ? 'alert' : 'status'}
-                    className={`alert my-2 print:hidden ${status.tone === 'error' ? 'alert-error' : 'alert-info'}`}
-                >
-                    <span>{status.text}</span>
-                </div>
-            ) : null}
+            {copiedLinkDlg}
             <div className="print:mx-3">
                 <SummaryTable input={list.units} />
             </div>

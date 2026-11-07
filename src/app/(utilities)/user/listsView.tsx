@@ -1,7 +1,8 @@
 'use client'
 
 import { materializeUnits } from "@/api/materializeUnits"
-import { ConstrainedList, copyShareLink, savedListHref, shareHref } from "@/api/shareApi"
+import { ConstrainedList, savedListHref, shareHref } from "@/api/shareApi"
+import useCopiedLinkDialog from "@/components/copiedLinkDialog"
 import { storeUnitsForPlay } from "@/components/playLink"
 import { builderHref } from "@/app/data"
 import { deleteListByKey, findListByKey } from "@/app/api/dao/lists"
@@ -32,11 +33,6 @@ type MemoryRow = {
     total: number
     constraints: string
     save: Save
-}
-
-type Notice = {
-    tone: 'error' | 'success'
-    text: string
 }
 
 type RowModel = {
@@ -94,7 +90,7 @@ function ListAction({
     return (
         <button type="button" className="list-action btn btn-outline btn-xs" aria-label={label} disabled={disabled} onClick={onClick}>
             {icon}
-            <span className="list-action-label">{label}</span>
+            <span className="list-action-label max-md:hidden">{label}</span>
         </button>
     )
 }
@@ -102,7 +98,7 @@ function ListAction({
 function RowActions({ row }: { row: RowModel }) {
     const icon = "h-3.5 w-3.5 shrink-0"
     return (
-        <div className="list-actions">
+        <div className="list-actions w-max">
             <ListAction label="Delete" icon={<TrashIcon className={icon} />} disabled={row.busy} onClick={row.onDelete} />
             <ListAction label="Edit" icon={<PencilSquareIcon className={icon} />} disabled={row.busy} onClick={row.onEdit} />
             <ListAction label="Print" icon={<PrinterIcon className={icon} />} disabled={row.busy} onClick={row.onPrint} />
@@ -114,14 +110,14 @@ function RowActions({ row }: { row: RowModel }) {
 
 function ListsTable({ rows }: { rows: RowModel[] }) {
     return (
-        <div className="overflow-x-auto">
-            <table className="table lists-table">
+        <div className="w-full">
+            <table className="table lists-table w-full">
                 <thead>
                     <tr>
                         <th>Name</th>
                         <th>Total PV</th>
                         <th>Constraints</th>
-                        <th>Actions</th>
+                        <th className="w-[1%] whitespace-nowrap">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -130,7 +126,7 @@ function ListsTable({ rows }: { rows: RowModel[] }) {
                             <th>{row.name}</th>
                             <td>{row.total}</td>
                             <td>{row.constraints}</td>
-                            <td>
+                            <td className="w-[1%] whitespace-nowrap">
                                 <RowActions row={row} />
                             </td>
                         </tr>
@@ -153,15 +149,12 @@ export default function ListsView({
     const router = useRouter()
     const [memories, setMemories] = useState<MemoryRow[]>([])
     const [busy, setBusy] = useState<string | null>(null)
-    const [notice, setNotice] = useState<Notice | null>(savedError ? { tone: 'error', text: savedError } : null)
+    const [notice, setNotice] = useState<string | null>(savedError)
+    const [showCopiedLink, copiedLinkDlg] = useCopiedLinkDialog()
 
     useEffect(() => {
         setMemories(readMemories())
     }, [])
-
-    function reportCopy(error: string | null) {
-        setNotice(error ? { tone: 'error', text: error } : { tone: 'success', text: 'Link copied.' })
-    }
 
     function deleteMemory(name: string) {
         const lists = loadLists().filter((item) => item !== name)
@@ -181,14 +174,14 @@ export default function ListsView({
     }
 
     function shareMemory(row: MemoryRow) {
-        copyShareLink(shareHref({
+        showCopiedLink(shareHref({
             name: row.name,
             total: row.total,
             units: row.save.units,
             constraints: row.save.constraints,
             eraId: row.save.eraId,
             factionId: row.save.factionId,
-        })).then(reportCopy)
+        }))
     }
 
     function playSave(save: Save) {
@@ -208,13 +201,13 @@ export default function ListsView({
         setNotice(null)
         return findListByKey(key).then(list => {
             if (!list.units.length) {
-                setNotice({ tone: 'error', text: unavailableMessage(list) })
+                setNotice(unavailableMessage(list))
                 return
             }
             return action(list)
         }).catch(error => {
             console.error(error)
-            setNotice({ tone: 'error', text: 'Could not open that list.' })
+            setNotice('Could not open that list.')
         }).finally(() => setBusy(null))
     }
 
@@ -252,7 +245,7 @@ export default function ListsView({
     }
 
     function shareSaved(summary: SavedListSummary) {
-        copyShareLink(savedListHref(summary.key)).then(reportCopy)
+        showCopiedLink(savedListHref(summary.key))
     }
 
     function deleteSaved(key: string) {
@@ -265,7 +258,7 @@ export default function ListsView({
             },
             error => {
                 console.error(error)
-                setNotice({ tone: 'error', text: 'Could not delete that list.' })
+                setNotice('Could not delete that list.')
             },
         ).finally(() => setBusy(null))
     }
@@ -298,7 +291,8 @@ export default function ListsView({
     return (
         <div className="w-full max-w-screen-lg mx-auto my-4 flex flex-col gap-6">
             <h1 className="text-lg">Lists</h1>
-            {notice ? <div role="status" className={`alert ${notice.tone === 'error' ? 'alert-error' : 'alert-success'}`}>{notice.text}</div> : null}
+            {notice ? <div role="alert" className="alert alert-error">{notice}</div> : null}
+            {copiedLinkDlg}
             <section>
                 <h2 className="text-base font-semibold mb-2">Memories</h2>
                 {memoryRows.length === 0 ? <p className="text-sm">No lists remembered on this device.</p> : <ListsTable rows={memoryRows} />}
