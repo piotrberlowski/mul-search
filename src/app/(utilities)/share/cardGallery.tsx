@@ -1,5 +1,5 @@
 import { ISelectedUnit, currentPV, groupByLance } from "@/api/unitListApi"
-import React, { useMemo } from "react"
+import React from "react"
 
 const CARD_WIDTH = 1008
 const CARD_HEIGHT = 720
@@ -27,11 +27,7 @@ function CardFace({ unit }: { unit: ISelectedUnit }) {
     )
 }
 
-function MemoImage({ ordinal, unit }: { ordinal: number, unit: ISelectedUnit }) {
-    return useMemo(() => (
-        <CardFace key={ordinal} unit={unit} />
-    ), [ordinal, unit])
-}
+const MemoCardFace = React.memo(CardFace)
 
 
 function MulListTable({ units }: { units: ISelectedUnit[] }) {
@@ -75,11 +71,10 @@ export type CardGroup = {
 }
 
 export function GroupedCardGallery({ groups, showHeading }: { groups: CardGroup[], showHeading: boolean }) {
-    const items = groups.map(({ heading: text, units: lanceUnits }, groupIdx) => {
-        const heading = (showHeading) ? <div className='divider text-lg font-bold divider-accent'>{text}</div> : <></>
+    const items = groups.map(({ heading, units: lanceUnits }, groupIdx) => {
         return (
             <React.Fragment key={groupIdx}>
-                {heading}
+                {showHeading ? <div className='divider text-lg font-bold divider-accent'>{heading}</div> : null}
                 <div className='hidden print:block print:mx-3' style={{ pageBreakAfter: "always" }}>
                     <MulListTable units={lanceUnits} />
                 </div>
@@ -87,7 +82,7 @@ export function GroupedCardGallery({ groups, showHeading }: { groups: CardGroup[
                     {
                         lanceUnits.map((u, idx) => (
                             <div key={idx} className="min-w-0">
-                                <MemoImage unit={u} ordinal={idx} />
+                                <MemoCardFace unit={u} />
                             </div>
                         ))
                     }

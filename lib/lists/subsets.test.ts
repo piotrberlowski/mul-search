@@ -1,16 +1,10 @@
 import assert from 'node:assert/strict'
 import { beforeEach, test } from 'node:test'
-import { represent, restoreSubset } from '../../src/api/subsets'
+import { generateSubsets, represent, restoreSubset } from '../../src/api/subsets'
 import { ISelectedUnit, loadSubListSelections, saveSubListSelections } from '../../src/api/unitListApi'
+import { installMemoryStorage } from './memoryStorage'
 
-const memory = new Map<string, string>()
-Object.assign(globalThis, {
-    localStorage: {
-        getItem: (key: string) => memory.get(key) ?? null,
-        setItem: (key: string, value: string) => { memory.set(key, value) },
-        removeItem: (key: string) => { memory.delete(key) },
-    },
-})
+const memory = installMemoryStorage()
 
 beforeEach(() => {
     memory.clear()
@@ -19,6 +13,18 @@ beforeEach(() => {
 function unit(Id: string, skill: number, ordinal: number, lance = ''): ISelectedUnit {
     return { Id, Name: Id, skill, ordinal, lance, BFPointValue: 40, BFSize: 3 } as ISelectedUnit
 }
+
+test('sub-lists are the largest picks inside the PV range, without duplicates', () => {
+    const units = [unit('atlas', 4, 0), unit('atlas', 4, 1), unit('locust', 4, 2)]
+    assert.deepEqual(generateSubsets(units, 80, 80).map(represent), ['atlas:4,locust:4', 'atlas:4,atlas:4'])
+    assert.deepEqual(generateSubsets(units, 200, 300), [])
+})
+
+test('an empty PV bound generates nothing', () => {
+    const units = [unit('atlas', 4, 0), unit('locust', 4, 1)]
+    assert.deepEqual(generateSubsets(units, NaN, 100), [])
+    assert.deepEqual(generateSubsets(units, 0, NaN), [])
+})
 
 test('a sub-list key ignores unit order and lance', () => {
     assert.equal(

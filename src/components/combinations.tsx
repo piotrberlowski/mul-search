@@ -49,22 +49,24 @@ const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProp
 
     useEffect(
         () => {
-            if (open) {
-                setCombinations(generateSubsets(units, minPV, maxPV))
-                if (units.length > 0) {
-                    const restored = loadSubListSelections().flatMap(stored => {
-                        const line = restoreSubset(stored.key, units)
-                        return line ? [{ ...stored, units: line }] : []
-                    })
-                    saveSubListSelections(restored)
-                    setSelected(restored)
-                }
+            if (!open) return
+            setCombinations(generateSubsets(units, minPV, maxPV))
+            if (units.length === 0) {
+                setSelected([])
+                return
             }
+            const restored = loadSubListSelections().flatMap(stored => {
+                const line = restoreSubset(stored.key, units)
+                return line ? [{ ...stored, units: line }] : []
+            })
+            saveSubListSelections(restored)
+            setSelected(restored)
         },
-        [ref, units, open, minPV, maxPV]
+        [units, open, minPV, maxPV]
     )
 
     const selectedKeys = new Set(selected.map(s => s.key))
+    const unselected = combinations?.filter(line => !selectedKeys.has(represent(line)))
 
     function updateSelected(next: SelectedSubList[]) {
         saveSubListSelections(next)
@@ -84,7 +86,11 @@ const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProp
     }
 
     function onPrintLists() {
-        stagePrintLists({ title, lists: selected })
+        const error = stagePrintLists({ title, lists: selected })
+        if (error) {
+            window.alert(error)
+            return
+        }
         router.push('/share/lists')
     }
 
@@ -118,10 +124,11 @@ const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProp
                 }
                 {selected.length > 0 ? <div className="divider my-1">Generated sub-lists</div> : null}
                 {
-                    combinations
-                        ?.filter(line => !selectedKeys.has(represent(line)))
-                        .map(line => (<SelectableLine key={represent(line)} units={line} checked={false} onToggle={() => select(line)} />))
-                    || <div className="w-full h-full items-center"><div>Generating...</div></div>
+                    unselected == null
+                        ? <div className="w-full h-full items-center"><div>Generating...</div></div>
+                        : unselected.length === 0
+                            ? <div className="text-center my-2">{combinations?.length ? 'Every sub-list in this PV range is selected.' : 'No sub-lists in this PV range.'}</div>
+                            : unselected.map(line => (<SelectableLine key={represent(line)} units={line} checked={false} onToggle={() => select(line)} />))
                 }
             </div>
         </dialog>
@@ -130,7 +137,14 @@ const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProp
 )
 RefCombinationsPanel.displayName = "CombinationsPanel"
 
-export function useCombinations(units: ISelectedUnit[], children?: ReactNode, className?: string, title: string = '') {
+type CombinationsOptions = {
+    units: ISelectedUnit[],
+    title?: string,
+    className?: string,
+    children?: ReactNode,
+}
+
+export function useCombinations({ units, title = '', className, children }: CombinationsOptions) {
     const [isOpen, setOpen] = useState(false)
     const panelRef = useRef<HTMLDialogElement>(null)
     function onOpen() {
@@ -144,8 +158,8 @@ export function useCombinations(units: ISelectedUnit[], children?: ReactNode, cl
 }
 
 
-export default function Combinations({ units, title, children, className }: {units: ISelectedUnit[], title?: string, children: ReactNode, className?: string}) {
-    const [cmbBtn, cmbDlg] = useCombinations(units, children, className, title)
+export default function Combinations(options: CombinationsOptions) {
+    const [cmbBtn, cmbDlg] = useCombinations(options)
     return (
         <>
             {cmbBtn}

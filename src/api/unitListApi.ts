@@ -137,14 +137,41 @@ export function defaultPrintedListHeader(index: number) {
     return `List ${index + 1}`
 }
 
-export function stagePrintLists(printLists: PrintLists) {
-    localStorage.setItem(LOCAL_STORAGE_PRINT_LISTS, JSON.stringify({
-        title: printLists.title,
-        lists: printLists.lists.map((list, idx) => ({
-            header: list.header.trim() || defaultPrintedListHeader(idx),
-            units: list.units,
-        })),
-    }))
+function readStoredJson(key: string): unknown {
+    try {
+        return JSON.parse(localStorage.getItem(key) ?? 'null')
+    } catch {
+        return null
+    }
+}
+
+function isPrintedList(value: unknown): value is PrintedList {
+    const list = value as Partial<PrintedList> | null
+    return typeof list?.header === 'string' && Array.isArray(list.units)
+}
+
+export function stagePrintLists(printLists: PrintLists): string | null {
+    try {
+        localStorage.setItem(LOCAL_STORAGE_PRINT_LISTS, JSON.stringify({
+            title: printLists.title,
+            lists: printLists.lists.map((list, idx) => ({
+                header: list.header.trim() || defaultPrintedListHeader(idx),
+                units: list.units,
+            })),
+        }))
+        return null
+    } catch (error) {
+        console.error(error)
+        return 'Could not save the lists for printing.'
+    }
+}
+
+export function loadPrintLists(): PrintLists {
+    const parsed = readStoredJson(LOCAL_STORAGE_PRINT_LISTS) as Partial<PrintLists> | null
+    return {
+        title: typeof parsed?.title === 'string' ? parsed.title : '',
+        lists: Array.isArray(parsed?.lists) ? parsed.lists.filter(isPrintedList) : [],
+    }
 }
 
 export type StoredSubListSelection = {
@@ -152,28 +179,18 @@ export type StoredSubListSelection = {
     header: string,
 }
 
+function isStoredSubListSelection(value: unknown): value is StoredSubListSelection {
+    const selection = value as Partial<StoredSubListSelection> | null
+    return typeof selection?.key === 'string' && typeof selection.header === 'string'
+}
+
 export function loadSubListSelections(): StoredSubListSelection[] {
-    try {
-        const parsed = JSON.parse(localStorage.getItem(LOCAL_STORAGE_SUBLIST_SELECTIONS) || '[]')
-        if (!Array.isArray(parsed)) return []
-        return parsed.filter(s => typeof s?.key === 'string' && typeof s?.header === 'string')
-    } catch {
-        return []
-    }
+    const parsed = readStoredJson(LOCAL_STORAGE_SUBLIST_SELECTIONS)
+    return Array.isArray(parsed) ? parsed.filter(isStoredSubListSelection) : []
 }
 
 export function saveSubListSelections(selections: StoredSubListSelection[]) {
     localStorage.setItem(LOCAL_STORAGE_SUBLIST_SELECTIONS, JSON.stringify(selections.map(({ key, header }) => ({ key, header }))))
-}
-
-export function loadPrintLists(): PrintLists {
-    const raw = localStorage.getItem(LOCAL_STORAGE_PRINT_LISTS)
-    if (!raw) return { title: '', lists: [] }
-    const parsed = JSON.parse(raw) as Partial<PrintLists>
-    return {
-        title: typeof parsed.title === 'string' ? parsed.title : '',
-        lists: Array.isArray(parsed.lists) ? parsed.lists : [],
-    }
 }
 
 export function rememberSave(save: Save, name: string): string | null {
