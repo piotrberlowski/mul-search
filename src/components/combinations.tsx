@@ -1,5 +1,5 @@
-import { generateSubsets, represent } from "@/api/subsets";
-import { ISelectedUnit, defaultPrintedListHeader, stagePrintLists, totalPV } from "@/api/unitListApi";
+import { generateSubsets, represent, restoreSubset } from "@/api/subsets";
+import { ISelectedUnit, defaultPrintedListHeader, loadSubListSelections, saveSubListSelections, stagePrintLists, totalPV } from "@/api/unitListApi";
 import { PlayCircleIcon } from "@heroicons/react/20/solid";
 import { useRouter } from "next/navigation";
 import React, { ReactNode, useEffect, useRef, useState } from "react";
@@ -51,25 +51,36 @@ const RefCombinationsPanel = React.forwardRef<HTMLDialogElement, CombinationProp
         () => {
             if (open) {
                 setCombinations(generateSubsets(units, minPV, maxPV))
+                if (units.length > 0) {
+                    const restored = loadSubListSelections().flatMap(stored => {
+                        const line = restoreSubset(stored.key, units)
+                        return line ? [{ ...stored, units: line }] : []
+                    })
+                    saveSubListSelections(restored)
+                    setSelected(restored)
+                }
             }
         },
         [ref, units, open, minPV, maxPV]
     )
 
-    useEffect(() => setSelected([]), [units])
-
     const selectedKeys = new Set(selected.map(s => s.key))
 
+    function updateSelected(next: SelectedSubList[]) {
+        saveSubListSelections(next)
+        setSelected(next)
+    }
+
     function select(line: ISelectedUnit[]) {
-        setSelected(prev => [...prev, { key: represent(line), units: line, header: '' }])
+        updateSelected([...selected, { key: represent(line), units: line, header: '' }])
     }
 
     function unselect(key: string) {
-        setSelected(prev => prev.filter(s => s.key !== key))
+        updateSelected(selected.filter(s => s.key !== key))
     }
 
     function setHeader(key: string, header: string) {
-        setSelected(prev => prev.map(s => s.key === key ? { ...s, header } : s))
+        updateSelected(selected.map(s => s.key === key ? { ...s, header } : s))
     }
 
     function onPrintLists() {
