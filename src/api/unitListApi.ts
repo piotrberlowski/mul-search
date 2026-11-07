@@ -8,6 +8,7 @@ const LOCAL_STORAGE_CONSTRAINT_KEY_PREFIX = 'alphaStrikeList_constraint_'
 const LOCAL_STORAGE_ERA_KEY_PREFIX = 'alphaStrikeList_era_'
 const LOCAL_STORAGE_FACTION_KEY_PREFIX = 'alphaStrikeList_faction_'
 const LOCAL_STORAGE_TTS = 'alphaStrikeTTS'
+const LOCAL_STORAGE_PRINT_LISTS = 'alphaStrikePrintLists'
 
 export interface ILanced {
     lance?: string
@@ -119,6 +120,40 @@ export function stageList(save: Save, name: string, serverKey: string | null) {
 export function loadStagedList(): { save: Save, name: string, serverKey: string | null } {
     const identity = loadBuilderIdentity()
     return { save: loadByName(LOCAL_STORAGE_NAME_AUTOSAVE), name: identity.name, serverKey: identity.serverKey }
+}
+
+export type PrintedList = {
+    header: string,
+    units: ISelectedUnit[],
+}
+
+export type PrintLists = {
+    title: string,
+    lists: PrintedList[],
+}
+
+export function defaultPrintedListHeader(index: number) {
+    return `List ${index + 1}`
+}
+
+export function stagePrintLists(printLists: PrintLists) {
+    localStorage.setItem(LOCAL_STORAGE_PRINT_LISTS, JSON.stringify({
+        title: printLists.title,
+        lists: printLists.lists.map((list, idx) => ({
+            header: list.header.trim() || defaultPrintedListHeader(idx),
+            units: list.units,
+        })),
+    }))
+}
+
+export function loadPrintLists(): PrintLists {
+    const raw = localStorage.getItem(LOCAL_STORAGE_PRINT_LISTS)
+    if (!raw) return { title: '', lists: [] }
+    const parsed = JSON.parse(raw) as Partial<PrintLists>
+    return {
+        title: typeof parsed.title === 'string' ? parsed.title : '',
+        lists: Array.isArray(parsed.lists) ? parsed.lists : [],
+    }
 }
 
 export function rememberSave(save: Save, name: string): string | null {
